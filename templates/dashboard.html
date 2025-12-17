@@ -92,51 +92,44 @@
   </div>
 
   <script>
-    let lastSuccess = Date.now();
-
-    function getDateTime() {
-      const now = new Date();
-      return now.toLocaleDateString() + " " + now.toLocaleTimeString();
+    function nowTime() {
+      const d = new Date();
+      return d.toLocaleDateString() + " " + d.toLocaleTimeString();
     }
 
     async function fetchData() {
       try {
         const res = await fetch("/api/data", { cache: "no-store" });
-        if (!res.ok) throw new Error("Bad response");
-
         const data = await res.json();
-        lastSuccess = Date.now(); // mark online
+
+        if (!data.online) {
+          showOffline();
+          return;
+        }
 
         document.getElementById("temp").innerText =
-          data.temperature !== null ? data.temperature + " °C" : "-- °C";
-
+          data.temperature + " °C";
         document.getElementById("humidity").innerText =
-          data.humidity !== null ? data.humidity + " %" : "-- %";
-
+          data.humidity + " %";
         document.getElementById("rain").innerText =
-          data.rain ?? "--";
+          data.rain;
 
         document.getElementById("datetime").innerText =
-          "Live • " + getDateTime();
+          "Live • " + nowTime();
 
-      } catch (e) {
-        // ignore here
+      } catch {
+        showOffline();
       }
     }
 
-    function checkOffline() {
-      if (Date.now() - lastSuccess > 8000) { // 8 sec
-        document.getElementById("temp").innerText = "-- °C";
-        document.getElementById("humidity").innerText = "-- %";
-        document.getElementById("rain").innerText = "--";
-        document.getElementById("datetime").innerText = "Device Offline";
-      }
+    function showOffline() {
+      document.getElementById("temp").innerText = "-- °C";
+      document.getElementById("humidity").innerText = "-- %";
+      document.getElementById("rain").innerText = "--";
+      document.getElementById("datetime").innerText = "Device Offline";
     }
 
-    // 🔥 FAST refresh (1–3 sec feel)
-    setInterval(fetchData, 2000);   // fetch every 2 sec
-    setInterval(checkOffline, 2000);
-
+    setInterval(fetchData, 2000); // 🔥 fast refresh
     fetchData();
   </script>
 </body>

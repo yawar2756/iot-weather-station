@@ -65,12 +65,6 @@
       text-align: center;
       font-weight: bold;
     }
-
-    .footer {
-      font-size: 12px;
-      color: gray;
-      padding-bottom: 10px;
-    }
   </style>
 </head>
 
@@ -78,7 +72,7 @@
   <div class="weather-box">
     <div class="header">
       <h1>GPCA Weather Station</h1>
-      <p id="datetime">Loading...</p>
+      <p id="datetime">Connecting...</p>
     </div>
 
     <table>
@@ -97,46 +91,53 @@
     </table>
   </div>
 
- <script>
-  let lastSuccess = Date.now();
+  <script>
+    let lastSuccess = Date.now();
 
-  async function fetchData() {
-    try {
-      const res = await fetch("/api/data", { cache: "no-store" });
-      if (!res.ok) throw new Error("Bad response");
-
-      const data = await res.json();
-
-      // ✅ Mark online on every successful fetch
-      lastSuccess = Date.now();
-
-      document.getElementById("temp").innerText =
-        data.temperature !== null ? data.temperature + " °C" : "-- °C";
-      document.getElementById("humidity").innerText =
-        data.humidity !== null ? data.humidity + " %" : "-- %";
-      document.getElementById("rain").innerText =
-        data.rain ?? "--";
-
-      document.getElementById("datetime").innerText = "Live";
-    } catch (e) {
-      // do nothing here; offline check handles it
+    function getDateTime() {
+      const now = new Date();
+      return now.toLocaleDateString() + " " + now.toLocaleTimeString();
     }
-  }
 
-  function checkOffline() {
-    const now = Date.now();
-    if (now - lastSuccess > 20000) { // 20 sec no data = offline
-      document.getElementById("temp").innerText = "-- °C";
-      document.getElementById("humidity").innerText = "-- %";
-      document.getElementById("rain").innerText = "--";
-      document.getElementById("datetime").innerText = "Device Offline";
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/data", { cache: "no-store" });
+        if (!res.ok) throw new Error("Bad response");
+
+        const data = await res.json();
+        lastSuccess = Date.now(); // mark online
+
+        document.getElementById("temp").innerText =
+          data.temperature !== null ? data.temperature + " °C" : "-- °C";
+
+        document.getElementById("humidity").innerText =
+          data.humidity !== null ? data.humidity + " %" : "-- %";
+
+        document.getElementById("rain").innerText =
+          data.rain ?? "--";
+
+        document.getElementById("datetime").innerText =
+          "Live • " + getDateTime();
+
+      } catch (e) {
+        // ignore here
+      }
     }
-  }
 
-  setInterval(fetchData, 3000);
-  setInterval(checkOffline, 3000);
+    function checkOffline() {
+      if (Date.now() - lastSuccess > 8000) { // 8 sec
+        document.getElementById("temp").innerText = "-- °C";
+        document.getElementById("humidity").innerText = "-- %";
+        document.getElementById("rain").innerText = "--";
+        document.getElementById("datetime").innerText = "Device Offline";
+      }
+    }
 
-  fetchData();
-</script>
+    // 🔥 FAST refresh (1–3 sec feel)
+    setInterval(fetchData, 2000);   // fetch every 2 sec
+    setInterval(checkOffline, 2000);
+
+    fetchData();
+  </script>
 </body>
 </html>

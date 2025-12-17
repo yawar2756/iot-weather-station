@@ -14,23 +14,24 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: linear-gradient(135deg, #a8e063, #56ab2f);
+      background-image: url("bg.jpg");
+      background-size: cover;
     }
 
     .weather-box {
-      width: 320px;
-      background: rgba(255, 255, 255, 0.9);
+      width: 300px;
+      background: rgba(255, 255, 255, 0.85);
       border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
       text-align: center;
       overflow: hidden;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(5px);
     }
 
     .header {
-      background: #4caf50;
+      background: #7aa77a;
       color: #fff;
-      padding: 14px 0;
+      padding: 12px 0;
     }
 
     .header h1 {
@@ -40,38 +41,35 @@
 
     .header p {
       margin: 4px 0;
-      font-size: 13px;
       font-weight: bold;
+      font-size: 14px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin: 10px 0;
     }
 
     td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
       font-size: 15px;
     }
 
     td:first-child {
-      text-align: left;
-      padding-left: 20px;
+      text-align: center;
     }
 
     td:last-child {
-      text-align: right;
-      padding-right: 20px;
+      text-align: center;
       font-weight: bold;
-      color: #333;
     }
 
     .footer {
       font-size: 12px;
       color: gray;
-      padding: 8px 0 12px;
+      padding-bottom: 10px;
     }
   </style>
 </head>
@@ -80,27 +78,23 @@
   <div class="weather-box">
     <div class="header">
       <h1>GPCA Weather Station</h1>
-      <p id="time">Loading...</p>
+      <p id="datetime">Loading...</p>
     </div>
 
     <table>
       <tr>
-        <td>🌡 Temperature</td>
+        <td>Temperature</td>
         <td id="temp">-- °C</td>
       </tr>
       <tr>
-        <td>💧 Humidity</td>
-        <td id="hum">-- %</td>
+        <td>Humidity</td>
+        <td id="humidity">-- %</td>
       </tr>
       <tr>
-        <td>🌧 Rain</td>
+        <td>Rain</td>
         <td id="rain">--</td>
       </tr>
     </table>
-
-    <div class="footer">
-      Cloud Based IoT Weather Station
-    </div>
   </div>
 
   <script>
@@ -109,30 +103,44 @@
         const res = await fetch("/api/data");
         const data = await res.json();
 
+        if (!data.time) {
+          showOffline();
+          return;
+        }
+
+        const lastTime = new Date(data.time.replace(" ", "T"));
+        const now = new Date();
+        const diffSeconds = (now - lastTime) / 1000;
+
+        if (diffSeconds > 60) {
+          showOffline();
+          return;
+        }
+
         document.getElementById("temp").innerText =
-          data.temperature !== null ? data.temperature + " °C" : "-- °C";
-
-        document.getElementById("hum").innerText =
-          data.humidity !== null ? data.humidity + " %" : "-- %";
-
+          data.temperature + " °C";
+        document.getElementById("humidity").innerText =
+          data.humidity + " %";
         document.getElementById("rain").innerText =
-          data.rain ?? "--";
+          data.rain;
 
-      } catch (e) {
-        document.getElementById("rain").innerText = "Offline";
+        document.getElementById("datetime").innerText =
+          "Live • " + data.time;
+
+      } catch (err) {
+        showOffline();
       }
     }
 
-    function updateTime() {
-      const now = new Date();
-      document.getElementById("time").innerText =
-        now.toLocaleDateString() + " " + now.toLocaleTimeString();
+    function showOffline() {
+      document.getElementById("temp").innerText = "-- °C";
+      document.getElementById("humidity").innerText = "-- %";
+      document.getElementById("rain").innerText = "--";
+      document.getElementById("datetime").innerText = "Device Offline";
     }
 
     setInterval(fetchData, 3000);
-    setInterval(updateTime, 1000);
     fetchData();
-    updateTime();
   </script>
 </body>
 </html>

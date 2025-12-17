@@ -1,38 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>IoT Weather Station</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPCA Weather Station</title>
+
   <style>
-    body { font-family: Arial; text-align: center; background: #eef; }
-    .box { background: #fff; padding: 20px; width: 300px; margin: auto; border-radius: 10px; }
-    h2 { margin-bottom: 10px; }
-    p { font-size: 18px; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #a8e063, #56ab2f);
+    }
+
+    .weather-box {
+      width: 320px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      text-align: center;
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+    }
+
+    .header {
+      background: #4caf50;
+      color: #fff;
+      padding: 14px 0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .header p {
+      margin: 4px 0;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      font-size: 15px;
+    }
+
+    td:first-child {
+      text-align: left;
+      padding-left: 20px;
+    }
+
+    td:last-child {
+      text-align: right;
+      padding-right: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .footer {
+      font-size: 12px;
+      color: gray;
+      padding: 8px 0 12px;
+    }
   </style>
 </head>
+
 <body>
-  <div class="box">
-    <h2>Weather Station</h2>
-    <p>🌡 Temp: <span id="temp">--</span> °C</p>
-    <p>💧 Humidity: <span id="hum">--</span> %</p>
-    <p>🌧 Rain: <span id="rain">--</span></p>
-    <p style="font-size:12px">Updated: <span id="time">--</span></p>
+  <div class="weather-box">
+    <div class="header">
+      <h1>GPCA Weather Station</h1>
+      <p id="time">Loading...</p>
+    </div>
+
+    <table>
+      <tr>
+        <td>🌡 Temperature</td>
+        <td id="temp">-- °C</td>
+      </tr>
+      <tr>
+        <td>💧 Humidity</td>
+        <td id="hum">-- %</td>
+      </tr>
+      <tr>
+        <td>🌧 Rain</td>
+        <td id="rain">--</td>
+      </tr>
+    </table>
+
+    <div class="footer">
+      Cloud Based IoT Weather Station
+    </div>
   </div>
 
   <script>
-    async function loadData() {
+    async function fetchData() {
       try {
         const res = await fetch("/api/data");
-        const d = await res.json();
-        document.getElementById("temp").innerText = d.temperature ?? "--";
-        document.getElementById("hum").innerText = d.humidity ?? "--";
-        document.getElementById("rain").innerText = d.rain ?? "--";
-        document.getElementById("time").innerText = d.time ?? "--";
-      } catch {
+        const data = await res.json();
+
+        document.getElementById("temp").innerText =
+          data.temperature !== null ? data.temperature + " °C" : "-- °C";
+
+        document.getElementById("hum").innerText =
+          data.humidity !== null ? data.humidity + " %" : "-- %";
+
+        document.getElementById("rain").innerText =
+          data.rain ?? "--";
+
+      } catch (e) {
         document.getElementById("rain").innerText = "Offline";
       }
     }
-    setInterval(loadData, 3000);
-    loadData();
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("time").innerText =
+        now.toLocaleDateString() + " " + now.toLocaleTimeString();
+    }
+
+    setInterval(fetchData, 3000);
+    setInterval(updateTime, 1000);
+    fetchData();
+    updateTime();
   </script>
 </body>
 </html>

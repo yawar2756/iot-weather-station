@@ -97,50 +97,46 @@
     </table>
   </div>
 
-  <script>
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/data");
-        const data = await res.json();
+ <script>
+  let lastSuccess = Date.now();
 
-        if (!data.time) {
-          showOffline();
-          return;
-        }
+  async function fetchData() {
+    try {
+      const res = await fetch("/api/data", { cache: "no-store" });
+      if (!res.ok) throw new Error("Bad response");
 
-        const lastTime = new Date(data.time.replace(" ", "T"));
-        const now = new Date();
-        const diffSeconds = (now - lastTime) / 1000;
+      const data = await res.json();
 
-        if (diffSeconds > 300) {
-          showOffline();
-          return;
-        }
+      // ✅ Mark online on every successful fetch
+      lastSuccess = Date.now();
 
-        document.getElementById("temp").innerText =
-          data.temperature + " °C";
-        document.getElementById("humidity").innerText =
-          data.humidity + " %";
-        document.getElementById("rain").innerText =
-          data.rain;
+      document.getElementById("temp").innerText =
+        data.temperature !== null ? data.temperature + " °C" : "-- °C";
+      document.getElementById("humidity").innerText =
+        data.humidity !== null ? data.humidity + " %" : "-- %";
+      document.getElementById("rain").innerText =
+        data.rain ?? "--";
 
-        document.getElementById("datetime").innerText =
-          "Live • " + data.time;
-
-      } catch (err) {
-        showOffline();
-      }
+      document.getElementById("datetime").innerText = "Live";
+    } catch (e) {
+      // do nothing here; offline check handles it
     }
+  }
 
-    function showOffline() {
+  function checkOffline() {
+    const now = Date.now();
+    if (now - lastSuccess > 20000) { // 20 sec no data = offline
       document.getElementById("temp").innerText = "-- °C";
       document.getElementById("humidity").innerText = "-- %";
       document.getElementById("rain").innerText = "--";
       document.getElementById("datetime").innerText = "Device Offline";
     }
+  }
 
-    setInterval(fetchData, 3000);
-    fetchData();
-  </script>
+  setInterval(fetchData, 3000);
+  setInterval(checkOffline, 3000);
+
+  fetchData();
+</script>
 </body>
 </html>

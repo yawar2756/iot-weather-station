@@ -13,7 +13,7 @@ data_store = {
 
 @app.route('/')
 def home():
-    return render_template('iot_dashboard_auto.html')
+    return render_template('dashboard.html')
 
 @app.route('/api/data', methods=['POST', 'GET'])
 def api_data():
@@ -37,3 +37,4 @@ def api_data():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+

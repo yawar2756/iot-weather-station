@@ -1,3 +1,41 @@
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+import sqlite3
+import datetime
+
+# ✅ APP MUST BE DEFINED FIRST
+app = Flask(__name__)
+CORS(app)
+
+DB_NAME = "weather.db"
+
+def get_db():
+    return sqlite3.connect(DB_NAME, check_same_thread=False)
+
+# ✅ DB INIT
+def init_db():
+    con = get_db()
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS weather (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            temperature REAL,
+            humidity REAL,
+            rain_value INTEGER,
+            rain_status TEXT,
+            time TEXT
+        )
+    """)
+    con.commit()
+    con.close()
+
+init_db()
+
+# ✅ HOME ROUTE
+@app.route("/")
+def home():
+    return render_template("dashboard.html")
+
+# ✅ API ROUTE (RELAXED + DEBUG)
 @app.route("/api/data", methods=["POST", "GET"])
 def api_data():
     if request.method == "POST":
@@ -5,13 +43,13 @@ def api_data():
         print("RECEIVED JSON:", data)
 
         try:
-            temperature = float(data.get("temperature"))
-            humidity = float(data.get("humidity"))
-            rain_value = int(data.get("rain_value"))
-            rain_status = str(data.get("rain_status"))
+            temperature = float(data["temperature"])
+            humidity = float(data["humidity"])
+            rain_value = int(data["rain_value"])
+            rain_status = str(data["rain_status"])
         except Exception as e:
             print("DATA ERROR:", e)
-            return jsonify({"error": "Bad data format"}), 400
+            return jsonify({"error": "Bad data"}), 400
 
         con = get_db()
         con.execute(
@@ -38,7 +76,12 @@ def api_data():
     con.close()
 
     if not row:
-        return jsonify({"temperature": None, "humidity": None, "rain": None, "time": None})
+        return jsonify({
+            "temperature": None,
+            "humidity": None,
+            "rain": None,
+            "time": None
+        })
 
     return jsonify({
         "temperature": row[0],
@@ -46,3 +89,6 @@ def api_data():
         "rain": row[2],
         "time": row[3]
     })
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

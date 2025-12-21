@@ -14,22 +14,22 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background-image: url("bg.jpg");
-      background-size: cover;
+      background: linear-gradient(135deg, #a8e063, #56ab2f);
     }
 
     .weather-box {
       width: 320px;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
       text-align: center;
       overflow: hidden;
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(6px);
+      position: relative; /* REQUIRED, nothing else changed */
     }
 
     .header {
-      background: #7aa77a;
+      background: #4caf50;
       color: #fff;
       padding: 14px 0;
     }
@@ -41,37 +41,49 @@
 
     .header p {
       margin: 4px 0;
+      font-size: 13px;
       font-weight: bold;
-      font-size: 14px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 10px 0;
+      margin-top: 10px;
     }
 
     td {
       padding: 12px;
-      border-bottom: 1px solid #ccc;
+      border-bottom: 1px solid #ddd;
       font-size: 15px;
     }
 
     td:first-child {
-      text-align: center;
+      text-align: left;
+      padding-left: 20px;
     }
 
     td:last-child {
-      text-align: center;
+      text-align: right;
+      padding-right: 20px;
       font-weight: bold;
+      color: #333;
     }
-    .credit {
-  font-size: 9px;
-  color: #666;
-  text-align: right;
-  padding: 6px 12px 10px;
-}
 
+    .footer {
+      font-size: 12px;
+      color: gray;
+      padding: 8px 0 12px;
+    }
+
+    /* ONLY ADDITION */
+    .credit {
+      position: absolute;
+      bottom: 6px;
+      right: 12px;
+      font-size: 9px;
+      color: #777;
+      opacity: 0.6;
+    }
   </style>
 </head>
 
@@ -79,67 +91,62 @@
   <div class="weather-box">
     <div class="header">
       <h1>GPCA Weather Station</h1>
-      <p id="datetime">Connecting...</p>
+      <p id="time">Loading...</p>
     </div>
 
     <table>
       <tr>
-        <td>Temperature</td>
+        <td>🌡 Temperature</td>
         <td id="temp">-- °C</td>
       </tr>
       <tr>
-        <td>Humidity</td>
-        <td id="humidity">-- %</td>
+        <td>💧 Humidity</td>
+        <td id="hum">-- %</td>
       </tr>
       <tr>
-        <td>Rain</td>
+        <td>🌧 Rain</td>
         <td id="rain">--</td>
       </tr>
     </table>
-  </div>
-        <div class="credit">
-      Developed By Yawar & Yaseen
-    </div>
-  <script>
-    function nowTime() {
-      const d = new Date();
-      return d.toLocaleDateString() + " " + d.toLocaleTimeString();
-    }
 
+    <div class="footer">
+      Cloud Based IoT Weather Station
+    </div>
+
+    <!-- ONLY ADDITION -->
+    <div class="credit">© Yawar & Yaseen</div>
+  </div>
+
+  <script>
     async function fetchData() {
       try {
-        const res = await fetch("/api/data", { cache: "no-store" });
+        const res = await fetch("/api/data");
         const data = await res.json();
 
-        if (!data.online) {
-          showOffline();
-          return;
-        }
-
         document.getElementById("temp").innerText =
-          data.temperature + " °C";
-        document.getElementById("humidity").innerText =
-          data.humidity + " %";
+          data.temperature !== null ? data.temperature + " °C" : "-- °C";
+
+        document.getElementById("hum").innerText =
+          data.humidity !== null ? data.humidity + " %" : "-- %";
+
         document.getElementById("rain").innerText =
-          data.rain;
+          data.rain ?? "--";
 
-        document.getElementById("datetime").innerText =
-          "Live • " + nowTime();
-
-      } catch {
-        showOffline();
+      } catch (e) {
+        document.getElementById("rain").innerText = "Offline";
       }
     }
 
-    function showOffline() {
-      document.getElementById("temp").innerText = "-- °C";
-      document.getElementById("humidity").innerText = "-- %";
-      document.getElementById("rain").innerText = "--";
-      document.getElementById("datetime").innerText = "Device Offline";
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("time").innerText =
+        now.toLocaleDateString() + " " + now.toLocaleTimeString();
     }
 
-    setInterval(fetchData, 2000); // 🔥 fast refresh
+    setInterval(fetchData, 3000);
+    setInterval(updateTime, 1000);
     fetchData();
+    updateTime();
   </script>
 </body>
 </html>

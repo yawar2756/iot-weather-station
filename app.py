@@ -74,7 +74,7 @@ def api_data():
     last_time = datetime.datetime.strptime(row[3], "%Y-%m-%d %H:%M:%S")
     diff = (datetime.datetime.utcnow() - last_time).total_seconds()
 
-    online = diff <= 5   # 🔥 5 sec threshold
+    online = diff <= 10   # 🔥 10 sec threshold
 
     return jsonify({
         "online": online,
@@ -86,4 +86,5 @@ def api_data():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 

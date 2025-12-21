@@ -25,7 +25,7 @@
       text-align: center;
       overflow: hidden;
       backdrop-filter: blur(6px);
-      position: relative; /* REQUIRED, nothing else changed */
+      position: relative;
     }
 
     .header {
@@ -75,7 +75,6 @@
       padding: 8px 0 12px;
     }
 
-    /* ONLY ADDITION */
     .credit {
       position: absolute;
       bottom: 6px;
@@ -113,8 +112,6 @@
       Cloud Based IoT Weather Station
     </div>
 
-    <!-- ONLY ADDITION -->
-    <br>
     <div class="credit">© Yawar & Yaseen</div>
   </div>
 
@@ -136,27 +133,29 @@
 
         document.getElementById("temp").innerText =
           data.temperature + " °C";
-        document.getElementById("humidity").innerText =
+
+        document.getElementById("hum").innerText =
           data.humidity + " %";
+
         document.getElementById("rain").innerText =
           data.rain;
 
-        document.getElementById("datetime").innerText =
+        document.getElementById("time").innerText =
           "Live • " + nowTime();
 
-      } catch {
+      } catch (e) {
         showOffline();
       }
     }
 
     function showOffline() {
       document.getElementById("temp").innerText = "-- °C";
-      document.getElementById("humidity").innerText = "-- %";
+      document.getElementById("hum").innerText = "-- %";
       document.getElementById("rain").innerText = "--";
-      document.getElementById("datetime").innerText = "Device Offline";
+      document.getElementById("time").innerText = "Device Offline";
     }
 
-    setInterval(fetchData, 2000); // 🔥 fast refresh
+    setInterval(fetchData, 2000);
     fetchData();
   </script>
 </body>

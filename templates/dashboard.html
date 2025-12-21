@@ -119,35 +119,45 @@
   </div>
 
   <script>
+    function nowTime() {
+      const d = new Date();
+      return d.toLocaleDateString() + " " + d.toLocaleTimeString();
+    }
+
     async function fetchData() {
       try {
-        const res = await fetch("/api/data");
+        const res = await fetch("/api/data", { cache: "no-store" });
         const data = await res.json();
 
+        if (!data.online) {
+          showOffline();
+          return;
+        }
+
         document.getElementById("temp").innerText =
-          data.temperature !== null ? data.temperature + " °C" : "-- °C";
-
-        document.getElementById("hum").innerText =
-          data.humidity !== null ? data.humidity + " %" : "-- %";
-
+          data.temperature + " °C";
+        document.getElementById("humidity").innerText =
+          data.humidity + " %";
         document.getElementById("rain").innerText =
-          data.rain ?? "--";
+          data.rain;
 
-      } catch (e) {
-        document.getElementById("rain").innerText = "Offline";
+        document.getElementById("datetime").innerText =
+          "Live • " + nowTime();
+
+      } catch {
+        showOffline();
       }
     }
 
-    function updateTime() {
-      const now = new Date();
-      document.getElementById("time").innerText =
-        now.toLocaleDateString() + " " + now.toLocaleTimeString();
+    function showOffline() {
+      document.getElementById("temp").innerText = "-- °C";
+      document.getElementById("humidity").innerText = "-- %";
+      document.getElementById("rain").innerText = "--";
+      document.getElementById("datetime").innerText = "Device Offline";
     }
 
-    setInterval(fetchData, 3000);
-    setInterval(updateTime, 1000);
+    setInterval(fetchData, 2000); // 🔥 fast refresh
     fetchData();
-    updateTime();
   </script>
 </body>
 </html>

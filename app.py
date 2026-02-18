@@ -11,9 +11,11 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
+
 @app.route("/")
 def home():
     return render_template("dashboard.html")
+
 
 @app.route("/health")
 def health():
@@ -33,7 +35,7 @@ def receive_data():
         con = get_db()
         cur = con.cursor()
 
-        # Create table if not exists (safe location)
+        # Create table if it doesn't exist
         cur.execute("""
             CREATE TABLE IF NOT EXISTS weather (
                 id SERIAL PRIMARY KEY,
@@ -48,6 +50,7 @@ def receive_data():
             );
         """)
 
+        # Insert data
         cur.execute("""
             INSERT INTO weather 
             (temperature, humidity, rain_value, rain_status, wind_speed, wind_direction, visibility)
@@ -102,6 +105,42 @@ def latest_data():
             "visibility": row[5],
             "time": row[6]
         })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/history", methods=["GET"])
+def history():
+    try:
+        con = get_db()
+        cur = con.cursor()
+
+        cur.execute("""
+            SELECT temperature, humidity, rain_status,
+                   wind_speed, wind_direction, visibility, created_at
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 20
+        """)
+
+        rows = cur.fetchall()
+        cur.close()
+        con.close()
+
+        data = []
+        for row in rows:
+            data.append({
+                "temperature": row[0],
+                "humidity": row[1],
+                "rain": row[2],
+                "wind_speed": row[3],
+                "wind_direction": row[4],
+                "visibility": row[5],
+                "time": row[6]
+            })
+
+        return jsonify(data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

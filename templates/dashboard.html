@@ -1,162 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GPCA Weather Station</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPCA Major Weather Station</title>
 
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: "Poppins", sans-serif;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #ffffff;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #2193b0, #6dd5ed);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
 
-    .weather-box {
-      width: 320px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-      text-align: center;
-      overflow: hidden;
-      backdrop-filter: blur(6px);
-      position: relative;
-    }
+.card {
+  background: white;
+  width: 400px;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
 
-    .header {
-      background: #7aa77a;
-      color: #fff;
-      padding: 14px 0;
-    }
+h2 {
+  text-align: center;
+  margin-bottom: 15px;
+}
 
-    .header h1 {
-      margin: 0;
-      font-size: 18px;
-    }
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
 
-    .header p {
-      margin: 4px 0;
-      font-size: 13px;
-      font-weight: bold;
-    }
+.row:last-child {
+  border-bottom: none;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
+.label {
+  font-weight: bold;
+}
 
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
-      font-size: 15px;
-    }
-
-    td:first-child {
-      text-align: left;
-      padding-left: 20px;
-    }
-
-    td:last-child {
-      text-align: right;
-      padding-right: 20px;
-      font-weight: bold;
-      color: #333;
-    }
-
-    .footer {
-      font-size: 12px;
-      color: gray;
-      padding: 8px 0 12px;
-    }
-
-    .credit {
-      position: absolute;
-      bottom: 6px;
-      right: 12px;
-      font-size: 9px;
-      color: #777;
-      opacity: 0.6;
-    }
-  </style>
+.footer {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+  color: gray;
+}
+</style>
 </head>
 
 <body>
-  <div class="weather-box">
-    <div class="header">
-      <h1>GPCA Weather Station</h1>
-      <p id="time">Loading...</p>
-    </div>
 
-    <table>
-      <tr>
-        <td>🌡 Temperature</td>
-        <td id="temp">-- °C</td>
-      </tr>
-      <tr>
-        <td>💧 Humidity</td>
-        <td id="hum">-- %</td>
-      </tr>
-      <tr>
-        <td>🌧 Rain</td>
-        <td id="rain">--</td>
-      </tr>
-    </table>
+<div class="card">
+  <h2>GPCA Weather Station</h2>
 
-    <div class="footer">
-      Cloud Based IoT Weather Station
-    </div>
-    <br>
-    <div class="credit">© Yawar & Yaseen</div>
+  <div class="row"><div class="label">🌡 Temperature</div><div id="temp">Loading...</div></div>
+  <div class="row"><div class="label">💧 Humidity</div><div id="hum">Loading...</div></div>
+  <div class="row"><div class="label">🌧 Rain</div><div id="rain">Loading...</div></div>
+  <div class="row"><div class="label">💨 Wind Speed</div><div id="windSpeed">Loading...</div></div>
+  <div class="row"><div class="label">🧭 Wind Direction</div><div id="windDir">Loading...</div></div>
+  <div class="row"><div class="label">👁 Visibility</div><div id="visibility">Loading...</div></div>
+  <div class="row"><div class="label">🕒 Last Update</div><div id="time">Loading...</div></div>
+
+  <div class="footer">
+    Major Project - Cloud IoT Weather Monitoring System
   </div>
+</div>
 
-  <script>
-    function nowTime() {
-      const d = new Date();
-      return d.toLocaleDateString() + " " + d.toLocaleTimeString();
+<script>
+async function fetchData() {
+  try {
+    const response = await fetch("/api/latest");
+    const data = await response.json();
+
+    if (data.message) {
+      document.getElementById("temp").innerText = "--";
+      return;
     }
 
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/data", { cache: "no-store" });
-        const data = await res.json();
+    document.getElementById("temp").innerText = (data.temperature ?? "--") + " °C";
+    document.getElementById("hum").innerText = (data.humidity ?? "--") + " %";
+    document.getElementById("rain").innerText = data.rain ?? "--";
+    document.getElementById("windSpeed").innerText = (data.wind_speed ?? "--") + " km/h";
+    document.getElementById("windDir").innerText = data.wind_direction ?? "--";
+    document.getElementById("visibility").innerText = (data.visibility ?? "--") + " %";
+    document.getElementById("time").innerText = data.time ?? "--";
 
-        if (!data.online) {
-          showOffline();
-          return;
-        }
+  } catch (error) {
+    console.log("Fetch error:", error);
+  }
+}
 
-        document.getElementById("temp").innerText =
-          data.temperature + " °C";
+setInterval(fetchData, 3000);
+fetchData();
+</script>
 
-        document.getElementById("hum").innerText =
-          data.humidity + " %";
-
-        document.getElementById("rain").innerText =
-          data.rain;
-
-        document.getElementById("time").innerText =
-          "Live • " + nowTime();
-
-      } catch (e) {
-        showOffline();
-      }
-    }
-
-    function showOffline() {
-      document.getElementById("temp").innerText = "-- °C";
-      document.getElementById("hum").innerText = "-- %";
-      document.getElementById("rain").innerText = "--";
-      document.getElementById("time").innerText = "Device Offline";
-    }
-
-    setInterval(fetchData, 1000);
-    fetchData();
-  </script>
 </body>
 </html>

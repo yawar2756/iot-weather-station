@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GPCA Major Weather Station</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body {
   margin: 0;
@@ -13,12 +15,12 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .card {
   background: white;
-  width: 400px;
+  width: 450px;
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -32,7 +34,7 @@ h2 {
 .row {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 1px solid #eee;
 }
 
@@ -44,9 +46,13 @@ h2 {
   font-weight: bold;
 }
 
+canvas {
+  margin-top: 15px;
+}
+
 .footer {
   text-align: center;
-  margin-top: 12px;
+  margin-top: 10px;
   font-size: 12px;
   color: gray;
 }
@@ -66,21 +72,22 @@ h2 {
   <div class="row"><div class="label">👁 Visibility</div><div id="visibility">Loading...</div></div>
   <div class="row"><div class="label">🕒 Last Update</div><div id="time">Loading...</div></div>
 
+  <canvas id="tempChart" height="120"></canvas>
+
   <div class="footer">
-    Major Project - Cloud IoT Weather Monitoring System
+    Major Project - Cloud IoT Weather Monitoring & Analytics System
   </div>
 </div>
 
 <script>
-async function fetchData() {
+let chart;
+
+async function fetchLatest() {
   try {
     const response = await fetch("/api/latest");
     const data = await response.json();
 
-    if (data.message) {
-      document.getElementById("temp").innerText = "--";
-      return;
-    }
+    if (data.message) return;
 
     document.getElementById("temp").innerText = (data.temperature ?? "--") + " °C";
     document.getElementById("hum").innerText = (data.humidity ?? "--") + " %";
@@ -91,12 +98,56 @@ async function fetchData() {
     document.getElementById("time").innerText = data.time ?? "--";
 
   } catch (error) {
-    console.log("Fetch error:", error);
+    console.log("Latest fetch error:", error);
   }
 }
 
-setInterval(fetchData, 3000);
-fetchData();
+async function loadChart() {
+  try {
+    const res = await fetch("/api/history");
+    const data = await res.json();
+
+    if (!Array.isArray(data)) return;
+
+    const temps = data.map(item => item.temperature).reverse();
+    const times = data.map(item => item.time).reverse();
+
+    const ctx = document.getElementById("tempChart").getContext("2d");
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: times,
+        datasets: [{
+          label: "Temperature Trend (°C)",
+          data: temps,
+          borderColor: "red",
+          backgroundColor: "rgba(255,0,0,0.1)",
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { display: false }
+        }
+      }
+    });
+
+  } catch (error) {
+    console.log("Chart error:", error);
+  }
+}
+
+async function refreshAll() {
+  await fetchLatest();
+  await loadChart();
+}
+
+setInterval(refreshAll, 5000);
+refreshAll();
 </script>
 
 </body>

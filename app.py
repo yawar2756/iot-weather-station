@@ -11,6 +11,33 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
+def init_db():
+    try:
+        con = get_db()
+        cur = con.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS weather (
+                id SERIAL PRIMARY KEY,
+                temperature FLOAT,
+                humidity FLOAT,
+                rain_value INT,
+                rain_status TEXT,
+                wind_speed FLOAT,
+                wind_direction TEXT,
+                visibility FLOAT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        con.commit()
+        cur.close()
+        con.close()
+        print("Database initialized successfully")
+    except Exception as e:
+        print("Database init failed:", e)
+
+# Initialize database safely
+init_db()
+
 
 @app.route("/")
 def home():
@@ -35,22 +62,6 @@ def receive_data():
         con = get_db()
         cur = con.cursor()
 
-        # Create table if it doesn't exist
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS weather (
-                id SERIAL PRIMARY KEY,
-                temperature FLOAT,
-                humidity FLOAT,
-                rain_value INT,
-                rain_status TEXT,
-                wind_speed FLOAT,
-                wind_direction TEXT,
-                visibility FLOAT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-
-        # Insert data
         cur.execute("""
             INSERT INTO weather 
             (temperature, humidity, rain_value, rain_status, wind_speed, wind_direction, visibility)

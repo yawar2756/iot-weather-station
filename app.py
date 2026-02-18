@@ -8,42 +8,12 @@ CORS(app)
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise Exception("DATABASE_URL not set")
-
 def get_db():
     return psycopg2.connect(DATABASE_URL)
-
-def init_db():
-    try:
-        con = get_db()
-        cur = con.cursor()
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS weather (
-                id SERIAL PRIMARY KEY,
-                temperature FLOAT,
-                humidity FLOAT,
-                rain_value INT,
-                rain_status TEXT,
-                wind_speed FLOAT,
-                wind_direction TEXT,
-                visibility FLOAT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-        con.commit()
-        cur.close()
-        con.close()
-    except Exception as e:
-        print("DB INIT ERROR:", e)
-
-init_db()
-
 
 @app.route("/")
 def home():
     return render_template("dashboard.html")
-
 
 @app.route("/health")
 def health():
@@ -62,6 +32,21 @@ def receive_data():
 
         con = get_db()
         cur = con.cursor()
+
+        # Create table if not exists (safe location)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS weather (
+                id SERIAL PRIMARY KEY,
+                temperature FLOAT,
+                humidity FLOAT,
+                rain_value INT,
+                rain_status TEXT,
+                wind_speed FLOAT,
+                wind_direction TEXT,
+                visibility FLOAT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
 
         cur.execute("""
             INSERT INTO weather 
@@ -117,42 +102,6 @@ def latest_data():
             "visibility": row[5],
             "time": row[6]
         })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/history", methods=["GET"])
-def history():
-    try:
-        con = get_db()
-        cur = con.cursor()
-
-        cur.execute("""
-            SELECT temperature, humidity, rain_status,
-                   wind_speed, wind_direction, visibility, created_at
-            FROM weather
-            ORDER BY id DESC
-            LIMIT 50
-        """)
-
-        rows = cur.fetchall()
-        cur.close()
-        con.close()
-
-        data = []
-        for row in rows:
-            data.append({
-                "temperature": row[0],
-                "humidity": row[1],
-                "rain": row[2],
-                "wind_speed": row[3],
-                "wind_direction": row[4],
-                "visibility": row[5],
-                "time": row[6]
-            })
-
-        return jsonify(data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

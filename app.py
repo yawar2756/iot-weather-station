@@ -9,7 +9,7 @@ CORS(app)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise Exception("DATABASE_URL not set in environment variables")
+    raise Exception("DATABASE_URL not set")
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
@@ -53,7 +53,7 @@ def health():
 @app.route("/api/data", methods=["POST"])
 def receive_data():
     try:
-        data = request.get_json()
+        data = request.get_json(force=True)
 
         required = ["temperature", "humidity", "rain_value", "rain_status"]
 

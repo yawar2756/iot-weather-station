@@ -1,56 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>GPCA Major Weather Station</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPCA Major Weather Station</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #2193b0, #6dd5ed);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #2193b0, #6dd5ed);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
 
-    .card {
-      background: white;
-      width: 380px;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    }
+.card {
+  background: white;
+  width: 400px;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
 
-    h2 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
+h2 {
+  text-align: center;
+  margin-bottom: 15px;
+}
 
-    .row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
-    }
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
 
-    .row:last-child {
-      border-bottom: none;
-    }
+.row:last-child {
+  border-bottom: none;
+}
 
-    .label {
-      font-weight: bold;
-    }
+.label {
+  font-weight: bold;
+}
 
-    .footer {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 12px;
-      color: gray;
-    }
-  </style>
+.footer {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+  color: gray;
+}
+</style>
 </head>
 
 <body>
@@ -58,40 +58,13 @@
 <div class="card">
   <h2>GPCA Weather Station</h2>
 
-  <div class="row">
-    <div class="label">🌡 Temperature</div>
-    <div id="temp">-- °C</div>
-  </div>
-
-  <div class="row">
-    <div class="label">💧 Humidity</div>
-    <div id="hum">-- %</div>
-  </div>
-
-  <div class="row">
-    <div class="label">🌧 Rain</div>
-    <div id="rain">--</div>
-  </div>
-
-  <div class="row">
-    <div class="label">💨 Wind Speed</div>
-    <div id="windSpeed">-- km/h</div>
-  </div>
-
-  <div class="row">
-    <div class="label">🧭 Wind Direction</div>
-    <div id="windDir">--</div>
-  </div>
-
-  <div class="row">
-    <div class="label">👁 Visibility</div>
-    <div id="visibility">-- %</div>
-  </div>
-
-  <div class="row">
-    <div class="label">🕒 Last Update</div>
-    <div id="time">--</div>
-  </div>
+  <div class="row"><div class="label">🌡 Temperature</div><div id="temp">Loading...</div></div>
+  <div class="row"><div class="label">💧 Humidity</div><div id="hum">Loading...</div></div>
+  <div class="row"><div class="label">🌧 Rain</div><div id="rain">Loading...</div></div>
+  <div class="row"><div class="label">💨 Wind Speed</div><div id="windSpeed">Loading...</div></div>
+  <div class="row"><div class="label">🧭 Wind Direction</div><div id="windDir">Loading...</div></div>
+  <div class="row"><div class="label">👁 Visibility</div><div id="visibility">Loading...</div></div>
+  <div class="row"><div class="label">🕒 Last Update</div><div id="time">Loading...</div></div>
 
   <div class="footer">
     Major Project - Cloud IoT Weather Monitoring System
@@ -101,21 +74,24 @@
 <script>
 async function fetchData() {
   try {
-    const res = await fetch("/api/latest");
-    const data = await res.json();
+    const response = await fetch("/api/latest");
+    const data = await response.json();
 
-    if (data.message) return;
+    if (data.message) {
+      document.getElementById("temp").innerText = "--";
+      return;
+    }
 
-    document.getElementById("temp").innerText = data.temperature + " °C";
-    document.getElementById("hum").innerText = data.humidity + " %";
-    document.getElementById("rain").innerText = data.rain;
+    document.getElementById("temp").innerText = (data.temperature ?? "--") + " °C";
+    document.getElementById("hum").innerText = (data.humidity ?? "--") + " %";
+    document.getElementById("rain").innerText = data.rain ?? "--";
     document.getElementById("windSpeed").innerText = (data.wind_speed ?? "--") + " km/h";
     document.getElementById("windDir").innerText = data.wind_direction ?? "--";
     document.getElementById("visibility").innerText = (data.visibility ?? "--") + " %";
-    document.getElementById("time").innerText = data.time;
+    document.getElementById("time").innerText = data.time ?? "--";
 
-  } catch (err) {
-    console.log("Error fetching data");
+  } catch (error) {
+    console.log("Fetch error:", error);
   }
 }
 

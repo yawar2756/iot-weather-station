@@ -1,138 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GPCA Weather Station</title>
+  <meta charset="UTF-8">
+  <title>GPCA Major Weather Station</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
       margin: 0;
-      padding: 0;
-      font-family: "Poppins", sans-serif;
-      height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #2193b0, #6dd5ed);
       display: flex;
       justify-content: center;
       align-items: center;
-      background: linear-gradient(135deg, #a8e063, #56ab2f);
+      height: 100vh;
     }
 
-    .weather-box {
-      width: 320px;
-      background: rgba(255, 255, 255, 0.9);
+    .card {
+      background: white;
+      width: 380px;
+      padding: 20px;
       border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    h2 {
       text-align: center;
-      overflow: hidden;
-      backdrop-filter: blur(6px);
+      margin-bottom: 10px;
     }
 
-    .header {
-      background: #4caf50;
-      color: #fff;
-      padding: 14px 0;
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
     }
 
-    .header h1 {
-      margin: 0;
-      font-size: 18px;
+    .row:last-child {
+      border-bottom: none;
     }
 
-    .header p {
-      margin: 4px 0;
-      font-size: 13px;
+    .label {
       font-weight: bold;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
-      font-size: 15px;
-    }
-
-    td:first-child {
-      text-align: left;
-      padding-left: 20px;
-    }
-
-    td:last-child {
-      text-align: right;
-      padding-right: 20px;
-      font-weight: bold;
-      color: #333;
     }
 
     .footer {
+      text-align: center;
+      margin-top: 10px;
       font-size: 12px;
       color: gray;
-      padding: 8px 0 12px;
     }
   </style>
 </head>
 
 <body>
-  <div class="weather-box">
-    <div class="header">
-      <h1>GPCA Weather Station</h1>
-      <p id="time">Loading...</p>
-    </div>
 
-    <table>
-      <tr>
-        <td>🌡 Temperature</td>
-        <td id="temp">-- °C</td>
-      </tr>
-      <tr>
-        <td>💧 Humidity</td>
-        <td id="hum">-- %</td>
-      </tr>
-      <tr>
-        <td>🌧 Rain</td>
-        <td id="rain">--</td>
-      </tr>
-    </table>
+<div class="card">
+  <h2>GPCA Weather Station</h2>
 
-    <div class="footer">
-      Cloud Based IoT Weather Station
-    </div>
+  <div class="row">
+    <div class="label">🌡 Temperature</div>
+    <div id="temp">-- °C</div>
   </div>
 
-  <script>
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/data");
-        const data = await res.json();
+  <div class="row">
+    <div class="label">💧 Humidity</div>
+    <div id="hum">-- %</div>
+  </div>
 
-        document.getElementById("temp").innerText =
-          data.temperature !== null ? data.temperature + " °C" : "-- °C";
+  <div class="row">
+    <div class="label">🌧 Rain</div>
+    <div id="rain">--</div>
+  </div>
 
-        document.getElementById("hum").innerText =
-          data.humidity !== null ? data.humidity + " %" : "-- %";
+  <div class="row">
+    <div class="label">💨 Wind Speed</div>
+    <div id="windSpeed">-- km/h</div>
+  </div>
 
-        document.getElementById("rain").innerText =
-          data.rain ?? "--";
+  <div class="row">
+    <div class="label">🧭 Wind Direction</div>
+    <div id="windDir">--</div>
+  </div>
 
-      } catch (e) {
-        document.getElementById("rain").innerText = "Offline";
-      }
-    }
+  <div class="row">
+    <div class="label">👁 Visibility</div>
+    <div id="visibility">-- %</div>
+  </div>
 
-    function updateTime() {
-      const now = new Date();
-      document.getElementById("time").innerText =
-        now.toLocaleDateString() + " " + now.toLocaleTimeString();
-    }
+  <div class="row">
+    <div class="label">🕒 Last Update</div>
+    <div id="time">--</div>
+  </div>
 
-    setInterval(fetchData, 3000);
-    setInterval(updateTime, 1000);
-    fetchData();
-    updateTime();
-  </script>
+  <div class="footer">
+    Major Project - Cloud IoT Weather Monitoring System
+  </div>
+</div>
+
+<script>
+async function fetchData() {
+  try {
+    const res = await fetch("/api/latest");
+    const data = await res.json();
+
+    if (data.message) return;
+
+    document.getElementById("temp").innerText = data.temperature + " °C";
+    document.getElementById("hum").innerText = data.humidity + " %";
+    document.getElementById("rain").innerText = data.rain;
+    document.getElementById("windSpeed").innerText = (data.wind_speed ?? "--") + " km/h";
+    document.getElementById("windDir").innerText = data.wind_direction ?? "--";
+    document.getElementById("visibility").innerText = (data.visibility ?? "--") + " %";
+    document.getElementById("time").innerText = data.time;
+
+  } catch (err) {
+    console.log("Error fetching data");
+  }
+}
+
+setInterval(fetchData, 3000);
+fetchData();
+</script>
+
 </body>
 </html>

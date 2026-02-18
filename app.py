@@ -35,7 +35,7 @@ def init_db():
     except Exception as e:
         print("Database init failed:", e)
 
-# Initialize database safely
+# Initialize DB once at startup
 init_db()
 
 
@@ -63,8 +63,9 @@ def receive_data():
         cur = con.cursor()
 
         cur.execute("""
-            INSERT INTO weather 
-            (temperature, humidity, rain_value, rain_status, wind_speed, wind_direction, visibility)
+            INSERT INTO weather
+            (temperature, humidity, rain_value, rain_status,
+             wind_speed, wind_direction, visibility)
             VALUES (%s,%s,%s,%s,%s,%s,%s)
         """, (
             data["temperature"],
@@ -155,7 +156,3 @@ def history():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)

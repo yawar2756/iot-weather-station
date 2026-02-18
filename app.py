@@ -1,90 +1,162 @@
+import os
+import psycopg2
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import sqlite3
-import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-DB_NAME = "weather.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL not set in environment variables")
 
 def get_db():
-    return sqlite3.connect(DB_NAME, check_same_thread=False)
+    return psycopg2.connect(DATABASE_URL)
 
-# DB init
 def init_db():
-    con = get_db()
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS weather (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            temperature REAL,
-            humidity REAL,
-            rain_status TEXT,
-            time TEXT
-        )
-    """)
-    con.commit()
-    con.close()
+    try:
+        con = get_db()
+        cur = con.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS weather (
+                id SERIAL PRIMARY KEY,
+                temperature FLOAT,
+                humidity FLOAT,
+                rain_value INT,
+                rain_status TEXT,
+                wind_speed FLOAT,
+                wind_direction TEXT,
+                visibility FLOAT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        con.commit()
+        cur.close()
+        con.close()
+    except Exception as e:
+        print("DB INIT ERROR:", e)
 
 init_db()
+
 
 @app.route("/")
 def home():
     return render_template("dashboard.html")
 
-@app.route("/api/data", methods=["POST", "GET"])
-def api_data():
 
-    # ===== ESP POST =====
-    if request.method == "POST":
-        data = request.get_json(force=True, silent=True)
+@app.route("/health")
+def health():
+    return jsonify({"status": "running"})
 
-        temperature = float(data.get("temperature", 0))
-        humidity = float(data.get("humidity", 0))
-        rain = data.get("rain_status", "Unknown")
 
-        now = datetime.datetime.utcnow()
+@app.route("/api/data", methods=["POST"])
+def receive_data():
+    try:
+        data = request.get_json()
+
+        required = ["temperature", "humidity", "rain_value", "rain_status"]
+
+        if not data or not all(k in data for k in required):
+            return jsonify({"error": "Invalid data"}), 400
 
         con = get_db()
-        con.execute(
-            "INSERT INTO weather (temperature, humidity, rain_status, time) VALUES (?,?,?,?)",
-            (
-                temperature,
-                humidity,
-                rain,
-                now.strftime("%Y-%m-%d %H:%M:%S")
-            )
-        )
+        cur = con.cursor()
+
+        cur.execute("""
+            INSERT INTO weather 
+            (temperature, humidity, rain_value, rain_status, wind_speed, wind_direction, visibility)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            data["temperature"],
+            data["humidity"],
+            data["rain_value"],
+            data["rain_status"],
+            data.get("wind_speed"),
+            data.get("wind_direction"),
+            data.get("visibility")
+        ))
+
         con.commit()
+        cur.close()
         con.close()
 
-        return jsonify({"status": "ok"}), 200
+        return jsonify({"status": "stored"}), 200
 
-    # ===== DASHBOARD GET =====
-    con = get_db()
-    cur = con.execute(
-        "SELECT temperature, humidity, rain_status, time FROM weather ORDER BY id DESC LIMIT 1"
-    )
-    row = cur.fetchone()
-    con.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    if not row:
-        return jsonify({"online": False})
 
-    last_time = datetime.datetime.strptime(row[3], "%Y-%m-%d %H:%M:%S")
-    diff = (datetime.datetime.utcnow() - last_time).total_seconds()
+@app.route("/api/latest", methods=["GET"])
+def latest_data():
+    try:
+        con = get_db()
+        cur = con.cursor()
 
-    online = diff <= 10   # 🔥 10 sec threshold
+        cur.execute("""
+            SELECT temperature, humidity, rain_status,
+                   wind_speed, wind_direction, visibility, created_at
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 1
+        """)
 
-    return jsonify({
-        "online": online,
-        "temperature": row[0],
-        "humidity": row[1],
-        "rain": row[2],
-        "time": row[3]
-    })
+        row = cur.fetchone()
+        cur.close()
+        con.close()
+
+        if not row:
+            return jsonify({"message": "No data available yet"})
+
+        return jsonify({
+            "temperature": row[0],
+            "humidity": row[1],
+            "rain": row[2],
+            "wind_speed": row[3],
+            "wind_direction": row[4],
+            "visibility": row[5],
+            "time": row[6]
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/history", methods=["GET"])
+def history():
+    try:
+        con = get_db()
+        cur = con.cursor()
+
+        cur.execute("""
+            SELECT temperature, humidity, rain_status,
+                   wind_speed, wind_direction, visibility, created_at
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 50
+        """)
+
+        rows = cur.fetchall()
+        cur.close()
+        con.close()
+
+        data = []
+        for row in rows:
+            data.append({
+                "temperature": row[0],
+                "humidity": row[1],
+                "rain": row[2],
+                "wind_speed": row[3],
+                "wind_direction": row[4],
+                "visibility": row[5],
+                "time": row[6]
+            })
+
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-
-

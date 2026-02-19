@@ -20,7 +20,7 @@ body {
 
 .card {
   background: white;
-  width: 480px;
+  width: 500px;
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -28,11 +28,10 @@ body {
 
 h2 {
   text-align: center;
-  margin-bottom: 10px;
 }
 
 #alertBox {
-  margin-bottom: 10px;
+  margin: 10px 0;
   padding: 10px;
   border-radius: 8px;
   text-align: center;
@@ -55,10 +54,6 @@ h2 {
   font-weight: bold;
 }
 
-canvas {
-  margin-top: 15px;
-}
-
 .footer {
   text-align: center;
   margin-top: 10px;
@@ -76,6 +71,7 @@ canvas {
   <div id="alertBox"></div>
 
   <div class="row"><div class="label">🌡 Temperature</div><div id="temp">Loading...</div></div>
+  <div class="row"><div class="label">📊 Trend</div><div id="trend">Loading...</div></div>
   <div class="row"><div class="label">💧 Humidity</div><div id="hum">Loading...</div></div>
   <div class="row"><div class="label">🌧 Rain</div><div id="rain">Loading...</div></div>
   <div class="row"><div class="label">💨 Wind Speed</div><div id="windSpeed">Loading...</div></div>
@@ -86,7 +82,7 @@ canvas {
   <canvas id="tempChart" height="120"></canvas>
 
   <div class="footer">
-    Major Project - Cloud IoT Weather Monitoring & Intelligent Alert System
+    Major Project - Monitoring + Alerts + Trend Analysis
   </div>
 </div>
 
@@ -94,85 +90,62 @@ canvas {
 let chart;
 
 async function fetchLatest() {
-  try {
-    const response = await fetch("/api/latest");
-    const data = await response.json();
+  const res = await fetch("/api/latest");
+  const data = await res.json();
 
-    if (data.message) return;
+  if (data.message) return;
 
-    document.getElementById("temp").innerText = (data.temperature ?? "--") + " °C";
-    document.getElementById("hum").innerText = (data.humidity ?? "--") + " %";
-    document.getElementById("rain").innerText = data.rain ?? "--";
-    document.getElementById("windSpeed").innerText = (data.wind_speed ?? "--") + " km/h";
-    document.getElementById("windDir").innerText = data.wind_direction ?? "--";
-    document.getElementById("visibility").innerText = (data.visibility ?? "--") + " %";
-    document.getElementById("time").innerText = data.time ?? "--";
+  document.getElementById("temp").innerText = data.temperature + " °C";
+  document.getElementById("trend").innerText = data.trend;
+  document.getElementById("hum").innerText = data.humidity + " %";
+  document.getElementById("rain").innerText = data.rain;
+  document.getElementById("windSpeed").innerText = (data.wind_speed ?? "--") + " km/h";
+  document.getElementById("windDir").innerText = data.wind_direction ?? "--";
+  document.getElementById("visibility").innerText = (data.visibility ?? "--") + " %";
+  document.getElementById("time").innerText = data.time;
 
-    // ALERT LOGIC DISPLAY
-    const alertBox = document.getElementById("alertBox");
+  const alertBox = document.getElementById("alertBox");
 
-    if (data.alert && data.alert !== "Normal") {
-      alertBox.style.display = "block";
-      alertBox.innerText = "⚠ " + data.alert;
-
-      if (data.alert.includes("Heat") || data.alert.includes("Storm")) {
-        alertBox.style.backgroundColor = "#ff4d4d";
-        alertBox.style.color = "white";
-      } 
-      else if (data.alert.includes("Rain")) {
-        alertBox.style.backgroundColor = "#ffd633";
-        alertBox.style.color = "black";
-      } 
-      else if (data.alert.includes("Visibility")) {
-        alertBox.style.backgroundColor = "#4da6ff";
-        alertBox.style.color = "white";
-      }
-    } else {
-      alertBox.style.display = "none";
-    }
-
-  } catch (error) {
-    console.log("Latest fetch error:", error);
+  if (data.alert && data.alert !== "Normal") {
+    alertBox.style.display = "block";
+    alertBox.innerText = "⚠ " + data.alert;
+    alertBox.style.backgroundColor = "#ff4d4d";
+    alertBox.style.color = "white";
+  } else {
+    alertBox.style.display = "none";
   }
 }
 
 async function loadChart() {
-  try {
-    const res = await fetch("/api/history");
-    const data = await res.json();
+  const res = await fetch("/api/history");
+  const data = await res.json();
 
-    if (!Array.isArray(data)) return;
+  const temps = data.map(item => item.temperature).reverse();
+  const times = data.map(item => item.time).reverse();
 
-    const temps = data.map(item => item.temperature).reverse();
-    const times = data.map(item => item.time).reverse();
+  const ctx = document.getElementById("tempChart").getContext("2d");
 
-    const ctx = document.getElementById("tempChart").getContext("2d");
+  if (chart) chart.destroy();
 
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: times,
-        datasets: [{
-          label: "Temperature Trend (°C)",
-          data: temps,
-          borderColor: "red",
-          backgroundColor: "rgba(255,0,0,0.1)",
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { display: false }
-        }
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: times,
+      datasets: [{
+        label: "Temperature Trend (°C)",
+        data: temps,
+        borderColor: "red",
+        backgroundColor: "rgba(255,0,0,0.1)",
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { display: false }
       }
-    });
-
-  } catch (error) {
-    console.log("Chart error:", error);
-  }
+    }
+  });
 }
 
 async function refreshAll() {

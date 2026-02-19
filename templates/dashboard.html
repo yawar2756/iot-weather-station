@@ -37,7 +37,6 @@ body {
 
 .trend {
   font-size: 20px;
-  opacity: 0.8;
   margin-top: 5px;
 }
 
@@ -123,7 +122,7 @@ canvas {
 
   <div class="hero">
     <div class="temperature" id="temp">-- °C</div>
-    <div class="trend" id="trend">--</div>
+    <div class="trend" id="trend">➖ Stable</div>
     <div id="deviceStatus" class="status">Checking...</div>
     <div id="alertBox" class="alert"></div>
   </div>
@@ -187,8 +186,12 @@ async function fetchData() {
   document.getElementById("temp").innerText =
     data.temperature !== null ? data.temperature + " °C" : "-- °C";
 
-  document.getElementById("trend").innerText =
-    data.trend ?? "--";
+  // Trend icons
+  let trendText = "➖ Stable";
+  if (data.trend === "Rising") trendText = "📈 Rising";
+  if (data.trend === "Falling") trendText = "📉 Falling";
+
+  document.getElementById("trend").innerText = trendText;
 
   document.getElementById("hum").innerText =
     data.humidity !== null ? data.humidity + " %" : "-- %";
@@ -256,6 +259,10 @@ async function loadChart() {
 
   if (chart) chart.destroy();
 
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, "rgba(255,77,77,0.5)");
+  gradient.addColorStop(1, "rgba(255,77,77,0)");
+
   chart = new Chart(ctx, {
     type: "line",
     data: {
@@ -264,21 +271,25 @@ async function loadChart() {
         label: mode === "daily" ? "Daily Avg Temperature" : "Hourly Temperature",
         data: temps,
         borderColor: "#ff4d4d",
-        backgroundColor: "rgba(255,77,77,0.15)",
+        backgroundColor: gradient,
         borderWidth: 3,
         pointRadius: 4,
-        tension: 0.3
+        tension: 0.3,
+        fill: true
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      devicePixelRatio: window.devicePixelRatio,
+      animation: {
+        duration: 800,
+        easing: 'easeInOutQuart'
+      },
       plugins: {
         tooltip: {
           callbacks: {
             label: function(context) {
-              return context.parsed.y + " °C";
+              return "Temperature: " + context.parsed.y + " °C";
             }
           }
         },
@@ -288,7 +299,7 @@ async function loadChart() {
       },
       scales: {
         x: {
-          ticks: { color: "white", maxRotation: 0 },
+          ticks: { color: "white" },
           grid: { color: "rgba(255,255,255,0.1)" }
         },
         y: {

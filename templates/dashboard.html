@@ -12,12 +12,39 @@ body {
   font-family: 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   color: white;
-  padding: 30px;
+}
+
+.header {
+  background: rgba(0,0,0,0.4);
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.header span {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.export-btn {
+  background: #28a745;
+  padding: 8px 15px;
+  border-radius: 6px;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
 }
 
 .container {
   max-width: 1200px;
   margin: auto;
+  padding: 30px;
   transition: opacity 0.3s ease;
 }
 
@@ -33,10 +60,11 @@ body {
 .temperature {
   font-size: 72px;
   font-weight: 700;
+  transition: opacity 0.3s ease;
 }
 
 .trend {
-  font-size: 20px;
+  font-size: 18px;
   margin-top: 5px;
 }
 
@@ -46,6 +74,12 @@ body {
   border-radius: 25px;
   margin-top: 10px;
   font-weight: bold;
+}
+
+.update-time {
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: 0.7;
 }
 
 .alert {
@@ -77,11 +111,6 @@ body {
   border-radius: 15px;
   backdrop-filter: blur(15px);
   text-align: center;
-  transition: transform 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
 }
 
 .card h3 {
@@ -100,7 +129,6 @@ body {
   background: rgba(255,255,255,0.08);
   padding: 20px;
   border-radius: 15px;
-  backdrop-filter: blur(15px);
   height: 420px;
 }
 
@@ -118,47 +146,35 @@ canvas {
 
 <body>
 
+<div class="header">
+  <div>
+    <h1>GPCA Smart Weather System</h1>
+    <span>Cloud Monitoring Dashboard • v1.0.0</span>
+  </div>
+  <a href="/api/export" class="export-btn">⬇ Export Last 7 Days</a>
+</div>
+
 <div class="container" id="mainContainer">
 
   <div class="hero">
     <div class="temperature" id="temp">-- °C</div>
     <div class="trend" id="trend">➖ Stable</div>
     <div id="deviceStatus" class="status">Checking...</div>
+    <div class="update-time" id="updateTime">Updated --</div>
     <div id="alertBox" class="alert"></div>
   </div>
 
   <div class="grid kpi-grid">
-    <div class="card">
-      <h3>Humidity</h3>
-      <p id="hum">-- %</p>
-    </div>
-    <div class="card">
-      <h3>Wind Speed</h3>
-      <p id="windSpeed">-- km/h</p>
-    </div>
-    <div class="card">
-      <h3>Visibility</h3>
-      <p id="visibility">-- %</p>
-    </div>
-    <div class="card">
-      <h3>Rain Status</h3>
-      <p id="rain">--</p>
-    </div>
+    <div class="card"><h3>Humidity</h3><p id="hum">-- %</p></div>
+    <div class="card"><h3>Wind Speed</h3><p id="windSpeed">-- km/h</p></div>
+    <div class="card"><h3>Visibility</h3><p id="visibility">-- %</p></div>
+    <div class="card"><h3>Rain Status</h3><p id="rain">--</p></div>
   </div>
 
   <div class="grid analytics-grid">
-    <div class="card">
-      <h3>Min Temperature</h3>
-      <p id="minTemp">-- °C</p>
-    </div>
-    <div class="card">
-      <h3>Max Temperature</h3>
-      <p id="maxTemp">-- °C</p>
-    </div>
-    <div class="card">
-      <h3>Average Temperature</h3>
-      <p id="avgTemp">-- °C</p>
-    </div>
+    <div class="card"><h3>Min Temperature</h3><p id="minTemp">-- °C</p></div>
+    <div class="card"><h3>Max Temperature</h3><p id="maxTemp">-- °C</p></div>
+    <div class="card"><h3>Average Temperature</h3><p id="avgTemp">-- °C</p></div>
   </div>
 
   <div class="chart-section">
@@ -174,6 +190,16 @@ canvas {
 
 <script>
 let chart;
+let lastUpdateTime = null;
+
+function updateCounter() {
+  if (!lastUpdateTime) return;
+  const seconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
+  document.getElementById("updateTime").innerText =
+    "Updated " + seconds + "s ago";
+}
+
+setInterval(updateCounter, 1000);
 
 async function fetchData() {
   const res = await fetch("/api/latest");
@@ -183,14 +209,21 @@ async function fetchData() {
 
   const container = document.getElementById("mainContainer");
 
+  if (data.device_status === "Offline") {
+    container.classList.add("offline");
+    document.getElementById("deviceStatus").innerText = "🔴 Device Offline";
+  } else {
+    container.classList.remove("offline");
+    document.getElementById("deviceStatus").innerText = "🟢 Device Online";
+    lastUpdateTime = Date.now();
+  }
+
   document.getElementById("temp").innerText =
     data.temperature !== null ? data.temperature + " °C" : "-- °C";
 
-  // Trend icons
   let trendText = "➖ Stable";
   if (data.trend === "Rising") trendText = "📈 Rising";
   if (data.trend === "Falling") trendText = "📉 Falling";
-
   document.getElementById("trend").innerText = trendText;
 
   document.getElementById("hum").innerText =
@@ -213,110 +246,10 @@ async function fetchData() {
 
   document.getElementById("avgTemp").innerText =
     data.avg_temp !== null ? data.avg_temp + " °C" : "-- °C";
-
-  const statusBox = document.getElementById("deviceStatus");
-
-  if (data.device_status === "Offline") {
-    statusBox.innerText = "🔴 Device Offline";
-    statusBox.style.background = "#ff4d4d";
-    container.classList.add("offline");
-  } else {
-    statusBox.innerText = "🟢 Device Online";
-    statusBox.style.background = "#28a745";
-    container.classList.remove("offline");
-  }
-
-  const alertBox = document.getElementById("alertBox");
-
-  if (data.alert && data.alert !== "Normal") {
-    alertBox.style.display = "block";
-    alertBox.innerText = "⚠ " + data.alert;
-    alertBox.style.background = "#ff9900";
-  } else {
-    alertBox.style.display = "none";
-  }
-}
-
-async function loadChart() {
-  const mode = document.getElementById("chartMode").value;
-  const res = await fetch("/api/history?mode=" + mode);
-  const data = await res.json();
-
-  if (!Array.isArray(data)) return;
-
-  const temps = data.map(d => d.temperature ?? 0);
-
-  const times = data.map(d => {
-    const date = new Date(d.time);
-    if (mode === "hourly") {
-      return date.getHours().toString().padStart(2, '0') + ":00";
-    } else {
-      return date.toLocaleDateString();
-    }
-  });
-
-  const ctx = document.getElementById("tempChart").getContext("2d");
-
-  if (chart) chart.destroy();
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-  gradient.addColorStop(0, "rgba(255,77,77,0.5)");
-  gradient.addColorStop(1, "rgba(255,77,77,0)");
-
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: times,
-      datasets: [{
-        label: mode === "daily" ? "Daily Avg Temperature" : "Hourly Temperature",
-        data: temps,
-        borderColor: "#ff4d4d",
-        backgroundColor: gradient,
-        borderWidth: 3,
-        pointRadius: 4,
-        tension: 0.3,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: {
-        duration: 800,
-        easing: 'easeInOutQuart'
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return "Temperature: " + context.parsed.y + " °C";
-            }
-          }
-        },
-        legend: {
-          labels: { color: "white" }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: "white" },
-          grid: { color: "rgba(255,255,255,0.1)" }
-        },
-        y: {
-          min: 0,
-          max: 50,
-          ticks: { stepSize: 5, color: "white" },
-          grid: { color: "rgba(255,255,255,0.1)" }
-        }
-      }
-    }
-  });
 }
 
 setInterval(fetchData, 10000);
-
 fetchData();
-loadChart();
 </script>
 
 </body>

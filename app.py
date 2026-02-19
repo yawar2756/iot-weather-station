@@ -1,8 +1,10 @@
 import os
 import psycopg2
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from flask_cors import CORS
 from datetime import datetime
+import csv
+import io
 
 app = Flask(__name__)
 CORS(app)
@@ -43,6 +45,8 @@ def init_db():
 init_db()
 
 
+# ---------------------- ROUTES ----------------------
+
 @app.route("/")
 def home():
     return render_template("dashboard.html")
@@ -52,6 +56,8 @@ def home():
 def health():
     return jsonify({"status": "running"})
 
+
+# ---------------------- RECEIVE ESP DATA ----------------------
 
 @app.route("/api/data", methods=["POST"])
 def receive_data():
@@ -70,6 +76,7 @@ def receive_data():
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
 
+        # Alert Logic
         alert_message = "Normal"
         if temperature > 40:
             alert_message = "Heat Alert"
@@ -103,6 +110,8 @@ def receive_data():
         return jsonify({"error": str(e)}), 500
 
 
+# ---------------------- LATEST DATA ----------------------
+
 @app.route("/api/latest", methods=["GET"])
 def latest_data():
     try:
@@ -128,6 +137,7 @@ def latest_data():
         seconds_diff = (current_time - created_time).total_seconds()
         device_status = "Offline" if seconds_diff > 30 else "Online"
 
+        # If offline → invalidate stale values
         if device_status == "Offline":
             cur.close()
             con.close()
@@ -147,7 +157,7 @@ def latest_data():
                 "time": None
             })
 
-        # TREND
+        # -------- TREND (Last 5 readings) --------
         cur.execute("""
             SELECT temperature
             FROM weather
@@ -155,8 +165,8 @@ def latest_data():
             LIMIT 5
         """)
         temps = [t[0] for t in cur.fetchall()]
-        trend = "Stable"
 
+        trend = "Stable"
         if len(temps) >= 5:
             first_avg = sum(temps[3:5]) / 2
             last_avg = sum(temps[0:2]) / 2
@@ -165,7 +175,7 @@ def latest_data():
             elif last_avg < first_avg:
                 trend = "Falling"
 
-        # STATS
+        # -------- MIN / MAX / AVG (Last 24 readings) --------
         cur.execute("""
             SELECT temperature
             FROM weather
@@ -176,7 +186,7 @@ def latest_data():
 
         min_temp = min(stats)
         max_temp = max(stats)
-        avg_temp = round(sum(stats)/len(stats), 2)
+        avg_temp = round(sum(stats) / len(stats), 2)
 
         cur.close()
         con.close()
@@ -200,6 +210,8 @@ def latest_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# ---------------------- HISTORY (12 HOURS / 7 DAYS) ----------------------
 
 @app.route("/api/history", methods=["GET"])
 def history():
@@ -226,7 +238,6 @@ def history():
             } for r in rows]
 
         else:
-            # PROPER LAST 12 HOURS
             cur.execute("""
                 WITH hours AS (
                     SELECT generate_series(
@@ -259,5 +270,46 @@ def history():
         return jsonify({"error": str(e)}), 500
 
 
+# ---------------------- CSV EXPORT ----------------------
 
+@app.route("/api/export", methods=["GET"])
+def export_csv():
+    try:
+        con = get_db()
+        cur = con.cursor()
 
+        cur.execute("""
+            SELECT created_at, temperature, humidity,
+                   rain_status, wind_speed,
+                   wind_direction, visibility
+            FROM weather
+            WHERE created_at >= NOW() - INTERVAL '7 days'
+            ORDER BY created_at DESC
+        """)
+
+        rows = cur.fetchall()
+        cur.close()
+        con.close()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "Timestamp", "Temperature (°C)", "Humidity (%)",
+            "Rain Status", "Wind Speed (km/h)",
+            "Wind Direction", "Visibility (%)"
+        ])
+
+        for row in rows:
+            writer.writerow(row)
+
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": "attachment;filename=weather_data.csv"
+            }
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

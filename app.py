@@ -2,7 +2,7 @@ import os
 import psycopg2
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from datetime import datetime, timezone
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -31,8 +31,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
-
-        cur.execute("ALTER TABLE weather ADD COLUMN IF NOT EXISTS alert TEXT;")
 
         con.commit()
         cur.close()
@@ -72,14 +70,12 @@ def receive_data():
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
 
-        # ALERT LOGIC
         alert_message = "Normal"
-
         if temperature > 40:
             alert_message = "Heat Alert"
-        elif wind_speed is not None and wind_speed > 30:
+        elif wind_speed and wind_speed > 30:
             alert_message = "Storm Warning"
-        elif visibility is not None and visibility < 20:
+        elif visibility and visibility < 20:
             alert_message = "Low Visibility Warning"
         elif rain_status.lower() != "no rain":
             alert_message = "Rain Alert"
@@ -93,14 +89,8 @@ def receive_data():
              wind_speed, wind_direction, visibility, alert)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
-            temperature,
-            humidity,
-            rain_value,
-            rain_status,
-            wind_speed,
-            wind_direction,
-            visibility,
-            alert_message
+            temperature, humidity, rain_value, rain_status,
+            wind_speed, wind_direction, visibility, alert_message
         ))
 
         con.commit()
@@ -130,15 +120,32 @@ def latest_data():
         row = cur.fetchone()
 
         if not row:
-            cur.close()
-            con.close()
             return jsonify({"message": "No data available yet"})
 
-        # DEVICE STATUS
-        created_time = row[7].replace(tzinfo=timezone.utc)
-        current_time = datetime.now(timezone.utc)
+        created_time = row[7]
+        current_time = datetime.utcnow()
+
         seconds_diff = (current_time - created_time).total_seconds()
         device_status = "Offline" if seconds_diff > 30 else "Online"
+
+        if device_status == "Offline":
+            cur.close()
+            con.close()
+            return jsonify({
+                "temperature": None,
+                "humidity": None,
+                "rain": None,
+                "wind_speed": None,
+                "wind_direction": None,
+                "visibility": None,
+                "alert": None,
+                "trend": None,
+                "min_temp": None,
+                "max_temp": None,
+                "avg_temp": None,
+                "device_status": "Offline",
+                "time": None
+            })
 
         # TREND
         cur.execute("""
@@ -147,32 +154,29 @@ def latest_data():
             ORDER BY id DESC
             LIMIT 5
         """)
-        temps = cur.fetchall()
-
+        temps = [t[0] for t in cur.fetchall()]
         trend = "Stable"
-        if len(temps) >= 5:
-            temps_list = [t[0] for t in temps]
-            first_avg = sum(temps_list[3:5]) / 2
-            last_avg = sum(temps_list[0:2]) / 2
 
+        if len(temps) >= 5:
+            first_avg = sum(temps[3:5]) / 2
+            last_avg = sum(temps[0:2]) / 2
             if last_avg > first_avg:
                 trend = "Rising"
             elif last_avg < first_avg:
                 trend = "Falling"
 
-        # MIN MAX AVG
+        # STATS
         cur.execute("""
             SELECT temperature
             FROM weather
             ORDER BY id DESC
             LIMIT 24
         """)
-        stats = cur.fetchall()
-        temps_stats = [t[0] for t in stats]
+        stats = [t[0] for t in cur.fetchall()]
 
-        min_temp = min(temps_stats) if temps_stats else None
-        max_temp = max(temps_stats) if temps_stats else None
-        avg_temp = round(sum(temps_stats)/len(temps_stats), 2) if temps_stats else None
+        min_temp = min(stats)
+        max_temp = max(stats)
+        avg_temp = round(sum(stats)/len(stats), 2)
 
         cur.close()
         con.close()
@@ -200,35 +204,33 @@ def latest_data():
 @app.route("/api/history", methods=["GET"])
 def history():
     try:
+        mode = request.args.get("mode", "hourly")
+
         con = get_db()
         cur = con.cursor()
 
-        cur.execute("""
-            SELECT temperature, humidity, rain_status,
-                   wind_speed, wind_direction, visibility,
-                   alert, created_at
-            FROM weather
-            ORDER BY id DESC
-            LIMIT 20
-        """)
+        if mode == "daily":
+            cur.execute("""
+                SELECT DATE(created_at), ROUND(AVG(temperature),2)
+                FROM weather
+                GROUP BY DATE(created_at)
+                ORDER BY DATE(created_at) DESC
+                LIMIT 7
+            """)
+            rows = cur.fetchall()
+            data = [{"time": str(r[0]), "temperature": r[1]} for r in rows]
+        else:
+            cur.execute("""
+                SELECT temperature, created_at
+                FROM weather
+                ORDER BY id DESC
+                LIMIT 20
+            """)
+            rows = cur.fetchall()
+            data = [{"time": r[1], "temperature": r[0]} for r in rows]
 
-        rows = cur.fetchall()
         cur.close()
         con.close()
-
-        data = []
-        for row in rows:
-            data.append({
-                "temperature": row[0],
-                "humidity": row[1],
-                "rain": row[2],
-                "wind_speed": row[3],
-                "wind_direction": row[4],
-                "visibility": row[5],
-                "alert": row[6],
-                "time": row[7]
-            })
-
         return jsonify(data)
 
     except Exception as e:

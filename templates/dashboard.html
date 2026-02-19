@@ -22,15 +22,8 @@ body {
   align-items: center;
 }
 
-.header h1 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.header span {
-  font-size: 13px;
-  opacity: 0.7;
-}
+.header h1 { margin: 0; font-size: 20px; }
+.header span { font-size: 13px; opacity: 0.7; }
 
 .export-btn {
   background: #28a745;
@@ -48,14 +41,9 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.offline {
-  opacity: 0.5;
-}
+.offline { opacity: 0.5; }
 
-.hero {
-  text-align: center;
-  margin-bottom: 30px;
-}
+.hero { text-align: center; margin-bottom: 30px; }
 
 .temperature {
   font-size: 72px;
@@ -63,10 +51,7 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.trend {
-  font-size: 18px;
-  margin-top: 5px;
-}
+.trend { font-size: 18px; margin-top: 5px; }
 
 .status {
   display: inline-block;
@@ -90,10 +75,7 @@ body {
   display: none;
 }
 
-.grid {
-  display: grid;
-  gap: 20px;
-}
+.grid { display: grid; gap: 20px; }
 
 .kpi-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -113,17 +95,9 @@ body {
   text-align: center;
 }
 
-.card h3 {
-  margin: 0;
-  font-size: 14px;
-  opacity: 0.7;
-}
+.card h3 { margin: 0; font-size: 14px; opacity: 0.7; }
 
-.card p {
-  font-size: 22px;
-  margin-top: 8px;
-  font-weight: bold;
-}
+.card p { font-size: 22px; margin-top: 8px; font-weight: bold; }
 
 .chart-section {
   background: rgba(255,255,255,0.08);
@@ -138,9 +112,7 @@ select {
   margin-bottom: 15px;
 }
 
-canvas {
-  background: transparent;
-}
+canvas { background: transparent; }
 </style>
 </head>
 
@@ -198,13 +170,11 @@ function updateCounter() {
   document.getElementById("updateTime").innerText =
     "Updated " + seconds + "s ago";
 }
-
 setInterval(updateCounter, 1000);
 
 async function fetchData() {
   const res = await fetch("/api/latest");
   const data = await res.json();
-
   if (data.message) return;
 
   const container = document.getElementById("mainContainer");
@@ -220,11 +190,6 @@ async function fetchData() {
 
   document.getElementById("temp").innerText =
     data.temperature !== null ? data.temperature + " °C" : "-- °C";
-
-  let trendText = "➖ Stable";
-  if (data.trend === "Rising") trendText = "📈 Rising";
-  if (data.trend === "Falling") trendText = "📉 Falling";
-  document.getElementById("trend").innerText = trendText;
 
   document.getElementById("hum").innerText =
     data.humidity !== null ? data.humidity + " %" : "-- %";
@@ -248,8 +213,49 @@ async function fetchData() {
     data.avg_temp !== null ? data.avg_temp + " °C" : "-- °C";
 }
 
+async function loadChart() {
+  const mode = document.getElementById("chartMode").value;
+  const res = await fetch("/api/history?mode=" + mode);
+  const data = await res.json();
+
+  const temps = data.map(d => d.temperature);
+  const times = data.map(d => {
+    const date = new Date(d.time);
+    return mode === "hourly"
+      ? date.getHours().toString().padStart(2,'0') + ":00"
+      : date.toLocaleDateString();
+  });
+
+  const ctx = document.getElementById("tempChart").getContext("2d");
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: times,
+      datasets: [{
+        label: "Temperature (°C)",
+        data: temps,
+        borderColor: "red",
+        backgroundColor: "rgba(255,0,0,0.2)",
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { min: 0, max: 50 } }
+    }
+  });
+}
+
+window.onload = function() {
+  fetchData();
+  loadChart();
+};
+
 setInterval(fetchData, 10000);
-fetchData();
 </script>
 
 </body>

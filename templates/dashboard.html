@@ -4,87 +4,162 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GPCA Smart Weather System</title>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #141e30, #243b55);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   color: white;
+  padding: 30px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.temperature {
+  font-size: 70px;
+  font-weight: 700;
+}
+
+.trend {
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+.status {
+  display: inline-block;
+  padding: 6px 15px;
+  border-radius: 20px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.alert {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: bold;
+  display: none;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+}
+
+.kpi-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-bottom: 30px;
+}
+
+.analytics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  margin-bottom: 30px;
 }
 
 .card {
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(20px);
-  width: 650px;
-  padding: 25px;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  background: rgba(255,255,255,0.08);
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(15px);
+  text-align: center;
 }
 
-h2 { text-align:center; }
-
-.status {
-  text-align:center;
-  padding:8px;
-  border-radius:8px;
-  margin-bottom:10px;
-  font-weight:bold;
+.card h3 {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.7;
 }
 
-.row {
-  display:flex;
-  justify-content:space-between;
-  padding:6px 0;
-  border-bottom:1px solid rgba(255,255,255,0.2);
+.card p {
+  font-size: 22px;
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+.chart-section {
+  background: rgba(255,255,255,0.08);
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(15px);
+}
+
+select {
+  padding: 6px;
+  border-radius: 6px;
+  margin-bottom: 10px;
 }
 
 canvas {
-  margin-top:15px;
-  background:white;
-  border-radius:10px;
-}
-
-.footer {
-  text-align:center;
-  margin-top:10px;
-  font-size:12px;
-  opacity:0.8;
+  background: white;
+  border-radius: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h2>🌦 GPCA Smart Weather System</h2>
+<div class="container">
 
-  <div id="deviceStatus" class="status">Checking...</div>
-  <div id="alertBox" class="status" style="display:none;"></div>
-
-  <div class="row"><span>🌡 Temperature</span><span id="temp"></span></div>
-  <div class="row"><span>📊 Trend</span><span id="trend"></span></div>
-  <div class="row"><span>💧 Humidity</span><span id="hum"></span></div>
-  <div class="row"><span>🌧 Rain</span><span id="rain"></span></div>
-  <div class="row"><span>💨 Wind Speed</span><span id="windSpeed"></span></div>
-  <div class="row"><span>🧭 Wind Direction</span><span id="windDir"></span></div>
-  <div class="row"><span>👁 Visibility</span><span id="visibility"></span></div>
-  <div class="row"><span>📉 Min Temp</span><span id="minTemp"></span></div>
-  <div class="row"><span>📈 Max Temp</span><span id="maxTemp"></span></div>
-  <div class="row"><span>📊 Avg Temp</span><span id="avgTemp"></span></div>
-  <div class="row"><span>🕒 Last Update</span><span id="time"></span></div>
-
-  <canvas id="tempChart" height="120"></canvas>
-
-  <div class="footer">
-    Intelligent IoT Weather Monitoring & Analytics System
+  <div class="hero">
+    <div class="temperature" id="temp">-- °C</div>
+    <div class="trend" id="trend">--</div>
+    <div id="deviceStatus" class="status">Checking...</div>
+    <div id="alertBox" class="alert"></div>
   </div>
+
+  <div class="grid kpi-grid">
+    <div class="card">
+      <h3>Humidity</h3>
+      <p id="hum">--</p>
+    </div>
+    <div class="card">
+      <h3>Wind Speed</h3>
+      <p id="windSpeed">--</p>
+    </div>
+    <div class="card">
+      <h3>Visibility</h3>
+      <p id="visibility">--</p>
+    </div>
+    <div class="card">
+      <h3>Rain Status</h3>
+      <p id="rain">--</p>
+    </div>
+  </div>
+
+  <div class="grid analytics-grid">
+    <div class="card">
+      <h3>Min Temperature</h3>
+      <p id="minTemp">--</p>
+    </div>
+    <div class="card">
+      <h3>Max Temperature</h3>
+      <p id="maxTemp">--</p>
+    </div>
+    <div class="card">
+      <h3>Average Temperature</h3>
+      <p id="avgTemp">--</p>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <label>View Mode:</label>
+    <select id="chartMode" onchange="loadChart()">
+      <option value="hourly">Hourly</option>
+      <option value="daily">Daily</option>
+    </select>
+    <canvas id="tempChart" height="100"></canvas>
+  </div>
+
 </div>
 
 <script>
@@ -93,21 +168,23 @@ let chart;
 async function fetchData() {
   const res = await fetch("/api/latest");
   const data = await res.json();
+
   if (data.message) return;
 
-  document.getElementById("temp").innerText = data.temperature + " °C";
-  document.getElementById("trend").innerText = data.trend;
-  document.getElementById("hum").innerText = data.humidity + " %";
-  document.getElementById("rain").innerText = data.rain;
-  document.getElementById("windSpeed").innerText = data.wind_speed + " km/h";
-  document.getElementById("windDir").innerText = data.wind_direction;
-  document.getElementById("visibility").innerText = data.visibility + " %";
-  document.getElementById("minTemp").innerText = data.min_temp + " °C";
-  document.getElementById("maxTemp").innerText = data.max_temp + " °C";
-  document.getElementById("avgTemp").innerText = data.avg_temp + " °C";
-  document.getElementById("time").innerText = data.time;
+  document.getElementById("temp").innerText = 
+    data.temperature !== null ? data.temperature + " °C" : "--";
+
+  document.getElementById("trend").innerText = data.trend ?? "--";
+  document.getElementById("hum").innerText = data.humidity ?? "--";
+  document.getElementById("windSpeed").innerText = data.wind_speed ?? "--";
+  document.getElementById("visibility").innerText = data.visibility ?? "--";
+  document.getElementById("rain").innerText = data.rain ?? "--";
+  document.getElementById("minTemp").innerText = data.min_temp ?? "--";
+  document.getElementById("maxTemp").innerText = data.max_temp ?? "--";
+  document.getElementById("avgTemp").innerText = data.avg_temp ?? "--";
 
   const statusBox = document.getElementById("deviceStatus");
+
   if (data.device_status === "Offline") {
     statusBox.innerText = "🔴 Device Offline";
     statusBox.style.background = "#ff4d4d";
@@ -117,6 +194,7 @@ async function fetchData() {
   }
 
   const alertBox = document.getElementById("alertBox");
+
   if (data.alert && data.alert !== "Normal") {
     alertBox.style.display = "block";
     alertBox.innerText = "⚠ " + data.alert;
@@ -124,16 +202,15 @@ async function fetchData() {
   } else {
     alertBox.style.display = "none";
   }
-
-  loadChart();
 }
 
 async function loadChart() {
-  const res = await fetch("/api/history");
+  const mode = document.getElementById("chartMode").value;
+  const res = await fetch("/api/history?mode=" + mode);
   const data = await res.json();
 
-  const temps = data.map(item => item.temperature).reverse();
-  const times = data.map(item => item.time).reverse();
+  const temps = data.map(d => d.temperature).reverse();
+  const times = data.map(d => d.time).reverse();
 
   const ctx = document.getElementById("tempChart").getContext("2d");
 
@@ -144,19 +221,23 @@ async function loadChart() {
     data: {
       labels: times,
       datasets: [{
-        label: "Temperature Trend",
+        label: mode === "daily" ? "Daily Avg Temp" : "Hourly Temp",
         data: temps,
         borderColor: "#ff4d4d",
         backgroundColor: "rgba(255,77,77,0.2)",
         tension: 0.3
       }]
-    },
-    options: { responsive: true }
+    }
   });
 }
 
-setInterval(fetchData, 5000);
+setInterval(() => {
+  fetchData();
+  loadChart();
+}, 10000);
+
 fetchData();
+loadChart();
 </script>
 
 </body>

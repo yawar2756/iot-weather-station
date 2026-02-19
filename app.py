@@ -214,9 +214,9 @@ def history():
                 SELECT DATE(created_at) as day,
                        ROUND(AVG(temperature)::numeric, 2)
                 FROM weather
+                WHERE created_at >= NOW() - INTERVAL '7 days'
                 GROUP BY day
-                ORDER BY day DESC
-                LIMIT 7
+                ORDER BY day ASC
             """)
             rows = cur.fetchall()
 
@@ -225,20 +225,29 @@ def history():
                 "temperature": float(r[1])
             } for r in rows]
 
-        else:  # HOURLY GROUPING
+        else:
+            # PROPER LAST 12 HOURS
             cur.execute("""
-                SELECT DATE_TRUNC('hour', created_at) as hour,
-                       ROUND(AVG(temperature)::numeric, 2)
-                FROM weather
-                GROUP BY hour
-                ORDER BY hour DESC
-                LIMIT 24
+                WITH hours AS (
+                    SELECT generate_series(
+                        date_trunc('hour', NOW()) - INTERVAL '11 hours',
+                        date_trunc('hour', NOW()),
+                        INTERVAL '1 hour'
+                    ) AS hour
+                )
+                SELECT h.hour,
+                       ROUND(AVG(w.temperature)::numeric, 2)
+                FROM hours h
+                LEFT JOIN weather w
+                  ON date_trunc('hour', w.created_at) = h.hour
+                GROUP BY h.hour
+                ORDER BY h.hour ASC
             """)
             rows = cur.fetchall()
 
             data = [{
                 "time": str(r[0]),
-                "temperature": float(r[1])
+                "temperature": float(r[1]) if r[1] is not None else None
             } for r in rows]
 
         cur.close()
@@ -248,6 +257,7 @@ def history():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 

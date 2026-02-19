@@ -1,64 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GPCA Major Weather Station</title>
+<title>GPCA Smart Weather System</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #2193b0, #6dd5ed);
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  color: white;
 }
 
 .card {
-  background: white;
-  width: 500px;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  width: 650px;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
-h2 {
-  text-align: center;
-}
+h2 { text-align:center; }
 
-#alertBox {
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 8px;
-  text-align: center;
-  font-weight: bold;
-  display: none;
+.status {
+  text-align:center;
+  padding:8px;
+  border-radius:8px;
+  margin-bottom:10px;
+  font-weight:bold;
 }
 
 .row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid rgba(255,255,255,0.2);
 }
 
-.row:last-child {
-  border-bottom: none;
-}
-
-.label {
-  font-weight: bold;
+canvas {
+  margin-top:15px;
+  background:white;
+  border-radius:10px;
 }
 
 .footer {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 12px;
-  color: gray;
+  text-align:center;
+  margin-top:10px;
+  font-size:12px;
+  opacity:0.8;
 }
 </style>
 </head>
@@ -66,54 +63,69 @@ h2 {
 <body>
 
 <div class="card">
-  <h2>GPCA Weather Station</h2>
+  <h2>🌦 GPCA Smart Weather System</h2>
 
-  <div id="alertBox"></div>
+  <div id="deviceStatus" class="status">Checking...</div>
+  <div id="alertBox" class="status" style="display:none;"></div>
 
-  <div class="row"><div class="label">🌡 Temperature</div><div id="temp">Loading...</div></div>
-  <div class="row"><div class="label">📊 Trend</div><div id="trend">Loading...</div></div>
-  <div class="row"><div class="label">💧 Humidity</div><div id="hum">Loading...</div></div>
-  <div class="row"><div class="label">🌧 Rain</div><div id="rain">Loading...</div></div>
-  <div class="row"><div class="label">💨 Wind Speed</div><div id="windSpeed">Loading...</div></div>
-  <div class="row"><div class="label">🧭 Wind Direction</div><div id="windDir">Loading...</div></div>
-  <div class="row"><div class="label">👁 Visibility</div><div id="visibility">Loading...</div></div>
-  <div class="row"><div class="label">🕒 Last Update</div><div id="time">Loading...</div></div>
+  <div class="row"><span>🌡 Temperature</span><span id="temp"></span></div>
+  <div class="row"><span>📊 Trend</span><span id="trend"></span></div>
+  <div class="row"><span>💧 Humidity</span><span id="hum"></span></div>
+  <div class="row"><span>🌧 Rain</span><span id="rain"></span></div>
+  <div class="row"><span>💨 Wind Speed</span><span id="windSpeed"></span></div>
+  <div class="row"><span>🧭 Wind Direction</span><span id="windDir"></span></div>
+  <div class="row"><span>👁 Visibility</span><span id="visibility"></span></div>
+  <div class="row"><span>📉 Min Temp</span><span id="minTemp"></span></div>
+  <div class="row"><span>📈 Max Temp</span><span id="maxTemp"></span></div>
+  <div class="row"><span>📊 Avg Temp</span><span id="avgTemp"></span></div>
+  <div class="row"><span>🕒 Last Update</span><span id="time"></span></div>
 
   <canvas id="tempChart" height="120"></canvas>
 
   <div class="footer">
-    Major Project - Monitoring + Alerts + Trend Analysis
+    Intelligent IoT Weather Monitoring & Analytics System
   </div>
 </div>
 
 <script>
 let chart;
 
-async function fetchLatest() {
+async function fetchData() {
   const res = await fetch("/api/latest");
   const data = await res.json();
-
   if (data.message) return;
 
   document.getElementById("temp").innerText = data.temperature + " °C";
   document.getElementById("trend").innerText = data.trend;
   document.getElementById("hum").innerText = data.humidity + " %";
   document.getElementById("rain").innerText = data.rain;
-  document.getElementById("windSpeed").innerText = (data.wind_speed ?? "--") + " km/h";
-  document.getElementById("windDir").innerText = data.wind_direction ?? "--";
-  document.getElementById("visibility").innerText = (data.visibility ?? "--") + " %";
+  document.getElementById("windSpeed").innerText = data.wind_speed + " km/h";
+  document.getElementById("windDir").innerText = data.wind_direction;
+  document.getElementById("visibility").innerText = data.visibility + " %";
+  document.getElementById("minTemp").innerText = data.min_temp + " °C";
+  document.getElementById("maxTemp").innerText = data.max_temp + " °C";
+  document.getElementById("avgTemp").innerText = data.avg_temp + " °C";
   document.getElementById("time").innerText = data.time;
 
-  const alertBox = document.getElementById("alertBox");
+  const statusBox = document.getElementById("deviceStatus");
+  if (data.device_status === "Offline") {
+    statusBox.innerText = "🔴 Device Offline";
+    statusBox.style.background = "#ff4d4d";
+  } else {
+    statusBox.innerText = "🟢 Device Online";
+    statusBox.style.background = "#28a745";
+  }
 
+  const alertBox = document.getElementById("alertBox");
   if (data.alert && data.alert !== "Normal") {
     alertBox.style.display = "block";
     alertBox.innerText = "⚠ " + data.alert;
-    alertBox.style.backgroundColor = "#ff4d4d";
-    alertBox.style.color = "white";
+    alertBox.style.background = "#ff9900";
   } else {
     alertBox.style.display = "none";
   }
+
+  loadChart();
 }
 
 async function loadChart() {
@@ -132,29 +144,19 @@ async function loadChart() {
     data: {
       labels: times,
       datasets: [{
-        label: "Temperature Trend (°C)",
+        label: "Temperature Trend",
         data: temps,
-        borderColor: "red",
-        backgroundColor: "rgba(255,0,0,0.1)",
+        borderColor: "#ff4d4d",
+        backgroundColor: "rgba(255,77,77,0.2)",
         tension: 0.3
       }]
     },
-    options: {
-      responsive: true,
-      scales: {
-        x: { display: false }
-      }
-    }
+    options: { responsive: true }
   });
 }
 
-async function refreshAll() {
-  await fetchLatest();
-  await loadChart();
-}
-
-setInterval(refreshAll, 5000);
-refreshAll();
+setInterval(fetchData, 5000);
+fetchData();
 </script>
 
 </body>

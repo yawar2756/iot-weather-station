@@ -2,6 +2,7 @@ import os
 import psycopg2
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app)
@@ -60,7 +61,6 @@ def receive_data():
         data = request.get_json(force=True)
 
         required = ["temperature", "humidity", "rain_value", "rain_status"]
-
         if not data or not all(k in data for k in required):
             return jsonify({"error": "Invalid data"}), 400
 
@@ -107,10 +107,7 @@ def receive_data():
         cur.close()
         con.close()
 
-        return jsonify({
-            "status": "stored",
-            "alert": alert_message
-        }), 200
+        return jsonify({"status": "stored", "alert": alert_message}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -122,7 +119,6 @@ def latest_data():
         con = get_db()
         cur = con.cursor()
 
-        # Latest record
         cur.execute("""
             SELECT temperature, humidity, rain_status,
                    wind_speed, wind_direction, visibility,
@@ -138,7 +134,13 @@ def latest_data():
             con.close()
             return jsonify({"message": "No data available yet"})
 
-        # TREND CALCULATION
+        # DEVICE STATUS
+        created_time = row[7].replace(tzinfo=timezone.utc)
+        current_time = datetime.now(timezone.utc)
+        seconds_diff = (current_time - created_time).total_seconds()
+        device_status = "Offline" if seconds_diff > 30 else "Online"
+
+        # TREND
         cur.execute("""
             SELECT temperature
             FROM weather
@@ -148,17 +150,29 @@ def latest_data():
         temps = cur.fetchall()
 
         trend = "Stable"
-
         if len(temps) >= 5:
-            temps = [t[0] for t in temps]
-
-            first_avg = sum(temps[3:5]) / 2
-            last_avg = sum(temps[0:2]) / 2
+            temps_list = [t[0] for t in temps]
+            first_avg = sum(temps_list[3:5]) / 2
+            last_avg = sum(temps_list[0:2]) / 2
 
             if last_avg > first_avg:
                 trend = "Rising"
             elif last_avg < first_avg:
                 trend = "Falling"
+
+        # MIN MAX AVG
+        cur.execute("""
+            SELECT temperature
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 24
+        """)
+        stats = cur.fetchall()
+        temps_stats = [t[0] for t in stats]
+
+        min_temp = min(temps_stats) if temps_stats else None
+        max_temp = max(temps_stats) if temps_stats else None
+        avg_temp = round(sum(temps_stats)/len(temps_stats), 2) if temps_stats else None
 
         cur.close()
         con.close()
@@ -172,6 +186,10 @@ def latest_data():
             "visibility": row[5],
             "alert": row[6],
             "trend": trend,
+            "min_temp": min_temp,
+            "max_temp": max_temp,
+            "avg_temp": avg_temp,
+            "device_status": device_status,
             "time": row[7]
         })
 

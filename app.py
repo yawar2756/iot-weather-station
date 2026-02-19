@@ -211,25 +211,35 @@ def history():
 
         if mode == "daily":
             cur.execute("""
-                SELECT DATE(created_at),
+                SELECT DATE(created_at) as day,
                        ROUND(AVG(temperature)::numeric, 2)
                 FROM weather
-                GROUP BY DATE(created_at)
-                ORDER BY DATE(created_at) DESC
+                GROUP BY day
+                ORDER BY day DESC
                 LIMIT 7
             """)
             rows = cur.fetchall()
-            data = [{"time": str(r[0]), "temperature": float(r[1])} for r in rows]
 
-        else:
+            data = [{
+                "time": str(r[0]),
+                "temperature": float(r[1])
+            } for r in rows]
+
+        else:  # HOURLY GROUPING
             cur.execute("""
-                SELECT temperature, created_at
+                SELECT DATE_TRUNC('hour', created_at) as hour,
+                       ROUND(AVG(temperature)::numeric, 2)
                 FROM weather
-                ORDER BY id DESC
-                LIMIT 20
+                GROUP BY hour
+                ORDER BY hour DESC
+                LIMIT 24
             """)
             rows = cur.fetchall()
-            data = [{"time": r[1], "temperature": r[0]} for r in rows]
+
+            data = [{
+                "time": str(r[0]),
+                "temperature": float(r[1])
+            } for r in rows]
 
         cur.close()
         con.close()
@@ -238,5 +248,6 @@ def history():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 

@@ -18,6 +18,11 @@ body {
 .container {
   max-width: 1200px;
   margin: auto;
+  transition: opacity 0.3s ease;
+}
+
+.offline {
+  opacity: 0.5;
 }
 
 .hero {
@@ -26,7 +31,7 @@ body {
 }
 
 .temperature {
-  font-size: 70px;
+  font-size: 72px;
   font-weight: 700;
 }
 
@@ -38,8 +43,8 @@ body {
 
 .status {
   display: inline-block;
-  padding: 6px 15px;
-  border-radius: 20px;
+  padding: 6px 18px;
+  border-radius: 25px;
   margin-top: 10px;
   font-weight: bold;
 }
@@ -97,31 +102,24 @@ body {
   padding: 20px;
   border-radius: 15px;
   backdrop-filter: blur(15px);
+  height: 420px;
 }
 
 select {
   padding: 6px;
   border-radius: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 canvas {
-  background: white;
-  border-radius: 10px;
-}
-
-.footer {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 13px;
-  opacity: 0.8;
+  background: transparent;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer">
 
   <div class="hero">
     <div class="temperature" id="temp">-- °C</div>
@@ -133,15 +131,15 @@ canvas {
   <div class="grid kpi-grid">
     <div class="card">
       <h3>Humidity</h3>
-      <p id="hum">--</p>
+      <p id="hum">-- %</p>
     </div>
     <div class="card">
       <h3>Wind Speed</h3>
-      <p id="windSpeed">--</p>
+      <p id="windSpeed">-- km/h</p>
     </div>
     <div class="card">
       <h3>Visibility</h3>
-      <p id="visibility">--</p>
+      <p id="visibility">-- %</p>
     </div>
     <div class="card">
       <h3>Rain Status</h3>
@@ -152,29 +150,25 @@ canvas {
   <div class="grid analytics-grid">
     <div class="card">
       <h3>Min Temperature</h3>
-      <p id="minTemp">--</p>
+      <p id="minTemp">-- °C</p>
     </div>
     <div class="card">
       <h3>Max Temperature</h3>
-      <p id="maxTemp">--</p>
+      <p id="maxTemp">-- °C</p>
     </div>
     <div class="card">
       <h3>Average Temperature</h3>
-      <p id="avgTemp">--</p>
+      <p id="avgTemp">-- °C</p>
     </div>
   </div>
 
   <div class="chart-section">
     <label>📅 View Mode:</label>
     <select id="chartMode" onchange="loadChart()">
-      <option value="hourly">Hourly</option>
-      <option value="daily">Daily</option>
+      <option value="hourly">Last 12 Hours</option>
+      <option value="daily">Last 7 Days</option>
     </select>
-    <canvas id="tempChart" height="100"></canvas>
-  </div>
-
-  <div class="footer">
-    Intelligent IoT Weather Monitoring & Multi-Scale Analytics System
+    <canvas id="tempChart"></canvas>
   </div>
 
 </div>
@@ -188,41 +182,45 @@ async function fetchData() {
 
   if (data.message) return;
 
+  const container = document.getElementById("mainContainer");
+
   document.getElementById("temp").innerText =
-    data.temperature !== null ? data.temperature + " °C" : "--";
+    data.temperature !== null ? data.temperature + " °C" : "-- °C";
 
   document.getElementById("trend").innerText =
     data.trend ?? "--";
 
   document.getElementById("hum").innerText =
-    data.humidity !== null ? data.humidity + " %" : "--";
+    data.humidity !== null ? data.humidity + " %" : "-- %";
 
   document.getElementById("windSpeed").innerText =
-    data.wind_speed !== null ? data.wind_speed + " km/h" : "--";
+    data.wind_speed !== null ? data.wind_speed + " km/h" : "-- km/h";
 
   document.getElementById("visibility").innerText =
-    data.visibility !== null ? data.visibility + " %" : "--";
+    data.visibility !== null ? data.visibility + " %" : "-- %";
 
   document.getElementById("rain").innerText =
     data.rain ?? "--";
 
   document.getElementById("minTemp").innerText =
-    data.min_temp !== null ? data.min_temp + " °C" : "--";
+    data.min_temp !== null ? data.min_temp + " °C" : "-- °C";
 
   document.getElementById("maxTemp").innerText =
-    data.max_temp !== null ? data.max_temp + " °C" : "--";
+    data.max_temp !== null ? data.max_temp + " °C" : "-- °C";
 
   document.getElementById("avgTemp").innerText =
-    data.avg_temp !== null ? data.avg_temp + " °C" : "--";
+    data.avg_temp !== null ? data.avg_temp + " °C" : "-- °C";
 
   const statusBox = document.getElementById("deviceStatus");
 
   if (data.device_status === "Offline") {
     statusBox.innerText = "🔴 Device Offline";
     statusBox.style.background = "#ff4d4d";
+    container.classList.add("offline");
   } else {
     statusBox.innerText = "🟢 Device Online";
     statusBox.style.background = "#28a745";
+    container.classList.remove("offline");
   }
 
   const alertBox = document.getElementById("alertBox");
@@ -244,7 +242,15 @@ async function loadChart() {
   if (!Array.isArray(data)) return;
 
   const temps = data.map(d => d.temperature ?? 0);
-  const times = data.map(d => d.time).reverse();
+
+  const times = data.map(d => {
+    const date = new Date(d.time);
+    if (mode === "hourly") {
+      return date.getHours().toString().padStart(2, '0') + ":00";
+    } else {
+      return date.toLocaleDateString();
+    }
+  });
 
   const ctx = document.getElementById("tempChart").getContext("2d");
 
@@ -258,14 +264,39 @@ async function loadChart() {
         label: mode === "daily" ? "Daily Avg Temperature" : "Hourly Temperature",
         data: temps,
         borderColor: "#ff4d4d",
-        backgroundColor: "rgba(255,77,77,0.2)",
+        backgroundColor: "rgba(255,77,77,0.15)",
+        borderWidth: 3,
+        pointRadius: 4,
         tension: 0.3
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
+      devicePixelRatio: window.devicePixelRatio,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + " °C";
+            }
+          }
+        },
+        legend: {
+          labels: { color: "white" }
+        }
+      },
       scales: {
-        x: { display: true }
+        x: {
+          ticks: { color: "white", maxRotation: 0 },
+          grid: { color: "rgba(255,255,255,0.1)" }
+        },
+        y: {
+          min: 0,
+          max: 50,
+          ticks: { stepSize: 5, color: "white" },
+          grid: { color: "rgba(255,255,255,0.1)" }
+        }
       }
     }
   });

@@ -33,6 +33,7 @@ body {
 .trend {
   font-size: 20px;
   opacity: 0.8;
+  margin-top: 5px;
 }
 
 .status {
@@ -57,7 +58,7 @@ body {
 }
 
 .kpi-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin-bottom: 30px;
 }
 
@@ -72,6 +73,11 @@ body {
   border-radius: 15px;
   backdrop-filter: blur(15px);
   text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
 }
 
 .card h3 {
@@ -102,6 +108,13 @@ select {
 canvas {
   background: white;
   border-radius: 10px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  opacity: 0.8;
 }
 </style>
 </head>
@@ -152,12 +165,16 @@ canvas {
   </div>
 
   <div class="chart-section">
-    <label>View Mode:</label>
+    <label>📅 View Mode:</label>
     <select id="chartMode" onchange="loadChart()">
       <option value="hourly">Hourly</option>
       <option value="daily">Daily</option>
     </select>
     <canvas id="tempChart" height="100"></canvas>
+  </div>
+
+  <div class="footer">
+    Intelligent IoT Weather Monitoring & Multi-Scale Analytics System
   </div>
 
 </div>
@@ -171,17 +188,32 @@ async function fetchData() {
 
   if (data.message) return;
 
-  document.getElementById("temp").innerText = 
+  document.getElementById("temp").innerText =
     data.temperature !== null ? data.temperature + " °C" : "--";
 
-  document.getElementById("trend").innerText = data.trend ?? "--";
-  document.getElementById("hum").innerText = data.humidity ?? "--";
-  document.getElementById("windSpeed").innerText = data.wind_speed ?? "--";
-  document.getElementById("visibility").innerText = data.visibility ?? "--";
-  document.getElementById("rain").innerText = data.rain ?? "--";
-  document.getElementById("minTemp").innerText = data.min_temp ?? "--";
-  document.getElementById("maxTemp").innerText = data.max_temp ?? "--";
-  document.getElementById("avgTemp").innerText = data.avg_temp ?? "--";
+  document.getElementById("trend").innerText =
+    data.trend ?? "--";
+
+  document.getElementById("hum").innerText =
+    data.humidity !== null ? data.humidity + " %" : "--";
+
+  document.getElementById("windSpeed").innerText =
+    data.wind_speed !== null ? data.wind_speed + " km/h" : "--";
+
+  document.getElementById("visibility").innerText =
+    data.visibility !== null ? data.visibility + " %" : "--";
+
+  document.getElementById("rain").innerText =
+    data.rain ?? "--";
+
+  document.getElementById("minTemp").innerText =
+    data.min_temp !== null ? data.min_temp + " °C" : "--";
+
+  document.getElementById("maxTemp").innerText =
+    data.max_temp !== null ? data.max_temp + " °C" : "--";
+
+  document.getElementById("avgTemp").innerText =
+    data.avg_temp !== null ? data.avg_temp + " °C" : "--";
 
   const statusBox = document.getElementById("deviceStatus");
 
@@ -209,6 +241,8 @@ async function loadChart() {
   const res = await fetch("/api/history?mode=" + mode);
   const data = await res.json();
 
+  if (!Array.isArray(data)) return;
+
   const temps = data.map(d => d.temperature).reverse();
   const times = data.map(d => d.time).reverse();
 
@@ -221,20 +255,23 @@ async function loadChart() {
     data: {
       labels: times,
       datasets: [{
-        label: mode === "daily" ? "Daily Avg Temp" : "Hourly Temp",
+        label: mode === "daily" ? "Daily Avg Temperature" : "Hourly Temperature",
         data: temps,
         borderColor: "#ff4d4d",
         backgroundColor: "rgba(255,77,77,0.2)",
         tension: 0.3
       }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { display: true }
+      }
     }
   });
 }
 
-setInterval(() => {
-  fetchData();
-  loadChart();
-}, 10000);
+setInterval(fetchData, 10000);
 
 fetchData();
 loadChart();

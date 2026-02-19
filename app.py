@@ -15,6 +15,8 @@ def init_db():
     try:
         con = get_db()
         cur = con.cursor()
+
+        # Create table if not exists
         cur.execute("""
             CREATE TABLE IF NOT EXISTS weather (
                 id SERIAL PRIMARY KEY,
@@ -25,17 +27,23 @@ def init_db():
                 wind_speed FLOAT,
                 wind_direction TEXT,
                 visibility FLOAT,
+                alert TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
+
+        # Ensure alert column exists (safe migration)
+        cur.execute("ALTER TABLE weather ADD COLUMN IF NOT EXISTS alert TEXT;")
+
         con.commit()
         cur.close()
         con.close()
         print("Database initialized successfully")
+
     except Exception as e:
         print("Database init failed:", e)
 
-# Initialize DB once at startup
+# Initialize database at startup
 init_db()
 
 
@@ -59,29 +67,53 @@ def receive_data():
         if not data or not all(k in data for k in required):
             return jsonify({"error": "Invalid data"}), 400
 
+        temperature = data["temperature"]
+        humidity = data["humidity"]
+        rain_value = data["rain_value"]
+        rain_status = data["rain_status"]
+        wind_speed = data.get("wind_speed")
+        wind_direction = data.get("wind_direction")
+        visibility = data.get("visibility")
+
+        # 🔥 ALERT LOGIC
+        alert_message = "Normal"
+
+        if temperature > 40:
+            alert_message = "Heat Alert"
+        elif wind_speed is not None and wind_speed > 30:
+            alert_message = "Storm Warning"
+        elif visibility is not None and visibility < 20:
+            alert_message = "Low Visibility Warning"
+        elif rain_status.lower() != "no rain":
+            alert_message = "Rain Alert"
+
         con = get_db()
         cur = con.cursor()
 
         cur.execute("""
             INSERT INTO weather
             (temperature, humidity, rain_value, rain_status,
-             wind_speed, wind_direction, visibility)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
+             wind_speed, wind_direction, visibility, alert)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
-            data["temperature"],
-            data["humidity"],
-            data["rain_value"],
-            data["rain_status"],
-            data.get("wind_speed"),
-            data.get("wind_direction"),
-            data.get("visibility")
+            temperature,
+            humidity,
+            rain_value,
+            rain_status,
+            wind_speed,
+            wind_direction,
+            visibility,
+            alert_message
         ))
 
         con.commit()
         cur.close()
         con.close()
 
-        return jsonify({"status": "stored"}), 200
+        return jsonify({
+            "status": "stored",
+            "alert": alert_message
+        }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -95,7 +127,8 @@ def latest_data():
 
         cur.execute("""
             SELECT temperature, humidity, rain_status,
-                   wind_speed, wind_direction, visibility, created_at
+                   wind_speed, wind_direction, visibility,
+                   alert, created_at
             FROM weather
             ORDER BY id DESC
             LIMIT 1
@@ -115,7 +148,8 @@ def latest_data():
             "wind_speed": row[3],
             "wind_direction": row[4],
             "visibility": row[5],
-            "time": row[6]
+            "alert": row[6],
+            "time": row[7]
         })
 
     except Exception as e:
@@ -130,7 +164,8 @@ def history():
 
         cur.execute("""
             SELECT temperature, humidity, rain_status,
-                   wind_speed, wind_direction, visibility, created_at
+                   wind_speed, wind_direction, visibility,
+                   alert, created_at
             FROM weather
             ORDER BY id DESC
             LIMIT 20
@@ -149,7 +184,8 @@ def history():
                 "wind_speed": row[3],
                 "wind_direction": row[4],
                 "visibility": row[5],
-                "time": row[6]
+                "alert": row[6],
+                "time": row[7]
             })
 
         return jsonify(data)

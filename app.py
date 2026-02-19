@@ -16,7 +16,6 @@ def init_db():
         con = get_db()
         cur = con.cursor()
 
-        # Create table if not exists
         cur.execute("""
             CREATE TABLE IF NOT EXISTS weather (
                 id SERIAL PRIMARY KEY,
@@ -32,7 +31,6 @@ def init_db():
             );
         """)
 
-        # Ensure alert column exists (safe migration)
         cur.execute("ALTER TABLE weather ADD COLUMN IF NOT EXISTS alert TEXT;")
 
         con.commit()
@@ -43,7 +41,6 @@ def init_db():
     except Exception as e:
         print("Database init failed:", e)
 
-# Initialize database at startup
 init_db()
 
 
@@ -75,7 +72,7 @@ def receive_data():
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
 
-        # 🔥 ALERT LOGIC
+        # ALERT LOGIC
         alert_message = "Normal"
 
         if temperature > 40:
@@ -125,6 +122,7 @@ def latest_data():
         con = get_db()
         cur = con.cursor()
 
+        # Latest record
         cur.execute("""
             SELECT temperature, humidity, rain_status,
                    wind_speed, wind_direction, visibility,
@@ -133,13 +131,37 @@ def latest_data():
             ORDER BY id DESC
             LIMIT 1
         """)
-
         row = cur.fetchone()
-        cur.close()
-        con.close()
 
         if not row:
+            cur.close()
+            con.close()
             return jsonify({"message": "No data available yet"})
+
+        # TREND CALCULATION
+        cur.execute("""
+            SELECT temperature
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 5
+        """)
+        temps = cur.fetchall()
+
+        trend = "Stable"
+
+        if len(temps) >= 5:
+            temps = [t[0] for t in temps]
+
+            first_avg = sum(temps[3:5]) / 2
+            last_avg = sum(temps[0:2]) / 2
+
+            if last_avg > first_avg:
+                trend = "Rising"
+            elif last_avg < first_avg:
+                trend = "Falling"
+
+        cur.close()
+        con.close()
 
         return jsonify({
             "temperature": row[0],
@@ -149,6 +171,7 @@ def latest_data():
             "wind_direction": row[4],
             "visibility": row[5],
             "alert": row[6],
+            "trend": trend,
             "time": row[7]
         })
 

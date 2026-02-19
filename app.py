@@ -253,7 +253,6 @@ def history():
 
 
 # -------------------- EXPORT CSV --------------------
-
 @app.route("/api/export", methods=["GET"])
 def export_csv():
     try:
@@ -266,7 +265,7 @@ def export_csv():
                    wind_direction, visibility
             FROM weather
             WHERE created_at >= NOW() - INTERVAL '7 days'
-            ORDER BY created_at DESC
+            ORDER BY created_at ASC
         """)
 
         rows = cur.fetchall()
@@ -276,8 +275,10 @@ def export_csv():
         output = io.StringIO()
         writer = csv.writer(output)
 
+        # Clean headers
         writer.writerow([
-            "Timestamp",
+            "Date",
+            "Time",
             "Temperature (°C)",
             "Humidity (%)",
             "Rain Status",
@@ -287,13 +288,27 @@ def export_csv():
         ])
 
         for row in rows:
-            writer.writerow(row)
+            timestamp = row[0]
+
+            formatted_date = timestamp.strftime("%d-%m-%Y")
+            formatted_time = timestamp.strftime("%I:%M %p")
+
+            writer.writerow([
+                formatted_date,
+                formatted_time,
+                f"{row[1]} °C",
+                f"{row[2]} %",
+                row[3],
+                f"{row[4]} km/h" if row[4] else "",
+                row[5] if row[5] else "",
+                f"{row[6]} %" if row[6] else ""
+            ])
 
         return Response(
             output.getvalue(),
             mimetype="text/csv",
             headers={
-                "Content-Disposition": "attachment; filename=weather_data.csv"
+                "Content-Disposition": "attachment; filename=weather_data_last_7_days.csv"
             }
         )
 

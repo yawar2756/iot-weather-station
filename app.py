@@ -211,14 +211,16 @@ def history():
 
         if mode == "daily":
             cur.execute("""
-                SELECT DATE(created_at), ROUND(AVG(temperature),2)
+                SELECT DATE(created_at),
+                       ROUND(AVG(temperature)::numeric, 2)
                 FROM weather
                 GROUP BY DATE(created_at)
                 ORDER BY DATE(created_at) DESC
                 LIMIT 7
             """)
             rows = cur.fetchall()
-            data = [{"time": str(r[0]), "temperature": r[1]} for r in rows]
+            data = [{"time": str(r[0]), "temperature": float(r[1])} for r in rows]
+
         else:
             cur.execute("""
                 SELECT temperature, created_at
@@ -231,7 +233,10 @@ def history():
 
         cur.close()
         con.close()
+
         return jsonify(data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+

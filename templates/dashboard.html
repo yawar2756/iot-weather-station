@@ -48,7 +48,6 @@ body {
 .temperature {
   font-size: 72px;
   font-weight: 700;
-  transition: opacity 0.3s ease;
 }
 
 .trend { font-size: 18px; margin-top: 5px; }
@@ -218,7 +217,8 @@ async function loadChart() {
   const res = await fetch("/api/history?mode=" + mode);
   const data = await res.json();
 
-  const temps = data.map(d => d.temperature);
+  const temps = data.map(d => d.temperature ?? 0);
+
   const times = data.map(d => {
     const date = new Date(d.time);
     return mode === "hourly"
@@ -229,6 +229,10 @@ async function loadChart() {
   const ctx = document.getElementById("tempChart").getContext("2d");
   if (chart) chart.destroy();
 
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, "rgba(255,77,77,0.5)");
+  gradient.addColorStop(1, "rgba(255,77,77,0)");
+
   chart = new Chart(ctx, {
     type: "line",
     data: {
@@ -236,16 +240,45 @@ async function loadChart() {
       datasets: [{
         label: "Temperature (°C)",
         data: temps,
-        borderColor: "red",
-        backgroundColor: "rgba(255,0,0,0.2)",
-        fill: true,
-        tension: 0.3
+        borderColor: "#ff4d4d",
+        backgroundColor: gradient,
+        borderWidth: 3,
+        tension: 0.3,
+        fill: true
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      scales: { y: { min: 0, max: 50 } }
+      plugins: {
+        legend: {
+          labels: { color: "#ffffff" }
+        },
+        tooltip: {
+          backgroundColor: "#1e1e1e",
+          titleColor: "#ffffff",
+          bodyColor: "#ffffff",
+          borderColor: "#ff4d4d",
+          borderWidth: 1,
+          callbacks: {
+            label: function(context) {
+              return "Temperature: " + context.parsed.y + " °C";
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#ffffff" },
+          grid: { color: "rgba(255,255,255,0.1)" }
+        },
+        y: {
+          min: 0,
+          max: 50,
+          ticks: { color: "#ffffff", stepSize: 5 },
+          grid: { color: "rgba(255,255,255,0.1)" }
+        }
+      }
     }
   });
 }

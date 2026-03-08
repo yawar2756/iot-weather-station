@@ -1,13 +1,17 @@
-</body>
-</html>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>GPCA Smart Weather System</title>
+<title>IoT Weather Station Live Dashboard | GPCA</title>
+
+<meta name="description" content="IoT-based smart weather station showing live temperature, humidity, wind speed, visibility and rain using ESP8266.">
+<meta name="keywords" content="IoT weather station, ESP8266 weather, live weather dashboard, GPCA weather">
+<meta name="author" content="Yawar Nazir Sheikh">
+
+<link rel="canonical" href="https://gpca-weather-station.onrender.com/">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -147,6 +151,23 @@ grid-template-columns:1fr;
 
 </div>
 
+<!-- ✅ SEO CONTENT -->
+
+<div style="margin:20px 0;padding:15px;background:rgba(255,255,255,0.08);border-radius:12px">
+
+<h2>About This Project</h2>
+
+<p>This IoT-based weather station monitors real-time environmental conditions using ESP8266 sensors.
+It tracks temperature, humidity, rainfall, wind speed and visibility. Data is transmitted to a cloud server 
+through REST APIs and displayed on this live dashboard.</p>
+
+<h2>System Working</h2>
+
+<p>Sensors collect weather data → ESP processes values → backend stores readings → dashboard displays 
+live and historical analytics using charts.</p>
+
+</div>
+
 <div class="grid kpi-grid">
 
 <div class="card"><h3>Humidity</h3><p id="hum">-- %</p></div>
@@ -178,6 +199,10 @@ grid-template-columns:1fr;
 
 </div>
 
+<footer style="text-align:center;padding:15px;font-size:13px;opacity:0.7">
+IoT Weather Station Project • GPCA • Developed by Yawar Nazir Sheikh
+</footer>
+
 <script>
 
 let chart=null;
@@ -208,18 +233,12 @@ return;
 
 const data=await res.json();
 
-if(data.device_status && data.device_status!=="Online"){
-document.getElementById("deviceStatus").innerText="🔴 "+data.device_status;
-return;
-}
-
 document.getElementById("deviceStatus").innerText="🟢 Device Online";
 
 lastUpdateTime=Date.now();
 
 const nowTime=new Date().toLocaleTimeString();
 document.getElementById("updateTime").innerText="Updated "+nowTime;
-/* NULL SAFE */
 
 document.getElementById("temp").innerText=data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C";
 document.getElementById("hum").innerText=data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %";
@@ -234,18 +253,6 @@ document.getElementById("avgTemp").innerText=data.avg_temp!=null?Number(data.avg
 document.getElementById("trend").innerText=
 data.trend==="Rising"?"📈 Rising":
 data.trend==="Falling"?"📉 Falling":"➖ Stable";
-
-/* alert */
-
-const alertBox=document.getElementById("alertBox");
-
-if(data.alert && data.alert!=="Normal"){
-alertBox.style.display="block";
-alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");
-alertBox.innerText="⚠ "+data.alert;
-}else{
-alertBox.style.display="none";
-}
 
 }catch(e){
 document.getElementById("deviceStatus").innerText="🔴 Offline";
@@ -313,6 +320,7 @@ fetchData();
 loadChart();
 startClock();
 };
+
 setInterval(()=>{
 if(!document.hidden){
 fetchData();

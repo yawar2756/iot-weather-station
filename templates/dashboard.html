@@ -1,67 +1,146 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
 <title>GPCA Smart Weather System</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white}
-.header{background:rgba(0,0,0,0.4);padding:15px 30px;display:flex;justify-content:space-between;align-items:center}
-.export-btn{background:#28a745;padding:8px 15px;border-radius:6px;color:white;text-decoration:none;font-size:13px}
-.container{max-width:1200px;margin:auto;padding:30px}
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+overflow-x:hidden;
+}
+
+/* HEADER */
+.header{
+background:rgba(0,0,0,0.4);
+padding:15px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.header h1{margin:0;font-size:22px}
+
+.export-btn{
+background:#28a745;
+padding:8px 14px;
+border-radius:6px;
+color:white;
+text-decoration:none;
+font-size:13px;
+}
+
+/* CONTAINER */
+.container{
+max-width:1200px;
+margin:auto;
+padding:30px;
+width:100%;
+}
+
+/* HERO */
 .hero{text-align:center;margin-bottom:30px}
 .temperature{font-size:72px;font-weight:700}
 .trend{font-size:18px;margin-top:5px}
 .status{margin-top:10px;font-weight:bold}
 .update-time{margin-top:6px;font-size:13px;opacity:0.7}
+
+/* GRID */
 .grid{display:grid;gap:20px}
-.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:30px}
-.analytics-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-bottom:30px}
-.card{background:rgba(255,255,255,0.08);padding:20px;border-radius:15px;backdrop-filter:blur(15px);text-align:center}
-.chart-section{background:rgba(255,255,255,0.08);padding:20px;border-radius:15px;height:420px}
-.alert{display:none;margin-top:15px;padding:14px;border-radius:12px;font-weight:bold;animation:pulse 1.2s infinite}
-.alert-danger{background:linear-gradient(135deg,#ff4d4d,#cc0000);box-shadow:0 0 20px rgba(255,0,0,0.7)}
-.alert-warning{background:linear-gradient(135deg,#ffb347,#ff8000);box-shadow:0 0 20px rgba(255,140,0,0.6)}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
-  /* 📱 MOBILE FIX */
+
+.kpi-grid{
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+margin-bottom:30px;
+}
+
+.analytics-grid{
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+margin-bottom:30px;
+}
+
+/* CARD */
+.card{
+background:rgba(255,255,255,0.08);
+padding:20px;
+border-radius:15px;
+backdrop-filter:blur(15px);
+text-align:center;
+}
+
+.card h3{font-size:14px}
+.card p{font-size:20px}
+
+/* CHART */
+.chart-section{
+background:rgba(255,255,255,0.08);
+padding:20px;
+border-radius:15px;
+height:420px;
+}
+
+/* ALERT */
+.alert{
+display:none;
+margin-top:15px;
+padding:14px;
+border-radius:12px;
+font-weight:bold;
+animation:pulse 1.2s infinite;
+}
+
+.alert-danger{
+background:linear-gradient(135deg,#ff4d4d,#cc0000);
+box-shadow:0 0 20px rgba(255,0,0,0.7);
+}
+
+.alert-warning{
+background:linear-gradient(135deg,#ffb347,#ff8000);
+box-shadow:0 0 20px rgba(255,140,0,0.6);
+}
+
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.03)}
+100%{transform:scale(1)}
+}
+
+/* 🔥 MOBILE FINAL FIX */
 @media (max-width:768px){
 
-.container{
-padding:15px;
-}
+.container{padding:15px}
 
-.temperature{
-font-size:48px;
-}
+.temperature{font-size:46px}
 
-.grid{
+.kpi-grid,
+.analytics-grid{
 grid-template-columns:1fr !important;
 }
 
-.card{
-padding:15px;
-}
-
 .chart-section{
-height:300px;
-padding:15px;
+height:260px;
+padding:12px;
 }
 
-.hero{
-margin-bottom:20px;
-}
+.header h1{font-size:18px}
 
-.update-time,#liveClock{
+.export-btn{
 font-size:12px;
+padding:6px 10px;
 }
 
 }
-.card h3{font-size:14px}
-.card p{font-size:18px}  
-  
+
 </style>
 </head>
 
@@ -118,7 +197,7 @@ let lastAlert="";
 
 const alertSound=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
-// ⏱ counter
+/* counter */
 function updateCounter(){
 if(!lastUpdateTime)return;
 const sec=Math.floor((Date.now()-lastUpdateTime)/1000);
@@ -126,7 +205,7 @@ document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
-// 🌡 fetch data
+/* fetch data */
 async function fetchData(){
 
 const res=await fetch("/api/latest");
@@ -171,7 +250,7 @@ alertBox.style.display="none";
 
 }
 
-// 📊 chart
+/* chart */
 async function loadChart(){
 
 const mode=document.getElementById("chartMode").value;
@@ -210,13 +289,13 @@ scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}}
 
 }
 
-// 🕒 live clock
+/* clock */
 function liveClock(){
 const now=new Date();
 document.getElementById("liveClock").innerText="🕒 "+now.toLocaleTimeString();
 }
 
-// 🚀 load
+/* load */
 window.onload=function(){
 
 fetchData();
@@ -227,7 +306,7 @@ setInterval(liveClock,1000);
 
 };
 
-// 👁 tab change refresh
+/* tab refresh */
 document.addEventListener("visibilitychange", ()=>{
 if(!document.hidden) fetchData();
 });

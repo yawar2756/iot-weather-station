@@ -19,7 +19,6 @@ color:white;
 overflow-x:hidden;
 }
 
-/* HEADER */
 .header{
 background:rgba(0,0,0,0.4);
 padding:15px 20px;
@@ -41,7 +40,6 @@ text-decoration:none;
 font-size:13px;
 }
 
-/* CONTAINER */
 .container{
 max-width:1200px;
 margin:auto;
@@ -49,14 +47,12 @@ padding:30px;
 width:100%;
 }
 
-/* HERO */
 .hero{text-align:center;margin-bottom:30px}
 .temperature{font-size:72px;font-weight:700}
 .trend{font-size:18px;margin-top:5px}
 .status{margin-top:10px;font-weight:bold}
 .update-time{margin-top:6px;font-size:13px;opacity:0.7}
 
-/* GRID */
 .grid{display:grid;gap:20px}
 
 .kpi-grid{
@@ -69,7 +65,6 @@ grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
 margin-bottom:30px;
 }
 
-/* CARD */
 .card{
 background:rgba(255,255,255,0.08);
 padding:20px;
@@ -78,10 +73,6 @@ backdrop-filter:blur(15px);
 text-align:center;
 }
 
-.card h3{font-size:14px}
-.card p{font-size:20px}
-
-/* CHART */
 .chart-section{
 background:rgba(255,255,255,0.08);
 padding:20px;
@@ -89,7 +80,6 @@ border-radius:15px;
 height:420px;
 }
 
-/* ALERT */
 .alert{
 display:none;
 margin-top:15px;
@@ -115,7 +105,7 @@ box-shadow:0 0 20px rgba(255,140,0,0.6);
 100%{transform:scale(1)}
 }
 
-/* 🔥 MOBILE FINAL FIX */
+/* MOBILE FIX */
 @media (max-width:768px){
 
 .container{padding:15px}
@@ -159,7 +149,7 @@ padding:6px 10px;
 <div class="hero">
 <div class="temperature" id="temp">-- °C</div>
 <div class="trend" id="trend">➖ Stable</div>
-<div id="deviceStatus" class="status">Checking...</div>
+<div id="deviceStatus" class="status">Loading...</div>
 <div class="update-time" id="updateTime">Updated --</div>
 <div id="liveClock" style="margin-top:6px;font-size:14px;opacity:0.8"></div>
 <div id="alertBox" class="alert"></div>
@@ -205,11 +195,20 @@ document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
-/* fetch data */
+/* SAFE fetch */
 async function fetchData(){
 
+try{
+
 const res=await fetch("/api/latest");
+
+if(!res.ok){
+document.getElementById("deviceStatus").innerText="🔴 Offline";
+return;
+}
+
 const data=await res.json();
+
 if(data.message)return;
 
 if(data.device_status==="Offline"){
@@ -248,10 +247,17 @@ lastAlert=data.alert;
 alertBox.style.display="none";
 }
 
+}catch(e){
+console.log("Fetch error:",e);
+document.getElementById("deviceStatus").innerText="🔴 Offline";
+}
+
 }
 
 /* chart */
 async function loadChart(){
+
+try{
 
 const mode=document.getElementById("chartMode").value;
 const res=await fetch("/api/history?mode="+mode);
@@ -287,6 +293,10 @@ plugins:{legend:{labels:{color:"#fff"}}},
 scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}}
 });
 
+}catch(e){
+console.log("Chart error:",e);
+}
+
 }
 
 /* clock */
@@ -305,11 +315,6 @@ liveClock();
 setInterval(liveClock,1000);
 
 };
-
-/* tab refresh */
-document.addEventListener("visibilitychange", ()=>{
-if(!document.hidden) fetchData();
-});
 
 setInterval(fetchData,10000);
 

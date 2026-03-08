@@ -41,18 +41,21 @@ def init_db():
 
 init_db()
 
-
 # -------------------- ROUTES --------------------
 
+# ✅ SEO HOMEPAGE
 @app.route("/")
 def home():
-    return render_template("dashboard.html")
+    return render_template("index.html")
 
+# ✅ DASHBOARD PAGE
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 @app.route("/health")
 def health():
     return jsonify({"status": "running"})
-
 
 # -------------------- RECEIVE DATA FROM ESP --------------------
 
@@ -130,7 +133,6 @@ def latest():
         seconds = (now - created_time).total_seconds()
         device_status = "Offline" if seconds > 30 else "Online"
 
-        # If device offline → invalidate stale data
         if device_status == "Offline":
             cur.close()
             con.close()
@@ -149,7 +151,7 @@ def latest():
                 "device_status": "Offline"
             })
 
-        # TREND (last 5)
+        # TREND (last 5 readings)
         cur.execute("""
             SELECT temperature
             FROM weather
@@ -241,10 +243,7 @@ def history():
         con.close()
 
         return jsonify([
-            {
-                "time": str(r[0]),
-                "temperature": float(r[1]) if r[1] is not None else 0
-            }
+            {"time": str(r[0]), "temperature": float(r[1]) if r[1] else 0}
             for r in rows
         ])
 
@@ -253,6 +252,7 @@ def history():
 
 
 # -------------------- EXPORT CSV --------------------
+
 @app.route("/api/export", methods=["GET"])
 def export_csv():
     try:
@@ -275,27 +275,16 @@ def export_csv():
         output = io.StringIO()
         writer = csv.writer(output)
 
-        # Clean headers
         writer.writerow([
-            "Date",
-            "Time",
-            "Temperature (°C)",
-            "Humidity (%)",
-            "Rain Status",
-            "Wind Speed (km/h)",
-            "Wind Direction",
-            "Visibility (%)"
+            "Date", "Time", "Temperature (°C)", "Humidity (%)",
+            "Rain Status", "Wind Speed (km/h)", "Wind Direction", "Visibility (%)"
         ])
 
         for row in rows:
             timestamp = row[0]
-
-            formatted_date = timestamp.strftime("%d-%m-%Y")
-            formatted_time = timestamp.strftime("%I:%M %p")
-
             writer.writerow([
-                formatted_date,
-                formatted_time,
+                timestamp.strftime("%d-%m-%Y"),
+                timestamp.strftime("%I:%M %p"),
                 f"{row[1]} °C",
                 f"{row[2]} %",
                 row[3],
@@ -307,9 +296,7 @@ def export_csv():
         return Response(
             output.getvalue(),
             mimetype="text/csv",
-            headers={
-                "Content-Disposition": "attachment; filename=weather_data_last_7_days.csv"
-            }
+            headers={"Content-Disposition": "attachment; filename=weather_data_last_7_days.csv"}
         )
 
     except Exception as e:

@@ -8,86 +8,24 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:white;
-}
-
-.header{
-background:rgba(0,0,0,0.4);
-padding:15px 30px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.export-btn{
-background:#28a745;
-padding:8px 15px;
-border-radius:6px;
-color:white;
-text-decoration:none;
-font-size:13px;
-}
-
-.container{
-max-width:1200px;
-margin:auto;
-padding:30px;
-}
-
-.hero{text-align:center;margin-bottom:30px;}
-.temperature{font-size:72px;font-weight:700;}
-.trend{font-size:18px;margin-top:5px;}
-.status{margin-top:10px;font-weight:bold;}
-.update-time{margin-top:6px;font-size:13px;opacity:0.7;}
-
+body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white}
+.header{background:rgba(0,0,0,0.4);padding:15px 30px;display:flex;justify-content:space-between;align-items:center}
+.export-btn{background:#28a745;padding:8px 15px;border-radius:6px;color:white;text-decoration:none;font-size:13px}
+.container{max-width:1200px;margin:auto;padding:30px}
+.hero{text-align:center;margin-bottom:30px}
+.temperature{font-size:72px;font-weight:700}
+.trend{font-size:18px;margin-top:5px}
+.status{margin-top:10px;font-weight:bold}
+.update-time{margin-top:6px;font-size:13px;opacity:0.7}
 .grid{display:grid;gap:20px}
 .kpi-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:30px}
 .analytics-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-bottom:30px}
-
-.card{
-background:rgba(255,255,255,0.08);
-padding:20px;
-border-radius:15px;
-backdrop-filter:blur(15px);
-text-align:center;
-}
-
-.chart-section{
-background:rgba(255,255,255,0.08);
-padding:20px;
-border-radius:15px;
-height:420px;
-}
-
-.alert{
-display:none;
-margin-top:15px;
-padding:14px;
-border-radius:12px;
-font-weight:bold;
-animation:pulse 1.2s infinite;
-}
-
-.alert-danger{
-background:linear-gradient(135deg,#ff4d4d,#cc0000);
-box-shadow:0 0 20px rgba(255,0,0,0.7);
-}
-
-.alert-warning{
-background:linear-gradient(135deg,#ffb347,#ff8000);
-box-shadow:0 0 20px rgba(255,140,0,0.6);
-}
-
-@keyframes pulse{
-0%{transform:scale(1)}
-50%{transform:scale(1.03)}
-100%{transform:scale(1)}
-}
-
+.card{background:rgba(255,255,255,0.08);padding:20px;border-radius:15px;backdrop-filter:blur(15px);text-align:center}
+.chart-section{background:rgba(255,255,255,0.08);padding:20px;border-radius:15px;height:420px}
+.alert{display:none;margin-top:15px;padding:14px;border-radius:12px;font-weight:bold;animation:pulse 1.2s infinite}
+.alert-danger{background:linear-gradient(135deg,#ff4d4d,#cc0000);box-shadow:0 0 20px rgba(255,0,0,0.7)}
+.alert-warning{background:linear-gradient(135deg,#ffb347,#ff8000);box-shadow:0 0 20px rgba(255,140,0,0.6)}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
 </style>
 </head>
 
@@ -108,6 +46,7 @@ box-shadow:0 0 20px rgba(255,140,0,0.6);
 <div class="trend" id="trend">➖ Stable</div>
 <div id="deviceStatus" class="status">Checking...</div>
 <div class="update-time" id="updateTime">Updated --</div>
+<div id="liveClock" style="margin-top:6px;font-size:14px;opacity:0.8"></div>
 <div id="alertBox" class="alert"></div>
 </div>
 
@@ -143,13 +82,15 @@ let lastAlert="";
 
 const alertSound=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
+// ⏱ counter
 function updateCounter(){
 if(!lastUpdateTime)return;
-const seconds=Math.floor((Date.now()-lastUpdateTime)/1000);
-document.getElementById("updateTime").innerText="Updated "+seconds+"s ago";
+const sec=Math.floor((Date.now()-lastUpdateTime)/1000);
+document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
+// 🌡 fetch data
 async function fetchData(){
 
 const res=await fetch("/api/latest");
@@ -194,8 +135,7 @@ alertBox.style.display="none";
 
 }
 
-// ✅ CHART OUTSIDE (FIXED)
-
+// 📊 chart
 async function loadChart(){
 
 const mode=document.getElementById("chartMode").value;
@@ -204,15 +144,16 @@ const data=await res.json();
 
 if(!data||data.length===0)return;
 
-const temps=data.map(d=>d.temperature??0);
+const temps=data.map(d=>d.temperature??null);
 
 const times=data.map(d=>{
 const date=new Date(d.time);
-return mode==="hourly"?date.getHours().toString().padStart(2,'0')+":00":date.toLocaleDateString();
+return mode==="hourly"
+?date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+:date.toLocaleDateString();
 });
 
 const ctx=document.getElementById("tempChart");
-
 if(chart)chart.destroy();
 
 chart=new Chart(ctx,{
@@ -226,20 +167,34 @@ borderWidth:3,
 tension:0.3,
 fill:true
 }]},
-options:{
-responsive:true,
-maintainAspectRatio:false,
+options:{responsive:true,maintainAspectRatio:false,
 plugins:{legend:{labels:{color:"#fff"}}},
-scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}
-}
+scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}}
 });
 
 }
 
+// 🕒 live clock
+function liveClock(){
+const now=new Date();
+document.getElementById("liveClock").innerText="🕒 "+now.toLocaleTimeString();
+}
+
+// 🚀 load
 window.onload=function(){
+
 fetchData();
 loadChart();
+
+liveClock();
+setInterval(liveClock,1000);
+
 };
+
+// 👁 tab change refresh
+document.addEventListener("visibilitychange", ()=>{
+if(!document.hidden) fetchData();
+});
 
 setInterval(fetchData,10000);
 

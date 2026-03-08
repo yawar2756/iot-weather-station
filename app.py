@@ -120,6 +120,7 @@ def latest():
         con = get_db()
         cur = con.cursor()
 
+        # latest row
         cur.execute("""
             SELECT temperature, humidity, rain_status,
                    wind_speed, wind_direction, visibility,
@@ -142,6 +143,38 @@ def latest():
         if device_status == "Offline":
             return jsonify({"device_status": "Offline"})
 
+        # stats calculation
+        cur.execute("""
+            SELECT temperature
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 24
+        """)
+        stats = [t[0] for t in cur.fetchall() if t[0] is not None]
+
+        min_temp = min(stats) if stats else None
+        max_temp = max(stats) if stats else None
+        avg_temp = round(sum(stats)/len(stats),2) if stats else None
+
+        # trend
+        cur.execute("""
+            SELECT temperature
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 5
+        """)
+        temps = [t[0] for t in cur.fetchall() if t[0] is not None]
+
+        trend = "Stable"
+        if len(temps) >= 5:
+            if temps[0] > temps[-1]:
+                trend = "Rising"
+            elif temps[0] < temps[-1]:
+                trend = "Falling"
+
+        cur.close()
+        con.close()
+
         return jsonify({
             "temperature": row[0],
             "humidity": row[1],
@@ -150,6 +183,10 @@ def latest():
             "wind_direction": row[4],
             "visibility": row[5],
             "alert": row[6],
+            "trend": trend,
+            "min_temp": min_temp,
+            "max_temp": max_temp,
+            "avg_temp": avg_temp,
             "device_status": device_status
         })
 

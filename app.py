@@ -80,15 +80,22 @@ def receive_data():
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
 
-        alert = "Normal"
-        if temperature > 40:
-            alert = "Heat Alert"
-        elif wind_speed and wind_speed > 30:
-            alert = "Storm Warning"
-        elif visibility and visibility < 20:
-            alert = "Low Visibility Warning"
-        elif rain_status.lower() != "no rain":
-            alert = "Rain Alert"
+        # ✅ PROFESSIONAL MULTI-ALERT SYSTEM
+        alerts = []
+
+        if wind_speed and wind_speed > 30:
+            alerts.append("Storm Warning")
+
+        if temperature and temperature > 40:
+            alerts.append("Heat Alert")
+
+        if visibility and visibility < 20:
+            alerts.append("Low Visibility Warning")
+
+        if rain_status and rain_status.lower() != "no rain":
+            alerts.append("Rain Alert")
+
+        alert = ", ".join(alerts) if alerts else "Normal"
 
         con = get_db()
         cur = con.cursor()
@@ -292,3 +299,4 @@ def export_csv():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+

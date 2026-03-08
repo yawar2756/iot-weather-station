@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gpca-weather-station.onrender.com/sitemap.xml

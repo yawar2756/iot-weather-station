@@ -66,12 +66,35 @@ body {
   opacity: 0.7;
 }
 
+/* 🚨 REAL ALERT STYLE */
 .alert {
-  margin-top: 15px;
-  padding: 10px;
-  border-radius: 10px;
-  font-weight: bold;
   display: none;
+  margin-top: 15px;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 16px;
+  text-align: center;
+  animation: pulse 1.2s infinite;
+}
+
+/* red alert */
+.alert-danger {
+  background: linear-gradient(135deg,#ff4d4d,#cc0000);
+  box-shadow: 0 0 20px rgba(255,0,0,0.7);
+}
+
+/* orange alert */
+.alert-warning {
+  background: linear-gradient(135deg,#ffb347,#ff8000);
+  box-shadow: 0 0 20px rgba(255,140,0,0.6);
+}
+
+/* pulse animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
 }
 
 .grid { display: grid; gap: 20px; }
@@ -225,20 +248,28 @@ async function fetchData() {
                   data.trend === "Falling" ? "📉 Falling" : "➖ Stable")
                : "➖ Stable";
 
-  // 🚨 ALERT BOX
-  const alertBox = document.getElementById("alertBox");
+  // 🚨 REAL ALERT BOX
+const alertBox = document.getElementById("alertBox");
 
-  if (data.alert && data.alert !== "Normal") {
-    alertBox.style.display = "block";
-    alertBox.innerText = "⚠ " + data.alert;
+if (data.alert && data.alert !== "Normal") {
 
-    if (data.alert !== lastAlert) {
-      alertSound.play();
-      lastAlert = data.alert;
-    }
+  alertBox.style.display = "block";
+
+  if (data.alert.includes("Storm") || data.alert.includes("Heat")) {
+    alertBox.className = "alert alert-danger";
   } else {
-    alertBox.style.display = "none";
+    alertBox.className = "alert alert-warning";
   }
+
+  alertBox.innerText = "⚠ " + data.alert + " — Take Precaution";
+
+  if (data.alert !== lastAlert) {
+    alertSound.play();
+    lastAlert = data.alert;
+  }
+
+} else {
+  alertBox.style.display = "none";
 }
 
 // 📊 CHART (same logic)

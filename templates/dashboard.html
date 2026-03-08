@@ -26,6 +26,42 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135de
 .alert-danger{background:linear-gradient(135deg,#ff4d4d,#cc0000);box-shadow:0 0 20px rgba(255,0,0,0.7)}
 .alert-warning{background:linear-gradient(135deg,#ffb347,#ff8000);box-shadow:0 0 20px rgba(255,140,0,0.6)}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+  /* 📱 MOBILE FIX */
+@media (max-width:768px){
+
+.container{
+padding:15px;
+}
+
+.temperature{
+font-size:48px;
+}
+
+.grid{
+grid-template-columns:1fr !important;
+}
+
+.card{
+padding:15px;
+}
+
+.chart-section{
+height:300px;
+padding:15px;
+}
+
+.hero{
+margin-bottom:20px;
+}
+
+.update-time,#liveClock{
+font-size:12px;
+}
+
+}
+.card h3{font-size:14px}
+.card p{font-size:18px}  
+  
 </style>
 </head>
 

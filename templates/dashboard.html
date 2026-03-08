@@ -216,8 +216,9 @@ return;
 document.getElementById("deviceStatus").innerText="🟢 Device Online";
 
 lastUpdateTime=Date.now();
-document.getElementById("updateTime").innerText="Updated just now";
 
+const nowTime=new Date().toLocaleTimeString();
+document.getElementById("updateTime").innerText="Updated "+nowTime;
 /* NULL SAFE */
 
 document.getElementById("temp").innerText=data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C";
@@ -312,8 +313,11 @@ fetchData();
 loadChart();
 startClock();
 };
-
-setInterval(fetchData,10000);
+setInterval(()=>{
+if(!document.hidden){
+fetchData();
+}
+},10000);
 
 </script>
 

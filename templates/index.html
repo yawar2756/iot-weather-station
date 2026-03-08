@@ -1,28 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="google-site-verification" content="hb_Tm8kqIXezu-En_XTMMO_Tp1iF0KfYlJ1Wjd_Pl7g" />
-  
+
 <title>GPCA IoT Weather Station</title>
 
-<meta name="description" content="GPCA IoT Weather Station shows real-time temperature, humidity, rain and weather data using ESP32 and cloud dashboard.">
+<style>
 
-<meta name="keywords" content="GPCA Weather Station, IoT weather station, GPCA project, live weather dashboard">
+body{
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+text-align:center;
+}
+
+.box{
+background:rgba(255,255,255,0.08);
+padding:40px;
+border-radius:20px;
+backdrop-filter:blur(12px);
+max-width:420px;
+}
+
+h1{margin-bottom:10px}
+
+p{opacity:.85}
+
+.btn{
+display:inline-block;
+margin-top:20px;
+padding:12px 20px;
+background:#28a745;
+border-radius:8px;
+color:white;
+text-decoration:none;
+font-weight:bold;
+}
+
+.btn:hover{background:#218838}
+
+</style>
 
 </head>
-<body style="font-family:Arial;text-align:center;padding:40px">
 
-<h1>GPCA IoT Weather Station</h1>
+<body>
 
-<p>Cloud-based IoT weather monitoring system developed using ESP32 and Flask backend.</p>
+<div class="box">
 
-<p>Shows real-time temperature, humidity and rain data.</p>
+<h1>🌦 GPCA IoT Weather Station</h1>
 
-<br>
+<p>Cloud-based IoT weather monitoring system using ESP32 + Flask.</p>
 
-<a href="/dashboard">👉 Open Live Dashboard</a>
+<p>Real-time temperature, humidity, rain & wind tracking.</p>
+
+<a href="/dashboard" class="btn">🚀 Open Live Dashboard</a>
+
+</div>
 
 </body>
 </html>

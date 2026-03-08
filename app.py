@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from flask import Flask, request, jsonify, render_template, Response
+from flask import Flask, request, jsonify, render_template, Response, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
 import csv
@@ -41,14 +41,22 @@ def init_db():
 
 init_db()
 
-# -------------------- ROUTES --------------------
+# -------------------- STATIC FILES --------------------
 
-# ✅ SEO HOMEPAGE
+@app.route("/sitemap.xml")
+def sitemap():
+    return send_from_directory(".", "sitemap.xml")
+
+@app.route("/robots.txt")
+def robots():
+    return send_from_directory(".", "robots.txt")
+
+# -------------------- PAGES --------------------
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ✅ DASHBOARD PAGE
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
@@ -72,7 +80,6 @@ def receive_data():
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
 
-        # Alert Logic
         alert = "Normal"
         if temperature > 40:
             alert = "Heat Alert"
@@ -105,7 +112,6 @@ def receive_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 # -------------------- LATEST DATA --------------------
 
 @app.route("/api/latest")
@@ -134,53 +140,7 @@ def latest():
         device_status = "Offline" if seconds > 30 else "Online"
 
         if device_status == "Offline":
-            cur.close()
-            con.close()
-            return jsonify({
-                "temperature": None,
-                "humidity": None,
-                "rain": None,
-                "wind_speed": None,
-                "wind_direction": None,
-                "visibility": None,
-                "alert": None,
-                "trend": None,
-                "min_temp": None,
-                "max_temp": None,
-                "avg_temp": None,
-                "device_status": "Offline"
-            })
-
-        # TREND (last 5 readings)
-        cur.execute("""
-            SELECT temperature
-            FROM weather
-            ORDER BY id DESC
-            LIMIT 5
-        """)
-        temps = [t[0] for t in cur.fetchall()]
-        trend = "Stable"
-        if len(temps) >= 5:
-            if temps[0] > temps[-1]:
-                trend = "Rising"
-            elif temps[0] < temps[-1]:
-                trend = "Falling"
-
-        # STATS (last 24 readings)
-        cur.execute("""
-            SELECT temperature
-            FROM weather
-            ORDER BY id DESC
-            LIMIT 24
-        """)
-        stats = [t[0] for t in cur.fetchall()]
-
-        min_temp = min(stats)
-        max_temp = max(stats)
-        avg_temp = round(sum(stats) / len(stats), 2)
-
-        cur.close()
-        con.close()
+            return jsonify({"device_status": "Offline"})
 
         return jsonify({
             "temperature": row[0],
@@ -190,18 +150,13 @@ def latest():
             "wind_direction": row[4],
             "visibility": row[5],
             "alert": row[6],
-            "trend": trend,
-            "min_temp": min_temp,
-            "max_temp": max_temp,
-            "avg_temp": avg_temp,
             "device_status": device_status
         })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# -------------------- HISTORY (12 HOURS / 7 DAYS) --------------------
+# -------------------- HISTORY --------------------
 
 @app.route("/api/history")
 def history():
@@ -249,7 +204,6 @@ def history():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # -------------------- EXPORT CSV --------------------
 

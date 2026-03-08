@@ -5,32 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>GPCA Smart Weather System</title>
-
 <link rel="icon" href="/favicon.png">
 
 <style>
 body{
-font-family:Arial;
 margin:0;
-background:#f4f6f8;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#1f4037,#99f2c8);
+color:white;
 text-align:center;
 }
 
 .container{
-padding:30px;
-}
-
-.card{
-background:white;
-margin:10px auto;
-padding:15px;
-border-radius:10px;
-width:320px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
+padding:25px;
 }
 
 h1{margin-bottom:5px;}
-.status{font-weight:bold;}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+margin-top:20px;
+}
+
+.card{
+background:rgba(255,255,255,0.15);
+padding:20px;
+border-radius:12px;
+backdrop-filter:blur(6px);
+}
+
+.big{
+font-size:40px;
+font-weight:bold;
+}
+
+.status{
+font-weight:bold;
+margin-top:10px;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:6px;
+background:white;
+cursor:pointer;
+font-weight:bold;
+}
 </style>
 </head>
 
@@ -38,38 +61,44 @@ h1{margin-bottom:5px;}
 
 <div class="container">
 
-<h1>GPCA Smart Weather System</h1>
-<p>Cloud Monitoring Dashboard • v1.0.0</p>
+<h1>🌦 GPCA Smart Weather System</h1>
+<p>Cloud Monitoring Dashboard • v2.0</p>
+
+<a href="/api/export"><button>⬇ Export Last 7 Days</button></a>
+
+<div class="grid">
 
 <div class="card">
-<h2 id="temp">-- °C</h2>
-<p class="status" id="status">Checking...</p>
+<div class="big" id="temp">-- °C</div>
+<div id="status">Checking...</div>
+</div>
+
+<div class="card">
+Humidity
+<h2 id="humidity">-- %</h2>
+</div>
+
+<div class="card">
+Wind Speed
+<h2 id="wind">-- km/h</h2>
+</div>
+
+<div class="card">
+Visibility
+<h2 id="visibility">-- %</h2>
+</div>
+
+<div class="card">
+Rain Status
+<h2 id="rain">--</h2>
+</div>
+
+</div>
+
 <p id="updated">Updated --</p>
-</div>
-
-<div class="card">
-<p>Humidity</p>
-<h3 id="humidity">-- %</h3>
-</div>
-
-<div class="card">
-<p>Wind Speed</p>
-<h3 id="wind">-- km/h</h3>
-</div>
-
-<div class="card">
-<p>Visibility</p>
-<h3 id="visibility">-- %</h3>
-</div>
-
-<div class="card">
-<p>Rain Status</p>
-<h3 id="rain">--</h3>
-</div>
 
 </div>
 
-<!-- 🔊 ALERT SOUND -->
 <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
 <script>
@@ -82,7 +111,6 @@ const data=await res.json();
 
 if(data.device_status==="Offline"){
 document.getElementById("status").innerText="🔴 Device Offline";
-document.getElementById("updated").innerText="Updated --";
 return;
 }
 
@@ -95,7 +123,6 @@ document.getElementById("rain").innerText=data.rain;
 document.getElementById("status").innerText="🟢 Device Online";
 document.getElementById("updated").innerText="Updated just now";
 
-// 🔊 alert sound
 if(data.alert && data.alert!=="Normal" && data.alert!==lastAlert){
 document.getElementById("alertSound").play();
 lastAlert=data.alert;

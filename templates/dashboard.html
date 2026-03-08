@@ -1,15 +1,19 @@
+</body>
+</html>
 <!DOCTYPE html>
 <html>
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>GPCA Smart Weather System</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
+/* ===== BASE ===== */
 
 body{
 margin:0;
@@ -19,6 +23,8 @@ color:white;
 overflow-x:hidden;
 }
 
+/* ===== HEADER ===== */
+
 .header{
 background:rgba(0,0,0,0.4);
 padding:15px 20px;
@@ -26,7 +32,6 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 flex-wrap:wrap;
-gap:10px;
 }
 
 .header h1{margin:0;font-size:22px}
@@ -40,17 +45,23 @@ text-decoration:none;
 font-size:13px;
 }
 
+/* ===== CONTAINER ===== */
+
 .container{
 width:100%;
 padding:20px;
 box-sizing:border-box;
 }
 
+/* ===== HERO ===== */
+
 .hero{text-align:center;margin-bottom:30px}
 .temperature{font-size:72px;font-weight:700}
 .trend{font-size:18px;margin-top:5px}
 .status{margin-top:10px;font-weight:bold}
 .update-time{margin-top:6px;font-size:13px;opacity:0.7}
+
+/* ===== GRID ===== */
 
 .grid{display:grid;gap:20px}
 
@@ -64,20 +75,25 @@ grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
 margin-bottom:30px;
 }
 
+/* ===== CARD ===== */
+
 .card{
 background:rgba(255,255,255,0.08);
 padding:20px;
 border-radius:15px;
-backdrop-filter:blur(15px);
 text-align:center;
 }
 
+/* ===== CHART ===== */
+
 .chart-section{
 background:rgba(255,255,255,0.08);
-padding:20px;
+padding:15px;
 border-radius:15px;
-height:420px;
+height:320px;
 }
+
+/* ===== ALERT ===== */
 
 .alert{
 display:none;
@@ -85,57 +101,24 @@ margin-top:15px;
 padding:14px;
 border-radius:12px;
 font-weight:bold;
-animation:pulse 1.2s infinite;
 }
 
-.alert-danger{
-background:linear-gradient(135deg,#ff4d4d,#cc0000);
-box-shadow:0 0 20px rgba(255,0,0,0.7);
-}
+.alert-danger{background:#cc0000}
+.alert-warning{background:#ff8000}
 
-.alert-warning{
-background:linear-gradient(135deg,#ffb347,#ff8000);
-box-shadow:0 0 20px rgba(255,140,0,0.6);
-}
+/* ===== MOBILE ===== */
 
-@keyframes pulse{
-0%{transform:scale(1)}
-50%{transform:scale(1.03)}
-100%{transform:scale(1)}
-}
-
-/* MOBILE FIX */
-@media (max-width:768px){
-
-.container{padding:15px}
+@media(max-width:768px){
 
 .temperature{font-size:46px}
 
 .kpi-grid,
 .analytics-grid{
-grid-template-columns:1fr !important;
+grid-template-columns:1fr;
 }
 
-.chart-section{
-width:100%;
-background:rgba(255,255,255,0.08);
-padding:15px;
-border-radius:15px;
-height:300px;
-box-sizing:border-box;
-}
+.chart-section{height:260px}
 
-.header h1{font-size:18px}
-
-.export-btn{
-font-size:12px;
-padding:6px 10px;
-}
-
-}
-html,body{
-width:100%;
-overflow-x:hidden;
 }
 
 </style>
@@ -154,47 +137,55 @@ overflow-x:hidden;
 <div class="container">
 
 <div class="hero">
+
 <div class="temperature" id="temp">-- °C</div>
 <div class="trend" id="trend">➖ Stable</div>
-<div id="deviceStatus" class="status">Loading...</div>
+<div id="deviceStatus" class="status">⏳ Loading data...</div>
 <div class="update-time" id="updateTime">Updated --</div>
-<div id="liveClock" style="margin-top:6px;font-size:14px;opacity:0.8"></div>
+<div id="liveClock"></div>
 <div id="alertBox" class="alert"></div>
+
 </div>
 
 <div class="grid kpi-grid">
+
 <div class="card"><h3>Humidity</h3><p id="hum">-- %</p></div>
 <div class="card"><h3>Wind Speed</h3><p id="windSpeed">-- km/h</p></div>
 <div class="card"><h3>Visibility</h3><p id="visibility">-- %</p></div>
 <div class="card"><h3>Rain Status</h3><p id="rain">--</p></div>
+
 </div>
 
 <div class="grid analytics-grid">
+
 <div class="card"><h3>Min Temperature</h3><p id="minTemp">-- °C</p></div>
 <div class="card"><h3>Max Temperature</h3><p id="maxTemp">-- °C</p></div>
 <div class="card"><h3>Average Temperature</h3><p id="avgTemp">-- °C</p></div>
+
 </div>
 
 <div class="chart-section">
+
 <label>📅 View Mode:</label>
 <select id="chartMode" onchange="loadChart()">
 <option value="hourly">Last 12 Hours</option>
 <option value="daily">Last 7 Days</option>
 </select>
+
 <canvas id="tempChart"></canvas>
+
 </div>
 
 </div>
 
 <script>
 
-let chart;
+let chart=null;
 let lastUpdateTime=null;
-let lastAlert="";
+let clockTimer=null;
 
-const alertSound=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+/* ===== COUNTER ===== */
 
-/* counter */
 function updateCounter(){
 if(!lastUpdateTime)return;
 const sec=Math.floor((Date.now()-lastUpdateTime)/1000);
@@ -202,7 +193,8 @@ document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
-/* SAFE fetch */
+/* ===== FETCH ===== */
+
 async function fetchData(){
 
 try{
@@ -216,52 +208,52 @@ return;
 
 const data=await res.json();
 
-if(data.message)return;
-
-if(data.device_status==="Offline"){
-document.getElementById("deviceStatus").innerText="🔴 Device Offline";
+if(data.device_status && data.device_status!=="Online"){
+document.getElementById("deviceStatus").innerText="🔴 "+data.device_status;
 return;
 }
 
 document.getElementById("deviceStatus").innerText="🟢 Device Online";
-lastUpdateTime=Date.now();
 
-document.getElementById("temp").innerText=data.temperature?Number(data.temperature).toFixed(1)+" °C":"-- °C";
-document.getElementById("hum").innerText=data.humidity?Number(data.humidity).toFixed(0)+" %":"-- %";
-document.getElementById("windSpeed").innerText=data.wind_speed?Number(data.wind_speed).toFixed(1)+" km/h":"-- km/h";
-document.getElementById("visibility").innerText=data.visibility?Number(data.visibility).toFixed(0)+" %":"-- %";
+lastUpdateTime=Date.now();
+document.getElementById("updateTime").innerText="Updated just now";
+
+/* NULL SAFE */
+
+document.getElementById("temp").innerText=data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C";
+document.getElementById("hum").innerText=data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %";
+document.getElementById("windSpeed").innerText=data.wind_speed!=null?Number(data.wind_speed).toFixed(1)+" km/h":"-- km/h";
+document.getElementById("visibility").innerText=data.visibility!=null?Number(data.visibility).toFixed(0)+" %":"-- %";
 document.getElementById("rain").innerText=data.rain??"--";
 
-document.getElementById("minTemp").innerText=data.min_temp?Number(data.min_temp).toFixed(1)+" °C":"-- °C";
-document.getElementById("maxTemp").innerText=data.max_temp?Number(data.max_temp).toFixed(1)+" °C":"-- °C";
-document.getElementById("avgTemp").innerText=data.avg_temp?Number(data.avg_temp).toFixed(1)+" °C":"-- °C";
+document.getElementById("minTemp").innerText=data.min_temp!=null?Number(data.min_temp).toFixed(1)+" °C":"-- °C";
+document.getElementById("maxTemp").innerText=data.max_temp!=null?Number(data.max_temp).toFixed(1)+" °C":"-- °C";
+document.getElementById("avgTemp").innerText=data.avg_temp!=null?Number(data.avg_temp).toFixed(1)+" °C":"-- °C";
 
-document.getElementById("trend").innerText=data.trend==="Rising"?"📈 Rising":data.trend==="Falling"?"📉 Falling":"➖ Stable";
+document.getElementById("trend").innerText=
+data.trend==="Rising"?"📈 Rising":
+data.trend==="Falling"?"📉 Falling":"➖ Stable";
+
+/* alert */
 
 const alertBox=document.getElementById("alertBox");
 
 if(data.alert && data.alert!=="Normal"){
 alertBox.style.display="block";
 alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");
-alertBox.innerText="⚠ "+data.alert+" — Take Precaution";
-
-if(data.alert!==lastAlert){
-alertSound.play();
-lastAlert=data.alert;
-}
-
+alertBox.innerText="⚠ "+data.alert;
 }else{
 alertBox.style.display="none";
 }
 
 }catch(e){
-console.log("Fetch error:",e);
 document.getElementById("deviceStatus").innerText="🔴 Offline";
 }
 
 }
 
-/* chart */
+/* ===== CHART ===== */
+
 async function loadChart(){
 
 try{
@@ -272,17 +264,18 @@ const data=await res.json();
 
 if(!data||data.length===0)return;
 
-const temps=data.map(d=>d.temperature??null);
+const temps=data.map(d=>d.temperature??0);
 
 const times=data.map(d=>{
 const date=new Date(d.time);
 return mode==="hourly"
-?date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+?date.getHours().toString().padStart(2,'0')+":00"
 :date.toLocaleDateString();
 });
 
-const ctx=document.getElementById("tempChart");
-if(chart)chart.destroy();
+const ctx=document.getElementById("tempChart").getContext("2d");
+
+if(chart) chart.destroy();
 
 chart=new Chart(ctx,{
 type:"line",
@@ -291,36 +284,33 @@ label:"Temperature (°C)",
 data:temps,
 borderColor:"#ff4d4d",
 backgroundColor:"rgba(255,77,77,0.2)",
-borderWidth:3,
-tension:0.3,
 fill:true
 }]},
-options:{responsive:true,maintainAspectRatio:false,
-plugins:{legend:{labels:{color:"#fff"}}},
-scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}}
+options:{responsive:true,maintainAspectRatio:false}
 });
 
-}catch(e){
-console.log("Chart error:",e);
-}
+}catch(e){}
 
 }
 
-/* clock */
+/* ===== CLOCK ===== */
+
 function liveClock(){
-const now=new Date();
-document.getElementById("liveClock").innerText="🕒 "+now.toLocaleTimeString();
+document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();
 }
 
-/* load */
-window.onload=function(){
+function startClock(){
+liveClock();
+if(clockTimer) clearInterval(clockTimer);
+clockTimer=setInterval(liveClock,1000);
+}
 
+/* ===== LOAD ===== */
+
+window.onload=function(){
 fetchData();
 loadChart();
-
-liveClock();
-setInterval(liveClock,1000);
-
+startClock();
 };
 
 setInterval(fetchData,10000);

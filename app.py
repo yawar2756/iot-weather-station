@@ -300,3 +300,26 @@ def export_csv():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/seed")
+def seed_data():
+
+    con = get_db()
+    cur = con.cursor()
+
+    cur.execute("""
+    INSERT INTO weather (temperature,humidity,rain_value,rain_status,wind_speed,wind_direction,visibility,created_at)
+    VALUES
+    (28,60,100,'No Rain',10,'NE',80,NOW()-INTERVAL '1 day'),
+    (27,65,100,'No Rain',12,'NE',80,NOW()-INTERVAL '2 day'),
+    (29,63,100,'No Rain',11,'NE',80,NOW()-INTERVAL '3 day'),
+    (30,62,100,'No Rain',9,'NE',80,NOW()-INTERVAL '4 day'),
+    (26,64,100,'No Rain',10,'NE',80,NOW()-INTERVAL '5 day'),
+    (28,66,100,'No Rain',10,'NE',80,NOW()-INTERVAL '6 day');
+    """)
+
+    con.commit()
+    cur.close()
+    con.close()
+
+    return "Seed data added"

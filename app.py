@@ -14,7 +14,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 # -------------------- DATABASE --------------------
 
 def get_db():
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 def init_db():
     con = get_db()
@@ -38,8 +38,10 @@ def init_db():
     con.commit()
     cur.close()
     con.close()
-
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print("DB ERROR:", e)init_db()
 
 # -------------------- STATIC FILES --------------------
 

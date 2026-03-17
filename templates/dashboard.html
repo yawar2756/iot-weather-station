@@ -149,7 +149,7 @@ document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
-/* ===== FETCH ===== */
+/* ===== FETCH DATA ===== */
 async function fetchData(){
 try{
 const res=await fetch("/api/latest");
@@ -161,19 +161,19 @@ return;
 
 const data=await res.json();
 
+/* DEVICE STATUS */
 if(data.device_status && data.device_status!=="Online"){
 document.getElementById("deviceStatus").innerText="🔴 "+data.device_status;
-return;
-}
-
+}else{
 document.getElementById("deviceStatus").innerText="🟢 Device Online";
+}
 
 lastUpdateTime=Date.now();
 
 const nowTime=new Date().toLocaleTimeString();
 document.getElementById("updateTime").innerText="Updated "+nowTime;
 
-/* DATA */
+/* SAFE DATA UPDATE */
 document.getElementById("temp").innerText=data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C";
 document.getElementById("hum").innerText=data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %";
 document.getElementById("windSpeed").innerText=data.wind_speed!=null?Number(data.wind_speed).toFixed(1)+" km/h":"-- km/h";
@@ -201,6 +201,7 @@ alertBox.style.display="none";
 }
 
 }catch(e){
+console.log("fetch error:",e);
 document.getElementById("deviceStatus").innerText="🔴 Offline";
 }
 }
@@ -212,7 +213,7 @@ const mode=document.getElementById("chartMode").value;
 const res=await fetch("/api/history?mode="+mode);
 const data=await res.json();
 
-if(!data||data.length===0)return;
+if(!data || data.length===0) return;
 
 const temps=data.map(d=>d.temperature??0);
 
@@ -232,7 +233,7 @@ gradient.addColorStop(1, "rgba(0,229,255,0.02)");
 
 if(chart) chart.destroy();
 
-chart = new Chart(ctx,{
+chart=new Chart(ctx,{
 type:"line",
 data:{
 labels:times,
@@ -251,11 +252,9 @@ options:{
 responsive:true,
 maintainAspectRatio:false,
 plugins:{
-legend:{
-labels:{color:"#ffffff",font:{size:13}}
-},
+legend:{labels:{color:"#ffffff"}},
 tooltip:{
-backgroundColor:"rgba(0,0,0,0.8)",
+backgroundColor:"rgba(0,0,0,0.85)",
 titleColor:"#fff",
 bodyColor:"#fff",
 borderColor:"#00e5ff",
@@ -263,19 +262,15 @@ borderWidth:1
 }
 },
 scales:{
-x:{
-ticks:{color:"#ffffff"},
-grid:{color:"rgba(255,255,255,0.08)"}
-},
-y:{
-ticks:{color:"#ffffff"},
-grid:{color:"rgba(255,255,255,0.08)"}
-}
+x:{ticks:{color:"#ffffff"},grid:{color:"rgba(255,255,255,0.08)"}},
+y:{ticks:{color:"#ffffff"},grid:{color:"rgba(255,255,255,0.08)"}}
 }
 }
 });
 
-}catch(e){}
+}catch(e){
+console.log("chart error:",e);
+}
 }
 
 /* ===== CLOCK ===== */
@@ -289,19 +284,18 @@ if(clockTimer) clearInterval(clockTimer);
 clockTimer=setInterval(liveClock,1000);
 }
 
-/* ===== LOAD ===== */
-window.onload=function(){
+/* ===== LOAD SAFE ===== */
+window.addEventListener("load",()=>{
 fetchData();
 loadChart();
 startClock();
-};
+});
 
 setInterval(()=>{
 if(!document.hidden){
 fetchData();
 }
 },10000);
-  
-  
+
 </script>  </body>  
 </html>

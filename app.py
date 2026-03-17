@@ -42,7 +42,7 @@ def init_db():
     con.close()
 
 
-# SAFE INIT (startup crash avoid)
+# SAFE INIT
 try:
     init_db()
 except Exception as e:
@@ -167,25 +167,21 @@ def latest():
         if device_status == "Offline":
             return jsonify({"device_status": "Offline"})
 
-        # stats
+        # ✅ TODAY STATS (FINAL FIX)
         cur.execute("""
-    SELECT 
-    MIN(temperature),
-    MAX(temperature),
-    AVG(temperature)
-    FROM weather
-    WHERE DATE(created_at)=CURRENT_DATE
-    """)
+        SELECT 
+        MIN(temperature),
+        MAX(temperature),
+        AVG(temperature)
+        FROM weather
+        WHERE DATE(created_at)=CURRENT_DATE
+        """)
 
-    row_stats = cur.fetchone()
+        row_stats = cur.fetchone()
 
-    min_temp = float(row_stats[0]) if row_stats[0] is not None else None
-    max_temp = float(row_stats[1]) if row_stats[1] is not None else None
-    avg_temp = round(float(row_stats[2]),2) if row_stats[2] is not None else None
-
-        min_temp = min(stats) if stats else None
-        max_temp = max(stats) if stats else None
-        avg_temp = round(sum(stats)/len(stats),2) if stats else None
+        min_temp = float(row_stats[0]) if row_stats[0] is not None else None
+        max_temp = float(row_stats[1]) if row_stats[1] is not None else None
+        avg_temp = round(float(row_stats[2]), 2) if row_stats[2] is not None else None
 
         # trend
         cur.execute("SELECT temperature FROM weather ORDER BY id DESC LIMIT 5")

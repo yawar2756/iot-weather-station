@@ -1,273 +1,280 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Weather App</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-
-/* 🌌 APPLE STYLE BACKGROUND */
-
-body{
-margin:0;
-font-family:-apple-system, BlinkMacSystemFont, sans-serif;
-background:linear-gradient(to top,#1c1c1e,#3a3a3c,#636366);
-color:white;
-}
-
-/* GLASS EFFECT */
-.glass{
-background:rgba(255,255,255,0.1);
-backdrop-filter:blur(20px);
-border-radius:20px;
-padding:20px;
-}
-
-/* CONTAINER */
-.container{
-max-width:420px;
-margin:auto;
-padding:20px;
-}
-
-/* HEADER */
-.header{
-text-align:center;
-margin-bottom:20px;
-}
-
-.city{
-font-size:22px;
-opacity:0.8;
-}
-
-.temp{
-font-size:72px;
-font-weight:300;
-}
-
-.condition{
-font-size:20px;
-opacity:0.9;
-}
-
-/* GRID */
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
-margin-top:20px;
-}
-
-.card{
-text-align:center;
-}
-
-/* CHART */
-.chart{
-margin-top:20px;
-height:250px;
-}
-
-/* STATUS */
-.status{
-text-align:center;
-margin-top:10px;
-font-size:14px;
-opacity:0.7;
-}
-
-.alert{
-margin-top:10px;
-padding:10px;
-border-radius:12px;
-font-size:14px;
-display:none;
-}
-
-.alert-danger{background:#ff453a}
-.alert-warning{background:#ff9f0a}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="container">
-
-<div class="header">
-<div class="city">📍 Weather Station</div>
-<div class="temp" id="temp">--°</div>
-<div class="condition" id="condition">Loading...</div>
-</div>
-
-<div class="glass grid">
-
-<div class="card">
-<div>Humidity</div>
-<div id="hum">--</div>
-</div>
-
-<div class="card">
-<div>Wind</div>
-<div id="wind">--</div>
-</div>
-
-<div class="card">
-<div>Visibility</div>
-<div id="vis">--</div>
-</div>
-
-<div class="card">
-<div>Rain</div>
-<div id="rain">--</div>
-</div>
-
-</div>
-
-<div class="glass chart">
-<canvas id="chart"></canvas>
-</div>
-
-<div id="alertBox" class="alert"></div>
-
-<div class="status" id="status">Updating...</div>
-
-</div>
-
-<script>
-
-let chart;
-
-/* SAFE VALUE */
-function safe(val, unit=""){
-if(val === null || val === undefined) return "--";
-return Number(val).toFixed ? Number(val).toFixed(1)+unit : val+unit;
-}
-
-/* CONDITION */
-function getCondition(temp,rain){
-
-if(temp === null || temp === undefined) return "Loading...";
-
-if(rain && rain !== "No Rain") return "🌧 Rainy";
-if(temp > 35) return "☀ Hot";
-if(temp < 15) return "❄ Cold";
-return "☁ Cloudy";
-}
-
-/* FETCH DATA */
-async function fetchData(){
-
-try{
-
-const res = await fetch("/api/latest");
-
-if(!res.ok){
-document.getElementById("status").innerText="Server Error";
-return;
-}
-
-const data = await res.json();
-
-/* DEVICE STATUS */
-if(data.device_status && data.device_status !== "Online"){
-document.getElementById("status").innerText="🔴 Device Offline";
-return;
-}
-
-/* MAIN DATA */
-
-document.getElementById("temp").innerText = safe(data.temperature,"°C");
-document.getElementById("hum").innerText = safe(data.humidity,"%");
-document.getElementById("wind").innerText = safe(data.wind_speed," km/h");
-document.getElementById("vis").innerText = safe(data.visibility,"%");
-document.getElementById("rain").innerText = data.rain || "--";
-
-/* CONDITION */
-document.getElementById("condition").innerText =
-getCondition(data.temperature,data.rain);
-
-/* STATUS */
-document.getElementById("status").innerText="🟢 Live";
-
-/* ALERT */
-const alertBox=document.getElementById("alertBox");
-
-if(data.alert && data.alert !== "Normal"){
-alertBox.style.display="block";
-alertBox.className="alert "+(data.alert.includes("Storm")?"alert-danger":"alert-warning");
-alertBox.innerText="⚠ "+data.alert;
-}else{
-alertBox.style.display="none";
-}
-
-}catch(e){
-document.getElementById("status").innerText="🔴 Network Error";
-}
-
-}
-
-/* CHART */
-async function loadChart(){
-
-try{
-
-const res = await fetch("/api/history");
-
-if(!res.ok) return;
-
-const data = await res.json();
-
-if(!data || data.length === 0) return;
-
-const temps = data.map(d=>d.temperature ?? 0);
-
-const labels = data.map(d=>{
-const t = new Date(d.time);
-return t.getHours().toString().padStart(2,'0')+":00";
-});
-
-const ctx = document.getElementById("chart");
-
-if(chart) chart.destroy();
-
-chart = new Chart(ctx,{
-type:"line",
-data:{
-labels:labels,
-datasets:[{
-data:temps,
-borderColor:"#0a84ff",
-backgroundColor:"rgba(10,132,255,0.2)",
-fill:true,
-tension:0.4
-}]
-},
-options:{
-plugins:{legend:{display:false}},
-scales:{x:{display:false},y:{display:false}}
-}
-});
-
-}catch(e){
-console.log("Chart error");
-}
-
-}
-
-/* RUN */
-fetchData();
-loadChart();
-setInterval(fetchData,8000);
-
-</script>
-
-</body>
+<!DOCTYPE html>  
+<html>  
+<head>  <meta charset="UTF-8">  
+<meta name="description" content="Live IoT weather dashboard showing real-time temperature, humidity, wind speed and rainfall data.">
+<meta name="viewport" content="width=device-width, initial-scale=1">  <title>GPCA Smart Weather System</title>  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <style>  
+  
+/* ===== BASE ===== */  
+  
+body{  
+margin:0;  
+font-family:'Segoe UI',sans-serif;  
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);  
+color:white;  
+overflow-x:hidden;  
+}  
+  
+/* ===== HEADER ===== */  
+  
+.header{  
+background:rgba(0,0,0,0.4);  
+padding:15px 20px;  
+display:flex;  
+justify-content:space-between;  
+align-items:center;  
+flex-wrap:wrap;  
+}  
+  
+.header h1{margin:0;font-size:22px}  
+  
+.export-btn{  
+background:#28a745;  
+padding:8px 14px;  
+border-radius:6px;  
+color:white;  
+text-decoration:none;  
+font-size:13px;  
+}  
+  
+/* ===== CONTAINER ===== */  
+  
+.container{  
+width:100%;  
+padding:20px;  
+box-sizing:border-box;  
+}  
+  
+/* ===== HERO ===== */  
+  
+.hero{text-align:center;margin-bottom:30px}  
+.temperature{font-size:72px;font-weight:700}  
+.trend{font-size:18px;margin-top:5px}  
+.status{margin-top:10px;font-weight:bold}  
+.update-time{margin-top:6px;font-size:13px;opacity:0.7}  
+  
+/* ===== GRID ===== */  
+  
+.grid{display:grid;gap:20px}  
+  
+.kpi-grid{  
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));  
+margin-bottom:30px;  
+}  
+  
+.analytics-grid{  
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));  
+margin-bottom:30px;  
+}  
+  
+/* ===== CARD ===== */  
+  
+.card{  
+background:rgba(255,255,255,0.08);  
+padding:20px;  
+border-radius:15px;  
+text-align:center;  
+}  
+  
+/* ===== CHART ===== */  
+  
+.chart-section{  
+background:rgba(255,255,255,0.08);  
+padding:15px;  
+border-radius:15px;  
+height:320px;  
+}  
+  
+/* ===== ALERT ===== */  
+  
+.alert{  
+display:none;  
+margin-top:15px;  
+padding:14px;  
+border-radius:12px;  
+font-weight:bold;  
+}  
+  
+.alert-danger{background:#cc0000}  
+.alert-warning{background:#ff8000}  
+  
+/* ===== MOBILE ===== */  
+  
+@media(max-width:768px){  
+  
+.temperature{font-size:46px}  
+  
+.kpi-grid,  
+.analytics-grid{  
+grid-template-columns:1fr;  
+}  
+  
+.chart-section{height:260px}  
+  
+}  
+  
+</style>  </head>  <body>  <div class="header">  
+<div>  
+<h1>GPCA Smart Weather System</h1>  
+<span>Cloud Monitoring Dashboard • v1.0.0</span>  
+</div>  
+<a href="/api/export" class="export-btn">⬇ Export Last 7 Days</a>  
+</div>  <div class="container">  <div class="hero">  <div class="temperature" id="temp">-- °C</div>  
+<div class="trend" id="trend">➖ Stable</div>  
+<div id="deviceStatus" class="status">⏳ Loading data...</div>  
+<div class="update-time" id="updateTime">Updated --</div>  
+<div id="liveClock"></div>  
+<div id="alertBox" class="alert"></div>  </div>  <div class="grid kpi-grid">  <div class="card"><h3>Humidity</h3><p id="hum">-- %</p></div>  
+<div class="card"><h3>Wind Speed</h3><p id="windSpeed">-- km/h</p></div>  
+<div class="card"><h3>Visibility</h3><p id="visibility">-- %</p></div>  
+<div class="card"><h3>Rain Status</h3><p id="rain">--</p></div>  </div>  <div class="grid analytics-grid">  <div class="card"><h3>Min Temperature</h3><p id="minTemp">-- °C</p></div>  
+<div class="card"><h3>Max Temperature</h3><p id="maxTemp">-- °C</p></div>  
+<div class="card"><h3>Average Temperature</h3><p id="avgTemp">-- °C</p></div>  </div>  <div class="chart-section">  <label>📅 View Mode:</label>
+<select id="chartMode" onchange="loadChart()">
+
+<option value="hourly">Last 12 Hours</option>  
+<option value="daily">Last 7 Days</option>  
+</select>  <canvas id="tempChart"></canvas>
+
+</div>  </div>  <script>  
+  
+let chart=null;  
+let lastUpdateTime=null;  
+let clockTimer=null;  
+  
+/* ===== COUNTER ===== */  
+  
+function updateCounter(){  
+if(!lastUpdateTime)return;  
+const sec=Math.floor((Date.now()-lastUpdateTime)/1000);  
+document.getElementById("updateTime").innerText="Updated "+sec+"s ago";  
+}  
+setInterval(updateCounter,1000);  
+  
+/* ===== FETCH ===== */  
+  
+async function fetchData(){  
+  
+try{  
+  
+const res=await fetch("/api/latest");  
+  
+if(!res.ok){  
+document.getElementById("deviceStatus").innerText="🔴 Offline";  
+return;  
+}  
+  
+const data=await res.json();  
+  
+if(data.device_status && data.device_status!=="Online"){  
+document.getElementById("deviceStatus").innerText="🔴 "+data.device_status;  
+return;  
+}  
+  
+document.getElementById("deviceStatus").innerText="🟢 Device Online";  
+  
+lastUpdateTime=Date.now();  
+  
+const nowTime=new Date().toLocaleTimeString();  
+document.getElementById("updateTime").innerText="Updated "+nowTime;  
+/* NULL SAFE */  
+  
+document.getElementById("temp").innerText=data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C";  
+document.getElementById("hum").innerText=data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %";  
+document.getElementById("windSpeed").innerText=data.wind_speed!=null?Number(data.wind_speed).toFixed(1)+" km/h":"-- km/h";  
+document.getElementById("visibility").innerText=data.visibility!=null?Number(data.visibility).toFixed(0)+" %":"-- %";  
+document.getElementById("rain").innerText=data.rain??"--";  
+  
+document.getElementById("minTemp").innerText=data.min_temp!=null?Number(data.min_temp).toFixed(1)+" °C":"-- °C";  
+document.getElementById("maxTemp").innerText=data.max_temp!=null?Number(data.max_temp).toFixed(1)+" °C":"-- °C";  
+document.getElementById("avgTemp").innerText=data.avg_temp!=null?Number(data.avg_temp).toFixed(1)+" °C":"-- °C";  
+  
+document.getElementById("trend").innerText=  
+data.trend==="Rising"?"📈 Rising":  
+data.trend==="Falling"?"📉 Falling":"➖ Stable";  
+  
+/* alert */  
+  
+const alertBox=document.getElementById("alertBox");  
+  
+if(data.alert && data.alert!=="Normal"){  
+alertBox.style.display="block";  
+alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");  
+alertBox.innerText="⚠ "+data.alert;  
+}else{  
+alertBox.style.display="none";  
+}  
+  
+}catch(e){  
+document.getElementById("deviceStatus").innerText="🔴 Offline";  
+}  
+  
+}  
+  
+/* ===== CHART ===== */  
+  
+async function loadChart(){  
+  
+try{  
+  
+const mode=document.getElementById("chartMode").value;  
+const res=await fetch("/api/history?mode="+mode);  
+const data=await res.json();  
+  
+if(!data||data.length===0)return;  
+  
+const temps=data.map(d=>d.temperature??0);  
+  
+const times=data.map(d=>{  
+const date=new Date(d.time);  
+return mode==="hourly"  
+?date.getHours().toString().padStart(2,'0')+":00"  
+:date.toLocaleDateString();  
+});  
+  
+const ctx=document.getElementById("tempChart").getContext("2d");  
+  
+if(chart) chart.destroy();  
+  
+chart=new Chart(ctx,{  
+type:"line",  
+data:{labels:times,datasets:[{  
+label:"Temperature (°C)",  
+data:temps,  
+borderColor:"#00d4ff",
+backgroundColor:"rgba(0,212,255,0.2)",  
+fill:true  
+}]},  
+options:{responsive:true,maintainAspectRatio:false}  
+});  
+  
+}catch(e){}  
+  
+}  
+  
+/* ===== CLOCK ===== */  
+  
+function liveClock(){  
+document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();  
+}  
+  
+function startClock(){  
+liveClock();  
+if(clockTimer) clearInterval(clockTimer);  
+clockTimer=setInterval(liveClock,1000);  
+}  
+  
+/* ===== LOAD ===== */  
+  
+window.onload=function(){  
+fetchData();  
+loadChart();  
+startClock();  
+};  
+setInterval(()=>{  
+if(!document.hidden){  
+fetchData();  
+}  
+},10000);  
+  
+</script>  </body>  
 </html>

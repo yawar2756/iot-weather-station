@@ -41,7 +41,7 @@ def init_db():
 try:
     init_db()
 except Exception as e:
-    print("DB ERROR:", e)init_db()
+    print("DB ERROR:", e)
 
 # -------------------- STATIC FILES --------------------
 

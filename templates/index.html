@@ -1,36 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="description" content="Live IoT weather station dashboard using ESP32 showing real-time temperature, humidity, rain and wind data online.">
+
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>IoT Weather Station | Live ESP32 Weather Dashboard</title>
+<title>IoT Weather Station | Real-Time ESP8266 Weather Monitoring</title>
+
+<meta name="description" content="IoT Weather Station using ESP8266 for real-time monitoring of temperature, humidity, wind speed, rainfall and visibility with live dashboard.">
 
 <style>
-
 body{
 margin:0;
 font-family:Segoe UI;
 background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-text-align:center;
+line-height:1.6;
 }
 
-.box{
-background:rgba(255,255,255,0.08);
-padding:40px;
-border-radius:20px;
-backdrop-filter:blur(12px);
-max-width:420px;
+.container{
+max-width:900px;
+margin:auto;
+padding:30px;
 }
 
-h1{margin-bottom:10px}
+h1,h2{
+color:#00d4ff;
+}
 
-p{opacity:.85}
+.section{
+margin-bottom:30px;
+}
 
 .btn{
 display:inline-block;
@@ -42,23 +42,50 @@ color:white;
 text-decoration:none;
 font-weight:bold;
 }
-
-.btn:hover{background:#218838}
-
 </style>
 
 </head>
 
 <body>
 
-<div class="box">
-<h1>IoT Weather Station Dashboard</h1>
+<div class="container">
 
-<p>This IoT-based weather station monitors temperature, humidity, rainfall, wind speed and pressure using ESP32 sensors. The system sends real-time data to a web dashboard using WiFi.</p>
+<h1>IoT Weather Station using ESP8266</h1>
 
-<p>This project is useful for agriculture, research and smart city monitoring.</p>
+<p>This project is a real-time IoT-based weather monitoring system that collects environmental data using sensors and displays it on a live web dashboard.</p>
 
 <a href="/dashboard" class="btn">🚀 Open Live Dashboard</a>
+
+<div class="section">
+<h2>📊 Features</h2>
+<ul>
+<li>Real-time temperature and humidity monitoring</li>
+<li>Wind speed and wind direction tracking</li>
+<li>Rain detection system</li>
+<li>Visibility monitoring</li>
+<li>Cloud-based dashboard</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>⚙️ How It Works</h2>
+<p>Sensors collect environmental data which is processed by ESP8266 and sent to a Flask server via API. The data is stored and displayed on a live dashboard.</p>
+</div>
+
+<div class="section">
+<h2>🌍 Applications</h2>
+<ul>
+<li>Agriculture monitoring</li>
+<li>Smart cities</li>
+<li>Weather research</li>
+<li>Disaster management</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>📡 Live Data Dashboard</h2>
+<p>View real-time weather updates with charts and analytics.</p>
+</div>
 
 </div>
 

@@ -189,15 +189,27 @@ document.getElementById("trend").innerText=
 data.trend==="Rising"?"📈 Rising":
 data.trend==="Falling"?"📉 Falling":"➖ Stable";
 
-/* ALERT */
-const alertBox=document.getElementById("alertBox");
+/* ALERT + SOUND */
+const alertBox = document.getElementById("alertBox");
+const alertSound = document.getElementById("alertSound");
 
-if(data.alert && data.alert!=="Normal"){
+if(data.alert && data.alert !== "Normal"){
+
 alertBox.style.display="block";
 alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");
 alertBox.innerText="⚠ "+data.alert;
+
+/* 🔊 PLAY SOUND ONCE */
+if(!alertSound.dataset.played){
+alertSound.play().catch(()=>{}); // safe play
+alertSound.dataset.played="true";
+}
+
 }else{
+
 alertBox.style.display="none";
+alertSound.dataset.played=""; // reset
+
 }
 
 }catch(e){
@@ -297,5 +309,7 @@ fetchData();
 }
 },10000);
 
-</script>  </body>  
+</script>
+<audio id="alertSound" src="/static/alert.mp3" preload="auto"></audio>
+</body>  
 </html>

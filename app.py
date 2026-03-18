@@ -17,7 +17,6 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
-
 def init_db():
     con = get_db()
     cur = con.cursor()

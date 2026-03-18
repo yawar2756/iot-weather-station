@@ -135,11 +135,25 @@ grid-template-columns:1fr;
 <option value="daily">Last 7 Days</option>  
 </select>  <canvas id="tempChart"></canvas>
 
-</div>  </div>  <script>  
-  
+</div>  </div>  <script>
+
 let chart=null;
 let lastUpdateTime=null;
 let clockTimer=null;
+
+/* 🔊 AUDIO UNLOCK FOR LAPTOP */
+window.userActivated = false;
+
+document.addEventListener("click", ()=>{
+window.userActivated = true;
+
+const sound = document.getElementById("alertSound");
+sound.play().then(()=>{
+sound.pause();
+sound.currentTime=0;
+}).catch(()=>{});
+
+});
 
 /* ===== COUNTER ===== */
 function updateCounter(){

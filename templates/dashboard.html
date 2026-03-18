@@ -189,51 +189,18 @@ document.getElementById("trend").innerText=
 data.trend==="Rising"?"📈 Rising":
 data.trend==="Falling"?"📉 Falling":"➖ Stable";
 
-/* FINAL STABLE ALERT SOUND */
+/* SIMPLE ALERT ONLY */
 const alertBox = document.getElementById("alertBox");
-const alertSound = document.getElementById("alertSound");
 
-/* unlock audio once */
-if(!window.clicked){
-document.body.addEventListener("click", ()=>{
-window.clicked = true;
-alertSound.play().then(()=>{
-alertSound.pause();
-alertSound.currentTime = 0;
-}).catch(()=>{});
-},{once:true});
-}
-
-/* create stable alert state */
-if(!window.activeAlert) window.activeAlert = null;
-
-/* SHOW ALERT */
 if(data.alert && data.alert !== "Normal"){
 
 alertBox.style.display="block";
 alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");
 alertBox.innerText="⚠ "+data.alert;
 
-/* 🔊 play only when NEW alert appears */
-if(window.activeAlert !== data.alert && window.clicked){
-
-alertSound.pause();
-alertSound.currentTime = 0;
-alertSound.volume = 0.2;
-alertSound.play().catch(()=>{});
-
-}
-
-window.activeAlert = data.alert;
-
 }else{
 
 alertBox.style.display="none";
-
-/* DO NOT reset instantly */
-setTimeout(()=>{
-window.activeAlert = null;
-},2000);   // 🔥 prevents flicker issue
 
 }
   
@@ -332,9 +299,8 @@ setInterval(()=>{
 if(!document.hidden){
 fetchData();
 }
-},5000);   // 🔥 faster response
+},1000);   // 🔥 faster response
 
 </script>
-<audio id="alertSound" src="/static/alert.mp3" preload="auto"></audio>
 </body>  
 </html>

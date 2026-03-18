@@ -1,16 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-<title>About IoT Weather Station</title>
-<meta name="description" content="Details about IoT weather station project using ESP8266.">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>About IoT Weather Station | ESP8266 & ESP32 Project</title>
+
+<meta name="description" content="Detailed explanation of IoT weather station project using ESP8266 and ESP32. Learn sensors, working process, backend, and dashboard system.">
+
+<meta name="keywords" content="IoT weather station project, ESP8266 weather station, ESP32 IoT project, weather monitoring system, IoT project explanation">
+
+<meta name="robots" content="index, follow">
+
+<link rel="canonical" href="https://gpca-weather-station.onrender.com/about">
+
+<style>
+
+body{
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+line-height:1.7;
+}
+
+.container{
+max-width:950px;
+margin:auto;
+padding:30px;
+}
+
+h1,h2{
+color:#00d4ff;
+}
+
+.section{
+margin-bottom:30px;
+}
+
+.btn{
+display:inline-block;
+margin-top:20px;
+padding:12px 20px;
+background:#28a745;
+border-radius:8px;
+color:white;
+text-decoration:none;
+font-weight:bold;
+}
+
+</style>
+
 </head>
-<body style="font-family:Segoe UI;background:#111;color:white;padding:30px">
 
-<h1>About This Project</h1>
+<body>
 
-<p>This IoT weather station collects environmental data using sensors and displays it on a web dashboard.</p>
+<div class="container">
 
-<p>It is designed for students, agriculture, and research purposes.</p>
+<h1>🌦 About IoT Weather Station Project</h1>
+
+<p>
+The IoT Weather Station is a smart environmental monitoring system developed using ESP8266 and ESP32 microcontrollers.
+It collects real-time weather data such as temperature, humidity, rainfall, wind speed, wind direction, and visibility.
+The system sends this data to a web-based dashboard for monitoring and analysis.
+</p>
+
+<div class="section">
+<h2>⚙️ System Overview</h2>
+
+<p>
+This project combines sensors, microcontrollers, and cloud technology to create an efficient weather monitoring solution.
+It is designed to be low-cost, scalable, and useful for agriculture, education, research, and smart city applications.
+</p>
+
+</div>
+
+<div class="section">
+<h2>🌡 Sensors Used</h2>
+
+<p>
+The system uses temperature and humidity sensors like DHT11 or DHT22, rain detection sensors, wind speed sensors, wind direction modules, and visibility sensors.
+These sensors continuously collect environmental data and send it to the microcontroller.
+</p>
+
+</div>
+
+<div class="section">
+<h2>📡 Working Process</h2>
+
+<p>
+The ESP8266 or ESP32 reads sensor data at regular intervals and converts it into structured JSON format.
+The data is transmitted through WiFi to a backend server using HTTP requests.
+The server stores and processes the data for visualization.
+</p>
+
+</div>
+
+<div class="section">
+<h2>🗄 Backend and Dashboard</h2>
+
+<p>
+The backend is built using Flask and stores data in a database.
+The dashboard displays real-time data using charts and analytics.
+It also provides alerts such as heat warnings, storm alerts, and rain notifications.
+</p>
+
+</div>
+
+<div class="section">
+<h2>🚀 Applications</h2>
+
+<ul>
+<li>Agriculture and crop monitoring</li>
+<li>Smart city environmental systems</li>
+<li>Weather research and analysis</li>
+<li>Disaster management planning</li>
+</ul>
+
+</div>
+
+<a href="/" class="btn">⬅ Back to Home</a>
+
+</div>
 
 </body>
+
 </html>

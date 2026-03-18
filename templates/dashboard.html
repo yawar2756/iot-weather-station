@@ -212,6 +212,8 @@ if(data.alert !== window.lastAlert && window.userActivated){
 
 alertSound.pause();
 alertSound.currentTime=0;
+
+alertSound.volume = 0.2;   // 👈 SOUND CONTROL
 alertSound.play().catch(()=>{});
 
 }
@@ -224,7 +226,7 @@ alertBox.style.display="none";
 window.lastAlert="";
 
 }
-
+  
 }catch(e){
 console.log("fetch error:",e);
 document.getElementById("deviceStatus").innerText="🔴 Offline";

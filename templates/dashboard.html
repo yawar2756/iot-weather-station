@@ -141,19 +141,6 @@ let chart=null;
 let lastUpdateTime=null;
 let clockTimer=null;
 
-/* 🔊 AUDIO UNLOCK FOR LAPTOP */
-window.userActivated = false;
-
-document.addEventListener("click", ()=>{
-window.userActivated = true;
-
-const sound = document.getElementById("alertSound");
-sound.play().then(()=>{
-sound.pause();
-sound.currentTime=0;
-}).catch(()=>{});
-});
-
 /* ===== COUNTER ===== */
 function updateCounter(){
 if(!lastUpdateTime)return;

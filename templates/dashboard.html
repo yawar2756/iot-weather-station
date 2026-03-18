@@ -152,7 +152,6 @@ sound.play().then(()=>{
 sound.pause();
 sound.currentTime=0;
 }).catch(()=>{});
-
 });
 
 /* ===== COUNTER ===== */
@@ -203,18 +202,18 @@ document.getElementById("trend").innerText=
 data.trend==="Rising"?"📈 Rising":
 data.trend==="Falling"?"📉 Falling":"➖ Stable";
 
-/* ULTRA STABLE ALERT SOUND */
+/* SIMPLE STABLE ALERT SOUND */
 const alertBox = document.getElementById("alertBox");
 const alertSound = document.getElementById("alertSound");
 
-if(!window.alertActive) window.alertActive=false;
-if(!window.userActivated) window.userActivated=false;
-if(!window.alertTimer) window.alertTimer=null;
+if(!window.userClicked){
+window.userClicked=false;
+document.body.addEventListener("click", ()=>{
+window.userClicked=true;
+}, { once: true });
+}
 
-/* activate after first click */
-document.addEventListener("click", ()=>{
-window.userActivated=true;
-});
+if(!window.alertActive) window.alertActive=false;
 
 if(data.alert && data.alert !== "Normal"){
 
@@ -222,36 +221,22 @@ alertBox.style.display="block";
 alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");
 alertBox.innerText="⚠ "+data.alert;
 
-/* 🔥 WAIT 1 SECOND BEFORE CONFIRMING ALERT */
-if(!window.alertActive && !window.alertTimer){
+/* play only once per alert */
+if(!window.alertActive && window.userClicked){
 
-window.alertTimer = setTimeout(()=>{
-    
-    if(window.userActivated){
-        alertSound.pause();
-        alertSound.currentTime=0;
-        alertSound.volume=0.2;
-        alertSound.play().catch(()=>{});
-    }
-
-    window.alertActive=true;
-    window.alertTimer=null;
-
-},1000); // 🔥 stability delay
+alertSound.pause();
+alertSound.currentTime=0;
+alertSound.volume=0.2;
+alertSound.play().catch(()=>{});
 
 }
+
+window.alertActive=true;
 
 }else{
 
 alertBox.style.display="none";
-
-/* reset everything */
 window.alertActive=false;
-
-if(window.alertTimer){
-clearTimeout(window.alertTimer);
-window.alertTimer=null;
-}
 
 }
   

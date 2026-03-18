@@ -160,7 +160,10 @@ return;
 }
 
 const data=await res.json();
-
+if(data.message){
+document.getElementById("deviceStatus").innerText="⚠ No Data Yet";
+return;
+}
 /* DEVICE STATUS */
 if(data.device_status && data.device_status!=="Online"){
 document.getElementById("deviceStatus").innerText="🔴 "+data.device_status;

@@ -189,14 +189,14 @@ document.getElementById("trend").innerText=
 data.trend==="Rising"?"📈 Rising":
 data.trend==="Falling"?"📉 Falling":"➖ Stable";
 
-/* LIVE ALERT SOUND FINAL FIX */
+/* PERFECT LIVE ALERT SOUND */
 const alertBox = document.getElementById("alertBox");
 const alertSound = document.getElementById("alertSound");
 
 if(!window.lastAlert) window.lastAlert="";
 if(!window.userActivated) window.userActivated=false;
 
-/* activate sound after first click */
+/* activate after first click */
 document.addEventListener("click", ()=>{
 window.userActivated=true;
 });
@@ -207,14 +207,16 @@ alertBox.style.display="block";
 alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");
 alertBox.innerText="⚠ "+data.alert;
 
-/* 🔊 PLAY when NEW alert + user interacted */
+/* 🔊 INSTANT SOUND */
 if(data.alert !== window.lastAlert && window.userActivated){
 
 alertSound.pause();
 alertSound.currentTime=0;
+alertSound.volume=0.2;
 
-alertSound.volume = 0.2;   // 👈 SOUND CONTROL
+setTimeout(()=>{
 alertSound.play().catch(()=>{});
+},100);   // 🔥 small delay = smooth
 
 }
 
@@ -322,7 +324,7 @@ setInterval(()=>{
 if(!document.hidden){
 fetchData();
 }
-},10000);
+},5000);   // 🔥 faster response
 
 </script>
 <audio id="alertSound" src="/static/alert.mp3" preload="auto"></audio>

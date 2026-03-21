@@ -227,7 +227,7 @@ const temps=data.map(d=>d.temperature??0);
 const times=data.map(d=>{
 const date=new Date(d.time);
 return mode==="hourly"
-?date.getHours().toString().padStart(2,'0')+":00"
+?date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 :date.toLocaleDateString();
 });
 
@@ -250,8 +250,8 @@ data:temps,
 borderColor:"#00e5ff",
 backgroundColor:gradient,
 fill:true,
-tension:0.45,
-pointRadius:0,
+tension:0.4,
+pointRadius:2,
 borderWidth:3
 }]
 },

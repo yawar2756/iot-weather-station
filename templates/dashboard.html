@@ -214,8 +214,13 @@ const mode=document.getElementById("chartMode").value;
 
 /* ⏳ SHOW LOADING LINE */
 if(chart){
-  chart.destroy();
+  chart.data.labels = times;
+  chart.data.datasets[0].data = temps;
+  chart.update();
+  return;
 }
+
+chart=new Chart(ctx,{
 
 const ctx=document.getElementById("tempChart").getContext("2d");
 

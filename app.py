@@ -159,7 +159,7 @@ def latest():
         seconds = (now - created_time).total_seconds()
 
         # 🔥 FIXED OFFLINE LOGIC
-        device_status = "Offline" if seconds > 120 else "Online"
+        device_status = "Offline" if seconds > 20 else "Online"
 
         if device_status == "Offline":
             return jsonify({"device_status": "Offline"})

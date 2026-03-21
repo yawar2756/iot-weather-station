@@ -202,28 +202,53 @@ def latest():
 @app.route("/api/history")
 def history():
     try:
+        mode = request.args.get("mode", "hourly")
+
         con = get_db()
         cur = con.cursor()
 
-        cur.execute("""
-            SELECT created_at, temperature
-            FROM weather
-            ORDER BY created_at ASC
-            LIMIT 50
-        """)
+        if mode == "daily":
+            # ✅ LAST 7 DAYS
+            cur.execute("""
+                SELECT 
+                    DATE(created_at) AS day,
+                    ROUND(AVG(temperature)::numeric, 2)
+                FROM weather
+                WHERE created_at >= NOW() - INTERVAL '7 days'
+                GROUP BY day
+                ORDER BY day ASC
+            """)
+        else:
+            # ✅ LAST 12 HOURS (FIXED VERSION)
+            cur.execute("""
+                WITH hours AS (
+                    SELECT generate_series(
+                        date_trunc('hour', NOW()) - INTERVAL '11 hours',
+                        date_trunc('hour', NOW()),
+                        INTERVAL '1 hour'
+                    ) AS hour
+                )
+                SELECT 
+                    h.hour,
+                    COALESCE(ROUND(AVG(w.temperature)::numeric, 2), 0)
+                FROM hours h
+                LEFT JOIN weather w
+                  ON date_trunc('hour', w.created_at) = h.hour
+                GROUP BY h.hour
+                ORDER BY h.hour ASC
+            """)
 
         rows = cur.fetchall()
-
         cur.close()
         con.close()
 
         return jsonify([
-            {"time": str(r[0]), "temperature": float(r[1]) if r[1] else 0}
+            {"time": str(r[0]), "temperature": float(r[1])}
             for r in rows
         ])
 
     except Exception as e:
-        print("❌ HISTORY ERROR:", e)
+        print("HISTORY ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
 

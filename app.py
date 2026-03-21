@@ -1,10 +1,8 @@
 import os
 import psycopg2
-from flask import Flask, request, jsonify, render_template, Response, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from datetime import datetime
-import csv
-import io
 
 app = Flask(__name__)
 CORS(app)
@@ -12,55 +10,45 @@ CORS(app)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
-# -------------------- DATABASE --------------------
+# ================= DATABASE =================
 
 def get_db():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
+
 def init_db():
-    con = get_db()
-    cur = con.cursor()
+    try:
+        con = get_db()
+        cur = con.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS weather (
-            id SERIAL PRIMARY KEY,
-            temperature FLOAT,
-            humidity FLOAT,
-            rain_value INT,
-            rain_status TEXT,
-            wind_speed FLOAT,
-            wind_direction TEXT,
-            visibility FLOAT,
-            alert TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS weather (
+                id SERIAL PRIMARY KEY,
+                temperature FLOAT,
+                humidity FLOAT,
+                rain_value INT,
+                rain_status TEXT,
+                wind_speed FLOAT,
+                wind_direction TEXT,
+                visibility FLOAT,
+                alert TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
 
-    con.commit()
-    cur.close()
-    con.close()
+        con.commit()
+        cur.close()
+        con.close()
+        print("✅ DB READY")
 
-
-# SAFE INIT
-try:
-    init_db()
-except Exception as e:
-    print("DB ERROR:", e)
+    except Exception as e:
+        print("❌ DB INIT ERROR:", e)
 
 
-# -------------------- STATIC --------------------
-
-@app.route("/sitemap.xml")
-def sitemap():
-    return send_from_directory(".", "sitemap.xml")
+init_db()
 
 
-@app.route("/robots.txt")
-def robots():
-    return send_from_directory(".", "robots.txt")
-
-
-# -------------------- PAGES --------------------
+# ================= PAGES =================
 
 @app.route("/")
 def home():
@@ -72,71 +60,78 @@ def dashboard():
     return render_template("dashboard.html")
 
 
-@app.route("/about")
-def about():
-    return render_template("about.html")
-
-
 @app.route("/health")
 def health():
     return jsonify({"status": "running"})
 
 
-# -------------------- RECEIVE DATA --------------------
+# ================= RECEIVE DATA =================
 
 @app.route("/api/data", methods=["POST"])
 def receive_data():
     try:
-        data = request.get_json(force=True)
+        data = request.get_json(silent=True)
 
-        temperature = data["temperature"]
-        humidity = data["humidity"]
-        rain_value = data["rain_value"]
-        rain_status = data["rain_status"]
-        wind_speed = data.get("wind_speed")
-        wind_direction = data.get("wind_direction")
-        visibility = data.get("visibility")
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
 
+        # SAFE DATA
+        temperature = data.get("temperature")
+        humidity = data.get("humidity")
+        rain_value = data.get("rain_value")
+        rain_status = data.get("rain_status", "No Rain")
+        wind_speed = data.get("wind_speed", 0)
+        wind_direction = data.get("wind_direction", "N/A")
+        visibility = data.get("visibility", 0)
+
+        # ALERT SYSTEM
         alerts = []
 
-        if wind_speed and wind_speed > 30:
+        if wind_speed > 30:
             alerts.append("Storm Warning")
 
         if temperature and temperature > 40:
             alerts.append("Heat Alert")
 
-        if visibility and visibility < 20:
-            alerts.append("Low Visibility Warning")
+        if visibility < 20:
+            alerts.append("Low Visibility")
 
-        if rain_status and rain_status.lower() != "no rain":
+        if rain_status.lower() != "no rain":
             alerts.append("Rain Alert")
 
         alert = ", ".join(alerts) if alerts else "Normal"
 
-        con = get_db()
-        cur = con.cursor()
+        # DB INSERT
+        try:
+            con = get_db()
+            cur = con.cursor()
 
-        cur.execute("""
-            INSERT INTO weather
-            (temperature, humidity, rain_value, rain_status,
-             wind_speed, wind_direction, visibility, alert)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-        """, (
-            temperature, humidity, rain_value, rain_status,
-            wind_speed, wind_direction, visibility, alert
-        ))
+            cur.execute("""
+                INSERT INTO weather
+                (temperature, humidity, rain_value, rain_status,
+                 wind_speed, wind_direction, visibility, alert)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                temperature, humidity, rain_value, rain_status,
+                wind_speed, wind_direction, visibility, alert
+            ))
 
-        con.commit()
-        cur.close()
-        con.close()
+            con.commit()
+            cur.close()
+            con.close()
+
+        except Exception as db_error:
+            print("❌ DB ERROR:", db_error)
+            return jsonify({"error": "Database Failed"}), 500
 
         return jsonify({"status": "stored", "alert": alert})
 
     except Exception as e:
+        print("❌ API ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
 
-# -------------------- LATEST --------------------
+# ================= LATEST =================
 
 @app.route("/api/latest")
 def latest():
@@ -152,6 +147,7 @@ def latest():
             ORDER BY id DESC
             LIMIT 1
         """)
+
         row = cur.fetchone()
 
         if not row:
@@ -161,37 +157,23 @@ def latest():
         now = datetime.utcnow()
 
         seconds = (now - created_time).total_seconds()
-        device_status = "Offline" if seconds > 30 else "Online"
+
+        # 🔥 FIXED OFFLINE LOGIC
+        device_status = "Offline" if seconds > 120 else "Online"
 
         if device_status == "Offline":
             return jsonify({"device_status": "Offline"})
 
-        # ✅ TODAY STATS (FINAL FIX)
+        # STATS
         cur.execute("""
-        SELECT 
-        MIN(temperature),
-        MAX(temperature),
-        AVG(temperature)
-        FROM weather
-        WHERE DATE(created_at)=CURRENT_DATE
+            SELECT MIN(temperature), MAX(temperature), AVG(temperature)
+            FROM weather
         """)
+        stats = cur.fetchone()
 
-        row_stats = cur.fetchone()
-
-        min_temp = float(row_stats[0]) if row_stats[0] is not None else None
-        max_temp = float(row_stats[1]) if row_stats[1] is not None else None
-        avg_temp = round(float(row_stats[2]), 2) if row_stats[2] is not None else None
-
-        # trend
-        cur.execute("SELECT temperature FROM weather ORDER BY id DESC LIMIT 5")
-        temps = [t[0] for t in cur.fetchall() if t[0] is not None]
-
-        trend = "Stable"
-        if len(temps) >= 5:
-            if temps[0] > temps[-1]:
-                trend = "Rising"
-            elif temps[0] < temps[-1]:
-                trend = "Falling"
+        min_temp = float(stats[0]) if stats[0] else None
+        max_temp = float(stats[1]) if stats[1] else None
+        avg_temp = round(float(stats[2]), 2) if stats[2] else None
 
         cur.close()
         con.close()
@@ -204,7 +186,6 @@ def latest():
             "wind_direction": row[4],
             "visibility": row[5],
             "alert": row[6],
-            "trend": trend,
             "min_temp": min_temp,
             "max_temp": max_temp,
             "avg_temp": avg_temp,
@@ -212,47 +193,27 @@ def latest():
         })
 
     except Exception as e:
+        print("❌ LATEST ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
 
-# -------------------- HISTORY --------------------
+# ================= HISTORY =================
 
 @app.route("/api/history")
 def history():
     try:
-        mode = request.args.get("mode", "hourly")
-
         con = get_db()
         cur = con.cursor()
 
-        if mode == "daily":
-            cur.execute("""
-                SELECT DATE(created_at),
-                       ROUND(AVG(temperature)::numeric, 2)
-                FROM weather
-                WHERE created_at >= NOW() - INTERVAL '7 days'
-                GROUP BY DATE(created_at)
-                ORDER BY DATE(created_at) ASC
-            """)
-        else:
-            cur.execute("""
-                WITH hours AS (
-                    SELECT generate_series(
-                        date_trunc('hour', NOW()) - INTERVAL '11 hours',
-                        date_trunc('hour', NOW()),
-                        INTERVAL '1 hour'
-                    ) AS hour
-                )
-                SELECT h.hour,
-                       ROUND(AVG(w.temperature)::numeric, 2)
-                FROM hours h
-                LEFT JOIN weather w
-                  ON date_trunc('hour', w.created_at) = h.hour
-                GROUP BY h.hour
-                ORDER BY h.hour ASC
-            """)
+        cur.execute("""
+            SELECT created_at, temperature
+            FROM weather
+            ORDER BY created_at ASC
+            LIMIT 50
+        """)
 
         rows = cur.fetchall()
+
         cur.close()
         con.close()
 
@@ -262,56 +223,11 @@ def history():
         ])
 
     except Exception as e:
+        print("❌ HISTORY ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
 
-# -------------------- EXPORT --------------------
+# ================= RUN =================
 
-@app.route("/api/export")
-def export_csv():
-    try:
-        con = get_db()
-        cur = con.cursor()
-
-        cur.execute("""
-            SELECT created_at, temperature, humidity,
-                   rain_status, wind_speed,
-                   wind_direction, visibility
-            FROM weather
-            WHERE created_at >= NOW() - INTERVAL '7 days'
-            ORDER BY created_at ASC
-        """)
-
-        rows = cur.fetchall()
-        cur.close()
-        con.close()
-
-        output = io.StringIO()
-        writer = csv.writer(output)
-
-        writer.writerow([
-            "Date", "Time", "Temperature (°C)", "Humidity (%)",
-            "Rain Status", "Wind Speed (km/h)", "Wind Direction", "Visibility (%)"
-        ])
-
-        for row in rows:
-            timestamp = row[0]
-            writer.writerow([
-                timestamp.strftime("%d-%m-%Y"),
-                timestamp.strftime("%I:%M %p"),
-                f"{row[1]} °C",
-                f"{row[2]} %",
-                row[3],
-                f"{row[4]} km/h" if row[4] else "",
-                row[5] if row[5] else "",
-                f"{row[6]} %" if row[6] else ""
-            ])
-
-        return Response(
-            output.getvalue(),
-            mimetype="text/csv",
-            headers={"Content-Disposition": "attachment; filename=weather_data_last_7_days.csv"}
-        )
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+if __name__ == "__main__":
+    app.run(debug=True)

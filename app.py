@@ -251,6 +251,63 @@ def history():
         print("HISTORY ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
+#==============Export=============
+
+@app.route("/api/export")
+def export_csv():
+    try:
+        con = get_db()
+        cur = con.cursor()
+
+        cur.execute("""
+            SELECT created_at, temperature, humidity,
+                   rain_status, wind_speed,
+                   wind_direction, visibility
+            FROM weather
+            WHERE created_at >= NOW() - INTERVAL '7 days'
+            ORDER BY created_at ASC
+        """)
+
+        rows = cur.fetchall()
+        cur.close()
+        con.close()
+
+        import csv
+        import io
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "Date", "Time", "Temperature (°C)", "Humidity (%)",
+            "Rain Status", "Wind Speed (km/h)", "Wind Direction", "Visibility (%)"
+        ])
+
+        for row in rows:
+            timestamp = row[0]
+            writer.writerow([
+                timestamp.strftime("%d-%m-%Y"),
+                timestamp.strftime("%I:%M %p"),
+                f"{row[1]} °C",
+                f"{row[2]} %",
+                row[3],
+                f"{row[4]} km/h" if row[4] else "",
+                row[5] if row[5] else "",
+                f"{row[6]} %" if row[6] else ""
+            ])
+
+        from flask import Response
+
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment; filename=weather_data_last_7_days.csv"}
+        )
+
+    except Exception as e:
+        print("EXPORT ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 # ================= RUN =================
 

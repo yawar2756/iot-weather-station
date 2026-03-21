@@ -272,8 +272,27 @@ borderWidth:3
 }]
 },
 options:{
-responsive:true,
-maintainAspectRatio:false
+  responsive:true,
+  maintainAspectRatio:false,
+  scales:{
+    x:{
+      ticks:{
+        color:"#00e5ff",
+        font:{ size:12, weight:"bold" }
+      },
+      grid:{
+        color:"rgba(255,255,255,0.15)"
+      }
+    },
+    y:{
+      ticks:{
+        color:"#ffffff"
+      },
+      grid:{
+        color:"rgba(255,255,255,0.1)"
+      }
+    }
+  }
 }
 });
 
@@ -322,6 +341,12 @@ if(!document.hidden){
 fetchData();
 }
 },10000);
+
+setInterval(()=>{
+  if(!document.hidden){
+    loadChart();
+  }
+},15000);
 
 </script>
 </body>  

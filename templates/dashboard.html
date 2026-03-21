@@ -212,39 +212,14 @@ try{
 
 const mode=document.getElementById("chartMode").value;
 
-/* ⏳ SHOW LOADING LINE */
-if(chart){
-  chart.data.labels = times;
-  chart.data.datasets[0].data = temps;
-  chart.update();
-  return;
-}
-
-chart=new Chart(ctx,{
-
-const ctx=document.getElementById("tempChart").getContext("2d");
-
-chart = new Chart(ctx,{
-  type:"line",
-  data:{
-    labels:["Loading..."],
-    datasets:[{
-      label:"Temperature",
-      data:[0],
-      borderColor:"#888"
-    }]
-  }
-});
-
-/* 🔄 FETCH DATA */
+/* 🔄 FETCH DATA FIRST */
 const res=await fetch("/api/history?mode="+mode);
-
 if(!res.ok) throw new Error("API failed");
 
 const data=await res.json();
-
 if(!data || data.length===0) return;
 
+/* PROCESS DATA */
 const temps=data.map(d=>d.temperature??0);
 
 const times=data.map(d=>{
@@ -254,9 +229,17 @@ return mode==="hourly"
 :date.toLocaleDateString();
 });
 
-/* 🔥 REAL CHART */
-if(chart) chart.destroy();
+const ctx=document.getElementById("tempChart").getContext("2d");
 
+/* ✅ UPDATE (NO RELOAD) */
+if(chart){
+  chart.data.labels = times;
+  chart.data.datasets[0].data = temps;
+  chart.update();
+  return;
+}
+
+/* 🎨 FIRST TIME CREATE */
 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
 gradient.addColorStop(0, "rgba(0,229,255,0.45)");
 gradient.addColorStop(1, "rgba(0,229,255,0.02)");
@@ -277,32 +260,34 @@ borderWidth:3
 }]
 },
 options:{
-  responsive:true,
-  maintainAspectRatio:false,
-  scales:{
-    x:{
-      ticks:{
-        color:"#00e5ff",
-        font:{ size:12, weight:"bold" }
-      },
-      grid:{
-        color:"rgba(255,255,255,0.15)"
-      }
-    },
-    y:{
-      ticks:{
-        color:"#ffffff"
-      },
-      grid:{
-        color:"rgba(255,255,255,0.1)"
-      }
-    }
-  }
+responsive:true,
+maintainAspectRatio:false,
+scales:{
+x:{
+ticks:{
+color:"#00e5ff",
+font:{ size:12, weight:"bold" }
+},
+grid:{
+color:"rgba(255,255,255,0.15)"
+}
+},
+y:{
+ticks:{
+color:"#ffffff"
+},
+grid:{
+color:"rgba(255,255,255,0.1)"
+}
+}
+}
 }
 });
 
 }catch(e){
 console.log("chart error:",e);
+}
+}
 
 /* ❌ FALLBACK (NOT STUCK ANYMORE) */
 const ctx=document.getElementById("tempChart").getContext("2d");

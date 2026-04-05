@@ -199,7 +199,23 @@ def latest():
         print("❌ LATEST ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
+# TREND (last 5 readings)
+cur.execute("""
+    SELECT temperature
+    FROM weather
+    ORDER BY id DESC
+    LIMIT 5
+""")
 
+temps = [t[0] for t in cur.fetchall() if t[0] is not None]
+
+trend = "Stable"
+
+if len(temps) >= 2:
+    if temps[0] > temps[-1]:
+        trend = "Rising"
+    elif temps[0] < temps[-1]:
+        trend = "Falling"
 # ================= HISTORY =================
 
 @app.route("/api/history")

@@ -78,7 +78,6 @@ def receive_data():
         if not data:
             return jsonify({"error": "Invalid JSON"}), 400
 
-        # SAFE DATA
         temperature = data.get("temperature")
         humidity = data.get("humidity")
         rain_value = data.get("rain_value")
@@ -87,7 +86,6 @@ def receive_data():
         wind_direction = data.get("wind_direction", "N/A")
         visibility = data.get("visibility", 0)
 
-        # ALERT SYSTEM
         alerts = []
 
         if wind_speed > 30:
@@ -104,7 +102,6 @@ def receive_data():
 
         alert = ", ".join(alerts) if alerts else "Normal"
 
-        # DB INSERT
         try:
             con = get_db()
             cur = con.cursor()
@@ -161,7 +158,6 @@ def latest():
 
         seconds = (now - created_time).total_seconds()
 
-        # 🔥 FIXED OFFLINE LOGIC
         device_status = "Offline" if seconds > 20 else "Online"
 
         if device_status == "Offline":
@@ -178,6 +174,24 @@ def latest():
         max_temp = float(stats[1]) if stats[1] else None
         avg_temp = round(float(stats[2]), 2) if stats[2] else None
 
+        # ✅ TREND FIX (correct placement)
+        cur.execute("""
+            SELECT temperature
+            FROM weather
+            ORDER BY id DESC
+            LIMIT 5
+        """)
+
+        temps = [t[0] for t in cur.fetchall() if t[0] is not None]
+
+        trend = "Stable"
+
+        if len(temps) >= 2:
+            if temps[0] > temps[-1]:
+                trend = "Rising"
+            elif temps[0] < temps[-1]:
+                trend = "Falling"
+
         cur.close()
         con.close()
 
@@ -192,6 +206,7 @@ def latest():
             "min_temp": min_temp,
             "max_temp": max_temp,
             "avg_temp": avg_temp,
+            "trend": trend,
             "device_status": device_status
         })
 
@@ -199,23 +214,7 @@ def latest():
         print("❌ LATEST ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
-# TREND (last 5 readings)
-cur.execute("""
-    SELECT temperature
-    FROM weather
-    ORDER BY id DESC
-    LIMIT 5
-""")
 
-temps = [t[0] for t in cur.fetchall() if t[0] is not None]
-
-trend = "Stable"
-
-if len(temps) >= 2:
-    if temps[0] > temps[-1]:
-        trend = "Rising"
-    elif temps[0] < temps[-1]:
-        trend = "Falling"
 # ================= HISTORY =================
 
 @app.route("/api/history")
@@ -227,7 +226,6 @@ def history():
         cur = con.cursor()
 
         if mode == "daily":
-            # ✅ LAST 7 DAYS
             cur.execute("""
                 SELECT 
                     DATE(created_at) AS day,
@@ -238,7 +236,6 @@ def history():
                 ORDER BY day ASC
             """)
         else:
-            # ✅ LAST 12 HOURS (FIXED VERSION)
             cur.execute("""
                 WITH hours AS (
                     SELECT generate_series(
@@ -270,7 +267,8 @@ def history():
         print("HISTORY ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
-#==============Export=============
+
+# ================= EXPORT =================
 
 @app.route("/api/export")
 def export_csv():

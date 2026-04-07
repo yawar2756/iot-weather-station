@@ -165,8 +165,6 @@ def receive_data():
 def latest():
     global latest_cache
     
-    if latest_cache:
-        return jsonify(latest_cache)
     try:
         con = get_db()
         cur = con.cursor()
@@ -235,22 +233,39 @@ def latest():
         cur.close()
         con.close()
 
+               # 🔥 use cache for latest values, DB for stats
+        if latest_cache:
+            temperature = latest_cache.get("temperature", row[0])
+            humidity = latest_cache.get("humidity", row[1])
+            rain = latest_cache.get("rain", row[2])
+            wind_speed = latest_cache.get("wind_speed", row[3])
+            visibility = latest_cache.get("visibility", row[5])
+            visibility_status = latest_cache.get("visibility_status", "OK")
+            alert = latest_cache.get("alert", row[6])
+        else:
+            temperature = row[0]
+            humidity = row[1]
+            rain = row[2]
+            wind_speed = row[3]
+            visibility = row[5]
+            visibility_status = "Not Connected" if row[5] == -1 else "OK"
+            alert = row[6]
+        
         return jsonify({
-            "temperature": row[0],
-            "humidity": row[1],
-            "rain": row[2],
-            "wind_speed": row[3],
+            "temperature": temperature,
+            "humidity": humidity,
+            "rain": rain,
+            "wind_speed": wind_speed,
             "wind_direction": row[4],
-            "visibility": row[5],
-            "visibility_status": "Not Connected" if row[5] == -1 else "OK",
-            "alert": row[6],
+            "visibility": visibility,
+            "visibility_status": visibility_status,
+            "alert": alert,
             "min_temp": min_temp,
             "max_temp": max_temp,
             "avg_temp": avg_temp,
             "trend": trend,
             "device_status": device_status
         })
-
     except Exception as e:
         print("❌ LATEST ERROR:", e)
         return jsonify({"error": str(e)}), 500

@@ -208,6 +208,7 @@ def latest():
             "wind_speed": row[3],
             "wind_direction": row[4],
             "visibility": row[5],
+            "visibility_status": "Not Connected" if row[5] == -1 else "OK",
             "alert": row[6],
             "min_temp": min_temp,
             "max_temp": max_temp,

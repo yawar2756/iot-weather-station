@@ -1,5 +1,7 @@
 import os
 import psycopg2
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask import Flask, request, jsonify, render_template, Response
 from flask_cors import CORS
 from datetime import datetime
@@ -8,6 +10,7 @@ import io
 API_KEY = "gpcaweatherstation25"
 
 app = Flask(__name__)
+limiter = Limiter(get_remote_address, app=app)
 CORS(app)
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -73,6 +76,7 @@ def health():
 # ================= RECEIVE DATA =================
 
 @app.route("/api/data", methods=["POST"])
+@limiter.limit("20 per minute")
 def receive_data():
     if request.headers.get("x-api-key") != API_KEY:
         return jsonify({"error": "Unauthorized"}), 401

@@ -5,6 +5,7 @@ from flask_cors import CORS
 from datetime import datetime
 import csv
 import io
+API_KEY = "gpcaweatherstation25"
 
 app = Flask(__name__)
 CORS(app)
@@ -73,6 +74,8 @@ def health():
 
 @app.route("/api/data", methods=["POST"])
 def receive_data():
+    if request.headers.get("x-api-key") != API_KEY:
+        return jsonify({"error": "Unauthorized"}), 401
     try:
         data = request.get_json(silent=True)
 

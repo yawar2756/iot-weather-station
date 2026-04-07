@@ -95,7 +95,7 @@ def receive_data():
         if temperature and temperature > 40:
             alerts.append("Heat Alert")
 
-       if visibility_status != "Not Connected" and visibility and visibility < 20:
+        if visibility_status != "Not Connected" and visibility and visibility < 20:
             alerts.append("Low Visibility")
 
         if rain_status and rain_status.lower() in ["light rain", "heavy rain"]:

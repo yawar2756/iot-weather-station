@@ -228,11 +228,16 @@ const res=await fetch("/api/history?mode="+mode);
 if(!res.ok)return;
 
 const data=await res.json();
-if(!data || data.length===0)return;
+if(!data || data.length===0){
+  data = [];
+}
 
 const temps=data.map(d=>d.temperature??0);
-
-const times=data.map(d=>{
+if(temps.length === 0){
+  temps.push(0);
+}
+  
+const times=(data.length ? data : [{time:new Date()}]).map(d=>{  
 const date=new Date(d.time);
 return mode==="hourly"
 ?date.getHours().toString().padStart(2,'0')+":00"

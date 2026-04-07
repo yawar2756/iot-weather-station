@@ -56,6 +56,19 @@ background: linear-gradient(90deg,#00e5ff,#00ffcc);
 .status{margin-top:10px;font-weight:bold}
 .update-time{margin-top:6px;font-size:13px;opacity:0.7}
 
+#loadingText{
+opacity:0.7;
+font-size:14px;
+margin-top:10px;
+animation:pulse 1.5s infinite;
+}
+
+@keyframes pulse{
+0%{opacity:0.4}
+50%{opacity:1}
+100%{opacity:0.4}
+}
+
 .grid{display:grid;gap:20px}
 
 .kpi-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:30px;}
@@ -140,6 +153,7 @@ border:1px solid rgba(255,165,0,0.4);
 <div class="temperature" id="temp">-- °C</div>
 <div class="trend" id="trend">➖ Stable</div>
 <div id="deviceStatus" class="status">⏳ Loading data...</div>
+<div id="loadingText">⏳ Fetching live weather data...</div>
 <div class="update-time" id="updateTime">Updated --</div>
 <br>
 <div id="liveClock"></div>
@@ -175,14 +189,14 @@ border:1px solid rgba(255,165,0,0.4);
 let chart=null;
 let lastUpdateTime=null;
 let clockTimer=null;
+let lastDataCache=null;
 
-/* smooth update (safe) */
 function smoothUpdate(id,value){
 const el=document.getElementById(id);
 if(!el)return;
 if(el.innerText===value)return;
 
-el.style.transition="opacity 0.2s ease";  // ADD THIS
+el.style.transition="opacity 0.2s ease";
 el.style.opacity=0;
 
 setTimeout(()=>{
@@ -191,7 +205,6 @@ setTimeout(()=>{
 },200);
 }
 
-/* counter */
 function updateCounter(){
 if(!lastUpdateTime)return;
 const sec=Math.floor((Date.now()-lastUpdateTime)/1000);
@@ -199,22 +212,24 @@ document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
-/* fetch */
 async function fetchData(){
 try{
 const res=await fetch("/api/latest");
 
 if(!res.ok){
-document.getElementById("deviceStatus").innerText="🔴 Offline";
+document.getElementById("deviceStatus").innerText="⚠ Connection Issue";
 return;
 }
 
 const data=await res.json();
 
 if(data.message){
-document.getElementById("deviceStatus").innerText="⚠ No Data Yet";
+document.getElementById("deviceStatus").innerText="⏳ Waiting for sensor data...";
 return;
 }
+
+document.getElementById("loadingText").style.display="none";
+lastDataCache=data;
 
 document.getElementById("deviceStatus").innerText =
 data.device_status==="Online"?"🟢 Device Online":"🔴 Offline";
@@ -251,7 +266,17 @@ alertBox.style.display="none";
 
 }catch(e){
 console.log("fetch error:",e);
+
+if(lastDataCache){
+const d=lastDataCache;
+
+smoothUpdate("temp",d.temperature!=null?Number(d.temperature).toFixed(1)+" °C":"-- °C");
+smoothUpdate("hum",d.humidity!=null?Number(d.humidity).toFixed(0)+" %":"-- %");
+
+document.getElementById("deviceStatus").innerText="⚠ Showing last data";
+}else{
 document.getElementById("deviceStatus").innerText="🔴 Offline";
+}
 }
 }
 
@@ -317,7 +342,7 @@ document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeSt
 
 function updateDate(){
 const now=new Date();
-document.getElementById("dateLabel").innerText="📅 "+now.toLocaleDateString();
+document.getElementById("dateLabel").innerText="📅 "+now.toLocaleDateString('en-US',{month:'long',day:'numeric'});
 }
 
 function startClock(){

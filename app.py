@@ -15,6 +15,9 @@ CORS(app)
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# 🔥 ADD HERE
+latest_cache = None
+
 
 # ================= DATABASE =================
 
@@ -136,7 +139,19 @@ def receive_data():
         except Exception as db_error:
             print("❌ DB ERROR:", db_error)
             return jsonify({"error": "Database Failed"}), 500
+        global latest_cache
 
+        latest_cache = {
+            "temperature": temperature,
+            "humidity": humidity,
+            "rain": rain_status,
+            "wind_speed": wind_speed,
+            "visibility": visibility,
+            "visibility_status": visibility_status,
+            "alert": alert,
+            "trend": "Stable",  # optional (frontend expects it)
+            "device_status": "Online"
+        }
         return jsonify({"status": "stored", "alert": alert})
 
     except Exception as e:
@@ -148,6 +163,10 @@ def receive_data():
 
 @app.route("/api/latest")
 def latest():
+    global latest_cache
+    
+    if latest_cache:
+        return jsonify(latest_cache)
     try:
         con = get_db()
         cur = con.cursor()

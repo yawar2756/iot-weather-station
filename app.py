@@ -85,6 +85,7 @@ def receive_data():
         wind_speed = data.get("wind_speed", 0)
         wind_direction = data.get("wind_direction", "N/A")
         visibility = data.get("visibility", 0)
+        visibility_status = data.get("visibility_status", "OK")
 
         alerts = []
 
@@ -94,7 +95,7 @@ def receive_data():
         if temperature and temperature > 40:
             alerts.append("Heat Alert")
 
-        if visibility and visibility < 20:
+       if visibility_status != "Not Connected" and visibility and visibility < 20:
             alerts.append("Low Visibility")
 
         if rain_status and rain_status.lower() in ["light rain", "heavy rain"]:

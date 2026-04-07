@@ -75,6 +75,9 @@ def about():
 def health():
     return jsonify({"status": "running"})
 
+@app.route("/ping")
+def ping():
+    return "ok"
 
 # ================= RECEIVE DATA =================
 

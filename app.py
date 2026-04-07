@@ -116,7 +116,7 @@ def receive_data():
         if visibility_status != "Not Connected" and visibility and visibility < 20:
             alerts.append("Low Visibility")
 
-        if rain_status and rain_status.lower() in ["light rain", "heavy rain"]:
+        if rain_status != "Not Connected" and rain_status and rain_status.lower() in ["light rain", "heavy rain"]:
             alerts.append("Rain Alert")
 
         alert = ", ".join(alerts) if alerts else "Normal"

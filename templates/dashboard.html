@@ -119,6 +119,7 @@ font-weight:bold;
 <div class="trend" id="trend">➖ Stable</div>
 <div id="deviceStatus" class="status">⏳ Loading data...</div>
 <div class="update-time" id="updateTime">Updated --</div>
+<br>
 <div id="liveClock"></div>
 <div id="alertBox" class="alert"></div>
 </div>
@@ -137,7 +138,7 @@ font-weight:bold;
 </div>
 
 <div class="chart-section">
-<label>📅 View Mode:</label>
+<label id="dateLabel">📅 Loading...</label>
 <select id="chartMode" onchange="loadChart()">
 <option value="hourly">Last 12 Hours</option>
 <option value="daily">Last 7 Days</option>
@@ -292,6 +293,24 @@ function liveClock(){
 document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();
 }
 
+function liveClock(){
+document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();
+}
+
+/* 🔥 ADD THIS BELOW */
+function updateDate(){
+  const now = new Date();
+
+  const options = {
+    month: 'long',
+    day: 'numeric'
+  };
+
+  const formatted = now.toLocaleDateString('en-US', options);
+
+  document.getElementById("dateLabel").innerText = "📅 " + formatted;
+}
+  
 function startClock(){
 liveClock();
 if(clockTimer)clearInterval(clockTimer);
@@ -303,6 +322,7 @@ window.addEventListener("load",()=>{
 fetchData();
 loadChart();
 startClock();
+updateDate(); 
 });
 
 /* AUTO REFRESH */

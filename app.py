@@ -186,16 +186,24 @@ def latest():
             SELECT temperature
             FROM weather
             ORDER BY id DESC
-            LIMIT 5
+            LIMIT 6
         """)
 
         temps = [t[0] for t in cur.fetchall() if t[0] is not None]
-
+        
         trend = "Stable"
-        if len(temps) >= 2:
-            if temps[0] > temps[-1]:
+        
+        if len(temps) >= 3:
+            changes = []
+            for i in range(len(temps) - 1):
+                diff = temps[i] - temps[i + 1]
+                changes.append(diff)
+        
+            avg_change = sum(changes) / len(changes)
+        
+            if avg_change > 0.5:
                 trend = "Rising"
-            elif temps[0] < temps[-1]:
+            elif avg_change < -0.5:
                 trend = "Falling"
 
         cur.close()

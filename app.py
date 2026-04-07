@@ -132,13 +132,13 @@ def receive_data():
 
 
 # ================= LATEST =================
-
 @app.route("/api/latest")
 def latest():
     try:
         con = get_db()
         cur = con.cursor()
 
+        # ===== GET LATEST DATA =====
         cur.execute("""
             SELECT temperature, humidity, rain_status,
                    wind_speed, wind_direction, visibility,
@@ -163,18 +163,23 @@ def latest():
         if device_status == "Offline":
             return jsonify({"device_status": "Offline"})
 
-        # STATS
+        # ===== STATS (FIXED → LAST 12 HOURS) =====
         cur.execute("""
-            SELECT MIN(temperature), MAX(temperature), AVG(temperature)
+            SELECT 
+                MIN(temperature),
+                MAX(temperature),
+                AVG(temperature)
             FROM weather
+            WHERE created_at >= NOW() - INTERVAL '12 hours'
         """)
+
         stats = cur.fetchone()
 
         min_temp = float(stats[0]) if stats[0] else None
         max_temp = float(stats[1]) if stats[1] else None
         avg_temp = round(float(stats[2]), 2) if stats[2] else None
 
-        # ✅ TREND FIX (correct placement)
+        # ===== TREND =====
         cur.execute("""
             SELECT temperature
             FROM weather
@@ -195,6 +200,7 @@ def latest():
         cur.close()
         con.close()
 
+        # ===== RESPONSE =====
         return jsonify({
             "temperature": row[0],
             "humidity": row[1],

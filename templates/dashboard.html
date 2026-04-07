@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <meta charset="UTF-8">
@@ -16,7 +15,10 @@ font-family:'Segoe UI',sans-serif;
 background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 color:white;
 overflow-x:hidden;
+animation: fadePage 0.6s ease;
 }
+
+@keyframes fadePage{from{opacity:0}to{opacity:1}}
 
 .header{
 background:rgba(0,0,0,0.4);
@@ -38,35 +40,42 @@ text-decoration:none;
 font-size:13px;
 }
 
-.container{
-width:100%;
-padding:20px;
-box-sizing:border-box;
-}
+.container{width:100%;padding:20px;box-sizing:border-box;}
 
 .hero{text-align:center;margin-bottom:30px}
-.temperature{font-size:72px;font-weight:700}
+
+.temperature{
+font-size:72px;
+font-weight:700;
+background: linear-gradient(90deg,#00e5ff,#00ffcc);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+}
+
 .trend{font-size:18px;margin-top:5px}
 .status{margin-top:10px;font-weight:bold}
 .update-time{margin-top:6px;font-size:13px;opacity:0.7}
 
 .grid{display:grid;gap:20px}
 
-.kpi-grid{
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-margin-bottom:30px;
-}
-
-.analytics-grid{
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-margin-bottom:30px;
-}
+.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:30px;}
+.analytics-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-bottom:30px;}
 
 .card{
-background:rgba(255,255,255,0.08);
+background: rgba(255,255,255,0.08);
+backdrop-filter: blur(12px);
+-webkit-backdrop-filter: blur(12px);
 padding:20px;
-border-radius:15px;
+border-radius:18px;
 text-align:center;
+border:1px solid rgba(255,255,255,0.15);
+box-shadow:0 8px 25px rgba(0,0,0,0.3);
+transition:0.3s;
+}
+
+.card:hover{
+transform: translateY(-5px);
+box-shadow:0 12px 35px rgba(0,0,0,0.5);
 }
 
 .chart-section{
@@ -76,22 +85,35 @@ border-radius:15px;
 height:320px;
 }
 
-/* 🔥 FIX 2 */
 canvas{
-width:100% !important;
-height:100% !important;
+width:100%!important;
+height:100%!important;
 }
 
 .alert{
 display:none;
 margin-top:15px;
-padding:14px;
-border-radius:12px;
+padding:16px;
+border-radius:14px;
 font-weight:bold;
+backdrop-filter: blur(10px);
+animation: fadeIn 0.4s ease;
 }
 
-.alert-danger{background:#cc0000}
-.alert-warning{background:#ff8000}
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(-10px);}
+to{opacity:1;transform:translateY(0);}
+}
+
+.alert-danger{
+background: rgba(255,0,0,0.25);
+border:1px solid rgba(255,0,0,0.4);
+}
+
+.alert-warning{
+background: rgba(255,165,0,0.25);
+border:1px solid rgba(255,165,0,0.4);
+}
 
 @media(max-width:768px){
 .temperature{font-size:46px}
@@ -154,7 +176,22 @@ let chart=null;
 let lastUpdateTime=null;
 let clockTimer=null;
 
-/* COUNTER */
+/* smooth update (safe) */
+function smoothUpdate(id,value){
+const el=document.getElementById(id);
+if(!el)return;
+if(el.innerText===value)return;
+
+el.style.transition="opacity 0.2s ease";  // ADD THIS
+el.style.opacity=0;
+
+setTimeout(()=>{
+  el.innerText=value;
+  el.style.opacity=1;
+},200);
+}
+
+/* counter */
 function updateCounter(){
 if(!lastUpdateTime)return;
 const sec=Math.floor((Date.now()-lastUpdateTime)/1000);
@@ -162,7 +199,7 @@ document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
-/* FETCH */
+/* fetch */
 async function fetchData(){
 try{
 const res=await fetch("/api/latest");
@@ -184,20 +221,19 @@ data.device_status==="Online"?"🟢 Device Online":"🔴 Offline";
 
 lastUpdateTime=Date.now();
 
-document.getElementById("temp").innerText=data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C";
-document.getElementById("hum").innerText=data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %";
-document.getElementById("windSpeed").innerText=data.wind_speed!=null?Number(data.wind_speed).toFixed(1)+" km/h":"-- km/h";
+smoothUpdate("temp",data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C");
+smoothUpdate("hum",data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %");
+smoothUpdate("windSpeed",data.wind_speed!=null?Number(data.wind_speed).toFixed(1)+" km/h":"-- km/h");
 
-document.getElementById("visibility").innerText =
-data.visibility_status === "Not Connected"
-? "Not Connected"
-: (data.visibility!=null ? Number(data.visibility).toFixed(0)+" %" : "-- %");
+smoothUpdate("visibility",
+data.visibility_status==="Not Connected"
+?"Not Connected"
+:(data.visibility!=null?Number(data.visibility).toFixed(0)+" %":"-- %"));
 
-document.getElementById("rain").innerText=data.rain??"--";
-
-document.getElementById("minTemp").innerText=data.min_temp!=null?Number(data.min_temp).toFixed(1)+" °C":"-- °C";
-document.getElementById("maxTemp").innerText=data.max_temp!=null?Number(data.max_temp).toFixed(1)+" °C":"-- °C";
-document.getElementById("avgTemp").innerText=data.avg_temp!=null?Number(data.avg_temp).toFixed(1)+" °C":"-- °C";
+smoothUpdate("rain",data.rain??"--");
+smoothUpdate("minTemp",data.min_temp!=null?Number(data.min_temp).toFixed(1)+" °C":"-- °C");
+smoothUpdate("maxTemp",data.max_temp!=null?Number(data.max_temp).toFixed(1)+" °C":"-- °C");
+smoothUpdate("avgTemp",data.avg_temp!=null?Number(data.avg_temp).toFixed(1)+" °C":"-- °C");
 
 document.getElementById("trend").innerText=
 data.trend==="Rising"?"📈 Rising":
@@ -219,7 +255,7 @@ document.getElementById("deviceStatus").innerText="🔴 Offline";
 }
 }
 
-/* CHART */
+/* chart */
 async function loadChart(){
 try{
 const mode=document.getElementById("chartMode").value;
@@ -227,17 +263,13 @@ const mode=document.getElementById("chartMode").value;
 const res=await fetch("/api/history?mode="+mode);
 if(!res.ok)return;
 
-const data=await res.json();
-if(!data || data.length===0){
-  data = [];
-}
+let data=await res.json();
+if(!data)data=[];
 
 const temps=data.map(d=>d.temperature??0);
-if(temps.length === 0){
-  temps.push(0);
-}
-  
-const times=(data.length ? data : [{time:new Date()}]).map(d=>{  
+if(temps.length===0)temps.push(0);
+
+const times=(data.length?data:[{time:new Date()}]).map(d=>{
 const date=new Date(d.time);
 return mode==="hourly"
 ?date.getHours().toString().padStart(2,'0')+":00"
@@ -246,21 +278,11 @@ return mode==="hourly"
 
 const ctx=document.getElementById("tempChart").getContext("2d");
 
-/* UPDATE */
-if(chart){
-chart.data.labels=times;
-chart.data.datasets[0].data=temps;
-chart.update();
-return;
-}
+if(chart)chart.destroy();
 
-/* CREATE */
 const gradient=ctx.createLinearGradient(0,0,0,300);
 gradient.addColorStop(0,"rgba(0,229,255,0.45)");
 gradient.addColorStop(1,"rgba(0,229,255,0.02)");
-
-/* 🔥 FIX 3 */
-Chart.defaults.devicePixelRatio = window.devicePixelRatio;
 
 chart=new Chart(ctx,{
 type:"line",
@@ -279,12 +301,7 @@ borderWidth:3
 },
 options:{
 responsive:true,
-maintainAspectRatio:false,
-devicePixelRatio: window.devicePixelRatio,   // 🔥 FIX 1
-scales:{
-x:{ticks:{color:"#00e5ff"},grid:{color:"rgba(255,255,255,0.15)"}},
-y:{ticks:{color:"#ffffff"},grid:{color:"rgba(255,255,255,0.1)"}}
-}
+maintainAspectRatio:false
 }
 });
 
@@ -293,44 +310,29 @@ console.log("chart error:",e);
 }
 }
 
-/* CLOCK */
+/* clock */
 function liveClock(){
 document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();
 }
 
-function liveClock(){
-document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();
-}
-
-/* 🔥 ADD THIS BELOW */
 function updateDate(){
-  const now = new Date();
-
-  const options = {
-    month: 'long',
-    day: 'numeric'
-  };
-
-  const formatted = now.toLocaleDateString('en-US', options);
-
-  document.getElementById("dateLabel").innerText = "📅 " + formatted;
+const now=new Date();
+document.getElementById("dateLabel").innerText="📅 "+now.toLocaleDateString();
 }
-  
+
 function startClock(){
 liveClock();
 if(clockTimer)clearInterval(clockTimer);
 clockTimer=setInterval(liveClock,1000);
 }
 
-/* INIT */
 window.addEventListener("load",()=>{
 fetchData();
 loadChart();
 startClock();
-updateDate(); 
+updateDate();
 });
 
-/* AUTO REFRESH */
 setInterval(()=>{if(!document.hidden)fetchData();},10000);
 setInterval(()=>{if(!document.hidden)loadChart();},15000);
 

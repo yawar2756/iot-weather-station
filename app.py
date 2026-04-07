@@ -1,8 +1,10 @@
 import os
 import psycopg2
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from flask_cors import CORS
 from datetime import datetime
+import csv
+import io
 
 app = Flask(__name__)
 CORS(app)
@@ -62,7 +64,6 @@ def dashboard():
 def about():
     return render_template("about.html")
 
-
 @app.route("/health")
 def health():
     return jsonify({"status": "running"})
@@ -87,6 +88,10 @@ def receive_data():
         visibility = data.get("visibility", 0)
         visibility_status = data.get("visibility_status", "OK")
 
+        # 🔥 FIX: handle sensor not connected
+        if visibility_status == "Not Connected":
+            visibility = -1
+
         alerts = []
 
         if wind_speed > 30:
@@ -100,6 +105,7 @@ def receive_data():
 
         if rain_status and rain_status.lower() in ["light rain", "heavy rain"]:
             alerts.append("Rain Alert")
+
         alert = ", ".join(alerts) if alerts else "Normal"
 
         try:
@@ -132,13 +138,13 @@ def receive_data():
 
 
 # ================= LATEST =================
+
 @app.route("/api/latest")
 def latest():
     try:
         con = get_db()
         cur = con.cursor()
 
-        # ===== GET LATEST DATA =====
         cur.execute("""
             SELECT temperature, humidity, rain_status,
                    wind_speed, wind_direction, visibility,
@@ -157,18 +163,14 @@ def latest():
         now = datetime.utcnow()
 
         seconds = (now - created_time).total_seconds()
-
         device_status = "Offline" if seconds > 20 else "Online"
 
         if device_status == "Offline":
             return jsonify({"device_status": "Offline"})
 
-        # ===== STATS (FIXED → LAST 12 HOURS) =====
+        # ===== STATS (LAST 12 HOURS) =====
         cur.execute("""
-            SELECT 
-                MIN(temperature),
-                MAX(temperature),
-                AVG(temperature)
+            SELECT MIN(temperature), MAX(temperature), AVG(temperature)
             FROM weather
             WHERE created_at >= NOW() - INTERVAL '12 hours'
         """)
@@ -190,7 +192,6 @@ def latest():
         temps = [t[0] for t in cur.fetchall() if t[0] is not None]
 
         trend = "Stable"
-
         if len(temps) >= 2:
             if temps[0] > temps[-1]:
                 trend = "Rising"
@@ -200,7 +201,6 @@ def latest():
         cur.close()
         con.close()
 
-        # ===== RESPONSE =====
         return jsonify({
             "temperature": row[0],
             "humidity": row[1],
@@ -304,9 +304,6 @@ def export_csv():
         cur.close()
         con.close()
 
-        import csv
-        import io
-
         output = io.StringIO()
         writer = csv.writer(output)
 
@@ -327,8 +324,6 @@ def export_csv():
                 row[5] if row[5] else "",
                 f"{row[6]} %" if row[6] else ""
             ])
-
-        from flask import Response
 
         return Response(
             output.getvalue(),

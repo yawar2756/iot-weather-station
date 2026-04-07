@@ -225,16 +225,24 @@ def history():
         con = get_db()
         cur = con.cursor()
 
-        if mode == "daily":
-            cur.execute("""
-                SELECT 
-                    DATE(created_at) AS day,
-                    ROUND(AVG(temperature)::numeric, 2)
-                FROM weather
-                WHERE created_at >= NOW() - INTERVAL '7 days'
-                GROUP BY day
-                ORDER BY day ASC
-            """)
+       if mode == "daily":
+    cur.execute("""
+        WITH days AS (
+            SELECT generate_series(
+                CURRENT_DATE - INTERVAL '6 days',
+                CURRENT_DATE,
+                INTERVAL '1 day'
+            ) AS day
+        )
+        SELECT 
+            d.day,
+            COALESCE(ROUND(AVG(w.temperature)::numeric, 2), 0)
+        FROM days d
+        LEFT JOIN weather w
+            ON DATE(w.created_at) = d.day
+        GROUP BY d.day
+        ORDER BY d.day ASC
+    """)
         else:
             cur.execute("""
                 WITH hours AS (

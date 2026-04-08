@@ -12,7 +12,7 @@ app = Flask(__name__)
 CORS(app)
 
 # 🔐 SECURITY
-API_KEY = os.environ.get("gpcaweatherstation25")
+API_KEY = "gpcaweatherstation25"
 
 # ⚡ RATE LIMIT
 limiter = Limiter(get_remote_address, app=app, default_limits=["10 per minute"])

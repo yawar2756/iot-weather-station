@@ -108,9 +108,9 @@ def receive_data():
         humidity = data.get("humidity")
         rain_value = data.get("rain_value")
         rain_status = data.get("rain_status", "No Rain")
-        wind_speed = data.get("wind_speed", 0)
+        wind_speed = data.get("wind_speed")
         wind_direction = data.get("wind_direction", "N/A")
-        visibility = data.get("visibility", 0)
+        visibility = data.get("visibility")
         visibility_status = data.get("visibility_status", "OK")
 
         # 🔧 HANDLE NOT CONNECTED
@@ -120,16 +120,17 @@ def receive_data():
         # 🚨 ALERTS
         alerts = []
 
-        if wind_speed and wind_speed > 30:
+        # ✅ SAFE CHECKS (NO CRASH)
+        if wind_speed is not None and wind_speed > 30:
             alerts.append("Storm Warning")
-
-        if temperature and temperature > 40:
+        
+        if temperature is not None and temperature > 40:
             alerts.append("Heat Alert")
-
-        if visibility_status != "Not Connected" and visibility and visibility < 20:
+        
+        if visibility_status != "Not Connected" and visibility is not None and visibility < 20:
             alerts.append("Low Visibility")
-
-        if rain_status != "Not Connected" and rain_status.lower() in ["light rain", "heavy rain"]:
+        
+        if rain_status != "Not Connected" and rain_status and rain_status.lower() in ["light rain", "heavy rain"]:
             alerts.append("Rain Alert")
 
         alert = ", ".join(alerts) if alerts else "Normal"

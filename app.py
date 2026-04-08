@@ -14,9 +14,6 @@ CORS(app)
 # 🔐 SECURITY
 API_KEY = "gpcaweatherstation25"
 
-# ⚡ RATE LIMIT
-limiter = Limiter(get_remote_address, app=app, default_limits=["10 per minute"])
-
 # 📦 DATABASE
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -27,7 +24,11 @@ latest_cache = None
 # ================= DATABASE =================
 
 def get_db():
-    return psycopg2.connect(DATABASE_URL, sslmode="require")
+    try:
+        return psycopg2.connect(DATABASE_URL, sslmode="require")
+    except Exception as e:
+        print("DB CONNECTION ERROR:", e)
+        return None
 
 
 def init_db():

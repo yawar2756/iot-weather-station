@@ -67,6 +67,10 @@ def about():
 def ping():
     return "ok"
 
+@app.route("/health")
+def health():
+    return "ok"
+
 # ================= ALERT SYSTEM =================
 def generate_alert(temp, wind, visibility, rain):
     alerts = []

@@ -53,7 +53,7 @@ else:
 # ================= PAGES =================
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return "SERVER RUNNING ✅"
 
 @app.route("/dashboard")
 def dashboard():

@@ -298,7 +298,7 @@ const times=(data.length?data:[{time:new Date()}]).map(d=>{
 const date=new Date(d.time);
 return mode==="hourly"
 ?date.getHours().toString().padStart(2,'0')+":00"
-:date.toLocaleDateString();
+:date.toLocaleDateString('en-US',{month:'short',day:'numeric'});
 });
 
 const ctx=document.getElementById("tempChart").getContext("2d");

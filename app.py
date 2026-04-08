@@ -92,7 +92,6 @@ def ping():
 # ================= RECEIVE DATA =================
 
 @app.route("/api/data", methods=["POST"])
-@limiter.limit("10 per minute")
 def receive_data():
 
     # 🔐 API KEY CHECK

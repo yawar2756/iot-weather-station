@@ -7,15 +7,20 @@ from flask_cors import CORS
 from datetime import datetime
 import csv
 import io
-API_KEY = "gpcaweatherstation25"
 
 app = Flask(__name__)
-limiter = Limiter(get_remote_address, app=app)
 CORS(app)
 
+# 🔐 SECURITY
+API_KEY = os.environ.get("gpcaweatherstation25")
+
+# ⚡ RATE LIMIT
+limiter = Limiter(get_remote_address, app=app, default_limits=["10 per minute"])
+
+# 📦 DATABASE
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# 🔥 ADD HERE
+# ⚡ CACHE
 latest_cache = None
 
 
@@ -54,7 +59,10 @@ def init_db():
         print("❌ DB INIT ERROR:", e)
 
 
-init_db()
+if DATABASE_URL:
+    init_db()
+else:
+    print("❌ DATABASE_URL missing")
 
 
 # ================= PAGES =================
@@ -79,13 +87,17 @@ def health():
 def ping():
     return "ok"
 
+
 # ================= RECEIVE DATA =================
 
 @app.route("/api/data", methods=["POST"])
-@limiter.limit("20 per minute")
+@limiter.limit("10 per minute")
 def receive_data():
+
+    # 🔐 API KEY CHECK
     if request.headers.get("x-api-key") != API_KEY:
         return jsonify({"error": "Unauthorized"}), 401
+
     try:
         data = request.get_json(silent=True)
 
@@ -101,13 +113,14 @@ def receive_data():
         visibility = data.get("visibility", 0)
         visibility_status = data.get("visibility_status", "OK")
 
-        # 🔥 FIX: handle sensor not connected
+        # 🔧 HANDLE NOT CONNECTED
         if visibility_status == "Not Connected":
             visibility = -1
 
+        # 🚨 ALERTS
         alerts = []
 
-        if wind_speed > 30:
+        if wind_speed and wind_speed > 30:
             alerts.append("Storm Warning")
 
         if temperature and temperature > 40:
@@ -116,11 +129,12 @@ def receive_data():
         if visibility_status != "Not Connected" and visibility and visibility < 20:
             alerts.append("Low Visibility")
 
-        if rain_status != "Not Connected" and rain_status and rain_status.lower() in ["light rain", "heavy rain"]:
+        if rain_status != "Not Connected" and rain_status.lower() in ["light rain", "heavy rain"]:
             alerts.append("Rain Alert")
 
         alert = ", ".join(alerts) if alerts else "Normal"
 
+        # 💾 STORE IN DB
         try:
             con = get_db()
             cur = con.cursor()
@@ -142,8 +156,9 @@ def receive_data():
         except Exception as db_error:
             print("❌ DB ERROR:", db_error)
             return jsonify({"error": "Database Failed"}), 500
-        global latest_cache
 
+        # ⚡ UPDATE CACHE (NO device_status here)
+        global latest_cache
         latest_cache = {
             "temperature": temperature,
             "humidity": humidity,
@@ -151,10 +166,9 @@ def receive_data():
             "wind_speed": wind_speed,
             "visibility": visibility,
             "visibility_status": visibility_status,
-            "alert": alert,
-            "trend": "Stable",  # optional (frontend expects it)
-            "device_status": "Online"
+            "alert": alert
         }
+
         return jsonify({"status": "stored", "alert": alert})
 
     except Exception as e:
@@ -167,7 +181,7 @@ def receive_data():
 @app.route("/api/latest")
 def latest():
     global latest_cache
-    
+
     try:
         con = get_db()
         cur = con.cursor()
@@ -190,12 +204,12 @@ def latest():
         now = datetime.utcnow()
 
         seconds = (now - created_time).total_seconds()
-        device_status = "Offline" if seconds > 20 else "Online"
+        device_status = "Offline" if seconds > 40 else "Online"
 
         if device_status == "Offline":
             return jsonify({"device_status": "Offline"})
 
-        # ===== STATS (LAST 12 HOURS) =====
+        # 📊 STATS (12 HOURS)
         cur.execute("""
             SELECT MIN(temperature), MAX(temperature), AVG(temperature)
             FROM weather
@@ -208,7 +222,7 @@ def latest():
         max_temp = float(stats[1]) if stats[1] else None
         avg_temp = round(float(stats[2]), 2) if stats[2] else None
 
-        # ===== TREND =====
+        # 📈 TREND (SMART)
         cur.execute("""
             SELECT temperature
             FROM weather
@@ -217,17 +231,13 @@ def latest():
         """)
 
         temps = [t[0] for t in cur.fetchall() if t[0] is not None]
-        
+
         trend = "Stable"
-        
+
         if len(temps) >= 3:
-            changes = []
-            for i in range(len(temps) - 1):
-                diff = temps[i] - temps[i + 1]
-                changes.append(diff)
-        
+            changes = [(temps[i] - temps[i+1]) for i in range(len(temps)-1)]
             avg_change = sum(changes) / len(changes)
-        
+
             if avg_change > 0.5:
                 trend = "Rising"
             elif avg_change < -0.5:
@@ -236,7 +246,7 @@ def latest():
         cur.close()
         con.close()
 
-               # 🔥 use cache for latest values, DB for stats
+        # ⚡ USE CACHE FOR LATEST
         if latest_cache:
             temperature = latest_cache.get("temperature", row[0])
             humidity = latest_cache.get("humidity", row[1])
@@ -253,7 +263,7 @@ def latest():
             visibility = row[5]
             visibility_status = "Not Connected" if row[5] == -1 else "OK"
             alert = row[6]
-        
+
         return jsonify({
             "temperature": temperature,
             "humidity": humidity,
@@ -269,6 +279,7 @@ def latest():
             "trend": trend,
             "device_status": device_status
         })
+
     except Exception as e:
         print("❌ LATEST ERROR:", e)
         return jsonify({"error": str(e)}), 500
@@ -293,12 +304,11 @@ def history():
                         INTERVAL '1 day'
                     ) AS day
                 )
-                SELECT 
-                    d.day,
-                    COALESCE(ROUND(AVG(w.temperature)::numeric, 2), 0)
+                SELECT d.day,
+                       COALESCE(ROUND(AVG(w.temperature)::numeric, 2), 0)
                 FROM days d
                 LEFT JOIN weather w
-                    ON DATE(w.created_at) = d.day
+                ON DATE(w.created_at) = d.day
                 GROUP BY d.day
                 ORDER BY d.day ASC
             """)
@@ -311,12 +321,11 @@ def history():
                         INTERVAL '1 hour'
                     ) AS hour
                 )
-                SELECT 
-                    h.hour,
-                    COALESCE(ROUND(AVG(w.temperature)::numeric, 2), 0)
+                SELECT h.hour,
+                       COALESCE(ROUND(AVG(w.temperature)::numeric, 2), 0)
                 FROM hours h
                 LEFT JOIN weather w
-                    ON date_trunc('hour', w.created_at) = h.hour
+                ON date_trunc('hour', w.created_at) = h.hour
                 GROUP BY h.hour
                 ORDER BY h.hour ASC
             """)

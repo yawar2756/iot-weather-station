@@ -303,7 +303,12 @@ return mode==="hourly"
 
 const ctx=document.getElementById("tempChart").getContext("2d");
 
-if(chart)chart.destroy();
+if(chart){
+  chart.data.labels = times;
+  chart.data.datasets[0].data = temps;
+  chart.update();
+  return;
+  };
 
 const gradient=ctx.createLinearGradient(0,0,0,300);
 gradient.addColorStop(0,"rgba(0,229,255,0.45)");
@@ -319,15 +324,38 @@ data:temps,
 borderColor:"#00e5ff",
 backgroundColor:gradient,
 fill:true,
-tension:0.4,
+tension:0.5,
 pointRadius:2,
 borderWidth:3
 }]
 },
 options:{
 responsive:true,
-maintainAspectRatio:false
+maintainAspectRatio:false,
+
+scales:{
+  x:{
+    ticks:{
+      color:"#ffffff",   // 🔥 bright date labels
+      font:{
+        size:12,
+        weight:"bold"
+      }
+    },
+    grid:{
+      color:"rgba(255,255,255,0.08)"
+    }
+  },
+  y:{
+    ticks:{
+      color:"#ffffff"
+    },
+    grid:{
+      color:"rgba(255,255,255,0.08)"
+    }
+  }
 }
+  }
 });
 
 }catch(e){

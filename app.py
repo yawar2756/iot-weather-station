@@ -221,24 +221,37 @@ def latest():
         "device_status": device_status
     })
 
-
+#=====History=====
 @app.route("/api/history")
 def history():
+    mode = request.args.get("mode", "hourly")
+
     con = get_db()
     if not con:
         return jsonify([])
 
     cur = con.cursor()
 
-    cur.execute("""
-    SELECT 
-        date_trunc('minute', created_at) AT TIME ZONE 'Asia/Kolkata' as time,
-        ROUND(AVG(temperature)::numeric, 2)
-    FROM weather
-    WHERE created_at >= NOW() - INTERVAL '1 hour'
-    GROUP BY time
-    ORDER BY time ASC
-    """)
+    if mode == "daily":
+        cur.execute("""
+        SELECT 
+            DATE(created_at) as day,
+            ROUND(AVG(temperature)::numeric, 2)
+        FROM weather
+        WHERE created_at >= (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '7 days'
+        GROUP BY day
+        ORDER BY day ASC
+        """)
+    else:
+        cur.execute("""
+        SELECT 
+            date_trunc('hour', created_at) AT TIME ZONE 'Asia/Kolkata' as hour,
+            ROUND(AVG(temperature)::numeric, 2)
+        FROM weather
+        WHERE created_at >= (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '12 hours'
+        GROUP BY hour
+        ORDER BY hour ASC
+        """)
 
     rows = cur.fetchall()
 
@@ -246,7 +259,7 @@ def history():
     con.close()
 
     return jsonify([
-        {"time": r[0].isoformat(), "temperature": float(r[1])}
+        {"time": str(r[0]), "temperature": float(r[1])}
         for r in rows
     ])
 

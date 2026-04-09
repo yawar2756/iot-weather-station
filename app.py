@@ -223,12 +223,19 @@ def history():
     if mode == "daily":
         cur.execute("""
         SELECT 
-            DATE(created_at) as day,
-            ROUND(AVG(temperature)::numeric, 2)
-        FROM weather
-        WHERE created_at >= NOW() - INTERVAL '7 days'
-        GROUP BY day
-        ORDER BY day ASC
+            t.day,
+            ROUND(AVG(w.temperature)::numeric, 2) as temperature
+        FROM generate_series(
+            date_trunc('day', NOW() - INTERVAL '6 days'),
+            date_trunc('day', NOW()),
+            INTERVAL '1 day'
+        ) as t(day)
+        
+        LEFT JOIN weather w
+        ON DATE(w.created_at) = t.day
+        
+        GROUP BY t.day
+        ORDER BY t.day ASC
         """)
     else:
         cur.execute("""

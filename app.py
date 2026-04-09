@@ -233,10 +233,11 @@ def history():
     else:
         cur.execute("""
         SELECT 
-            date_trunc('minute', created_at) as time,
-            temperature
+            date_trunc('hour', created_at) as time,
+            ROUND(AVG(temperature)::numeric, 2) as temperature
         FROM weather
         WHERE created_at >= NOW() - INTERVAL '12 hours'
+        GROUP BY time
         ORDER BY time ASC
         """)
 

@@ -47,8 +47,6 @@ if DATABASE_URL:
         init_db()
     except Exception as e:
         print("DB INIT SKIPPED:", e)
-else:
-    print("NO DATABASE URL")
 
 # ================= PAGES =================
 @app.route("/")
@@ -71,7 +69,7 @@ def ping():
 def health():
     return jsonify({"status": "running"})
 
-# ================= ALERT SYSTEM =================
+# ================= ALERT =================
 def generate_alert(temp, wind, visibility, rain):
     alerts = []
 
@@ -107,7 +105,6 @@ def receive_data():
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
 
-        # handle not connected
         if visibility == "Not Connected":
             visibility = -1
 
@@ -136,6 +133,7 @@ def receive_data():
         return jsonify({"error": str(e)}), 500
 
 
+# ================= LATEST =================
 @app.route("/api/latest")
 def latest():
     con = get_db()
@@ -159,8 +157,6 @@ def latest():
         return jsonify({"message": "No data yet"})
 
     created_time = row[7]
-    from datetime import datetime
-
     now = datetime.utcnow()
 
     seconds = (now - created_time).total_seconds()
@@ -169,37 +165,28 @@ def latest():
     if device_status == "Offline":
         return jsonify({"device_status": "Offline"})
 
-    # ================= STATS =================
+    # stats
     cur.execute("""
     SELECT MIN(temperature), MAX(temperature), AVG(temperature)
     FROM weather
     WHERE created_at >= NOW() - INTERVAL '12 hours'
     """)
-
     stats = cur.fetchone()
 
-    min_temp = float(stats[0]) if stats[0] else None
-    max_temp = float(stats[1]) if stats[1] else None
-    avg_temp = round(float(stats[2]), 2) if stats[2] else None
-
-    # ================= TREND =================
+    # trend
     cur.execute("""
     SELECT temperature FROM weather
     ORDER BY id DESC
     LIMIT 6
     """)
-
     temps = [t[0] for t in cur.fetchall() if t[0] is not None]
 
     trend = "Stable"
-
     if len(temps) >= 3:
-        changes = [(temps[i] - temps[i+1]) for i in range(len(temps)-1)]
-        avg_change = sum(changes) / len(changes)
-
-        if avg_change > 0.5:
+        diff = temps[0] - temps[-1]
+        if diff > 1:
             trend = "Rising"
-        elif avg_change < -0.5:
+        elif diff < -1:
             trend = "Falling"
 
     cur.close()
@@ -214,14 +201,15 @@ def latest():
         "visibility": row[5],
         "visibility_status": "Not Connected" if row[5] == -1 else "OK",
         "alert": row[6],
-        "min_temp": min_temp,
-        "max_temp": max_temp,
-        "avg_temp": avg_temp,
+        "min_temp": float(stats[0]) if stats[0] else None,
+        "max_temp": float(stats[1]) if stats[1] else None,
+        "avg_temp": round(float(stats[2]), 2) if stats[2] else None,
         "trend": trend,
         "device_status": device_status
     })
 
-#=====History=====
+
+# ================= HISTORY (FINAL FIXED) =================
 @app.route("/api/history")
 def history():
     mode = request.args.get("mode", "hourly")
@@ -246,16 +234,17 @@ def history():
         cur.execute("""
         SELECT 
             t.time,
-            ROUND(AVG(w.temperature)::numeric, 2) as temperature
+            ROUND(AVG(w.temperature)::numeric, 2)
         FROM generate_series(
             NOW() - INTERVAL '12 hours',
             NOW(),
             INTERVAL '15 minutes'
-        ) as t(time)
-        
+        ) AS t(time)
+
         LEFT JOIN weather w
-        ON date_trunc('minute', w.created_at) = date_trunc('minute', t.time)
-        
+        ON w.created_at BETWEEN t.time - INTERVAL '7 minutes'
+                             AND t.time + INTERVAL '7 minutes'
+
         GROUP BY t.time
         ORDER BY t.time ASC
         """)
@@ -266,9 +255,10 @@ def history():
     con.close()
 
     return jsonify([
-        {"time": str(r[0]), "temperature": float(r[1])}
+        {"time": str(r[0]), "temperature": r[1] if r[1] else None}
         for r in rows
     ])
+
 
 # ================= EXPORT =================
 @app.route("/api/export")

@@ -366,7 +366,11 @@ async function loadChart() {
             grid: { display: false }
           },
           y: {
-            ticks: { color: "#aaa" },
+            ticks: {
+              autoSkip: false,
+              maxRotation: 0,
+              minRotation: 0
+            },
             grid: { color: "rgba(255,255,255,0.05)" }
           }
         }

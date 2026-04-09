@@ -160,13 +160,11 @@ def latest():
 
     created_time = row[7]
     from datetime import datetime
-    import pytz
 
-    IST = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(IST)
+    now = datetime.utcnow()
 
     seconds = (now - created_time).total_seconds()
-    device_status = "Offline" if seconds > 40 else "Online"
+    device_status = "Offline" if seconds > 60 else "Online"
 
     if device_status == "Offline":
         return jsonify({"device_status": "Offline"})

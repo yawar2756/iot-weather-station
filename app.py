@@ -245,15 +245,12 @@ def history():
     else:
         cur.execute("""
         SELECT 
-            date_trunc('minute', created_at) - 
-            (EXTRACT(MINUTE FROM created_at)::int % 15) * INTERVAL '1 minute'
-            AT TIME ZONE 'Asia/Kolkata' as time,
+            date_trunc('minute', created_at AT TIME ZONE 'Asia/Kolkata') as time,
             ROUND(AVG(temperature)::numeric, 2)
         FROM weather
-        WHERE created_at >= (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '12 hours'
+        WHERE created_at >= NOW() - INTERVAL '12 minutes'
         GROUP BY time
         ORDER BY time ASC
-        """)
 
     rows = cur.fetchall()
 

@@ -288,17 +288,27 @@ const mode=document.getElementById("chartMode").value;
 const res=await fetch("/api/history?mode="+mode);
 if(!res.ok)return;
 
-let data=await res.json();
-if(!data)data=[];
+let data = await res.json();
 
-const temps=data.map(d=>d.temperature??0);
-if(temps.length===0)temps.push(0);
+if (!data || data.length === 0) {
+    console.log("No chart data");
+    return;   // 🚨 stop chart completely
+}
 
-const times=(data.length?data:[{time:new Date()}]).map(d=>{
-const date=new Date(d.time);
-return mode==="hourly"
-?date.getHours().toString().padStart(2,'0')+":00"
-:date.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const temps = data.map(d => d.temperature ?? null);
+
+const times = (data.length ? data : [{time:new Date()}]).map(d => {
+    const date = new Date(d.time);
+
+    return mode === "hourly"
+    ? date.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : date.toLocaleDateString('en-IN', {
+        month: 'short',
+        day: 'numeric'
+      });
 });
 
 const ctx=document.getElementById("tempChart").getContext("2d");

@@ -238,7 +238,7 @@ def history():
             DATE(created_at) as day,
             ROUND(AVG(temperature)::numeric, 2)
         FROM weather
-        WHERE created_at >= (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '7 days'
+        WHERE created_at >= NOW() - INTERVAL '7 days'
         GROUP BY day
         ORDER BY day ASC
         """)
@@ -248,9 +248,10 @@ def history():
             date_trunc('minute', created_at AT TIME ZONE 'Asia/Kolkata') as time,
             ROUND(AVG(temperature)::numeric, 2)
         FROM weather
-        WHERE created_at >= NOW() - INTERVAL '12 minutes'
+        WHERE created_at >= NOW() - INTERVAL '30 minutes'
         GROUP BY time
         ORDER BY time ASC
+        """)
 
     rows = cur.fetchall()
 

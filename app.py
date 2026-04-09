@@ -245,12 +245,19 @@ def history():
     else:
         cur.execute("""
         SELECT 
-            date_trunc('minute', created_at AT TIME ZONE 'Asia/Kolkata') as time,
-            ROUND(AVG(temperature)::numeric, 2)
-        FROM weather
-        WHERE created_at >= NOW() - INTERVAL '30 minutes'
-        GROUP BY time
-        ORDER BY time ASC
+            t.time,
+            ROUND(AVG(w.temperature)::numeric, 2) as temperature
+        FROM generate_series(
+            NOW() - INTERVAL '12 hours',
+            NOW(),
+            INTERVAL '15 minutes'
+        ) as t(time)
+        
+        LEFT JOIN weather w
+        ON date_trunc('minute', w.created_at) = date_trunc('minute', t.time)
+        
+        GROUP BY t.time
+        ORDER BY t.time ASC
         """)
 
     rows = cur.fetchall()

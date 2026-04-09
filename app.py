@@ -231,10 +231,13 @@ def history():
     cur = con.cursor()
 
     cur.execute("""
-    SELECT created_at AT TIME ZONE 'Asia/Kolkata', temperature
+    SELECT 
+        date_trunc('minute', created_at) AT TIME ZONE 'Asia/Kolkata' as time,
+        ROUND(AVG(temperature)::numeric, 2)
     FROM weather
-    ORDER BY created_at DESC
-    LIMIT 12
+    WHERE created_at >= NOW() - INTERVAL '1 hour'
+    GROUP BY time
+    ORDER BY time ASC
     """)
 
     rows = cur.fetchall()
@@ -243,10 +246,9 @@ def history():
     con.close()
 
     return jsonify([
-        {"time": r[0].isoformat(), "temperature": r[1]}
-        for r in rows[::-1]
+        {"time": r[0].isoformat(), "temperature": float(r[1])}
+        for r in rows
     ])
-
 
 # ================= EXPORT =================
 @app.route("/api/export")

@@ -53,7 +53,7 @@ else:
 # ================= PAGES =================
 @app.route("/")
 def home():
-    return "SERVER RUNNING ✅"
+    return render_template("index.html")
 
 @app.route("/dashboard")
 def dashboard():
@@ -69,7 +69,7 @@ def ping():
 
 @app.route("/health")
 def health():
-    return "ok"
+    return jsonify({"status": "running"})
 
 # ================= ALERT SYSTEM =================
 def generate_alert(temp, wind, visibility, rain):
@@ -159,7 +159,11 @@ def latest():
         return jsonify({"message": "No data yet"})
 
     created_time = row[7]
-    now = datetime.utcnow()
+    from datetime import datetime
+    import pytz
+
+    IST = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(IST)
 
     seconds = (now - created_time).total_seconds()
     device_status = "Offline" if seconds > 40 else "Online"
@@ -229,9 +233,9 @@ def history():
     cur = con.cursor()
 
     cur.execute("""
-    SELECT created_at, temperature
+    SELECT created_at AT TIME ZONE 'Asia/Kolkata', temperature
     FROM weather
-    ORDER BY id DESC
+    ORDER BY created_at DESC
     LIMIT 12
     """)
 
@@ -241,7 +245,8 @@ def history():
     con.close()
 
     return jsonify([
-        {"time": str(r[0]), "temperature": r[1]} for r in rows[::-1]
+        {"time": r[0].isoformat(), "temperature": r[1]}
+        for r in rows[::-1]
     ])
 
 

@@ -6,21 +6,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Live IoT Weather Dashboard | ESP8266 & ESP32 Weather Station</title>
-<meta name="description" content="Live IoT weather dashboard showing real-time temperature, humidity, wind speed and rainfall using ESP8266 and ESP32. Monitor weather online.">
+<title>GPCA Weather Station | Real-Time IoT Weather Dashboard</title>
 
-<meta name="keywords" content="live weather dashboard, IoT weather station, ESP8266 weather, ESP32 weather dashboard, real time weather monitoring">
+<meta name="description" content="Real-time IoT weather station using ESP8266 & ESP32. Monitor temperature, humidity, wind, and rainfall with live dashboard.">
 
-<meta property="og:title" content="Live IoT Weather Dashboard">
-<meta property="og:description" content="Real-time weather monitoring using ESP8266 & ESP32 sensors.">
-<meta name="description" content="IoT Weather Station project using ESP8266 and ESP32 for real-time monitoring of temperature, humidity, rainfall, wind speed and visibility with live dashboard.">
+<meta name="keywords" content="IoT weather station, ESP8266 project, ESP32 dashboard, real time weather monitoring">
 
-<meta name="keywords" content="IoT weather station project, ESP8266 weather station, ESP32 weather station, real time weather dashboard">
+<meta property="og:title" content="GPCA Weather Station">
+<meta property="og:description" content="Live weather monitoring system with real-time dashboard.">
 
 <meta name="robots" content="index, follow">
 
 <link rel="canonical" href="https://gpca-weather-station.onrender.com/">
-<link rel="icon" href="/favicon.ico">
 
 <style>
 
@@ -29,73 +26,92 @@ margin:0;
 font-family:Segoe UI;
 background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 color:white;
-line-height:1.6;
 }
 
 .container{
-max-width:950px;
+max-width:1000px;
 margin:auto;
 padding:30px;
 }
 
+.hero{
+text-align:center;
+margin-top:40px;
+}
+
 h1{
-color:#00d4ff;
-font-size:32px;
+font-size:36px;
+color:#00e5ff;
+margin-bottom:10px;
 }
 
-h2{
-color:#00d4ff;
-margin-top:25px;
-}
-
-.section{
-margin-bottom:30px;
+.sub{
+opacity:0.85;
+max-width:700px;
+margin:auto;
 }
 
 .btn{
 display:inline-block;
-margin-top:15px;
-padding:12px 20px;
-background:#28a745;
+margin-top:20px;
+padding:14px 24px;
+background:#00e5ff;
+color:#000;
 border-radius:8px;
-color:white;
 text-decoration:none;
 font-weight:bold;
+transition:0.3s;
 }
 
 .btn:hover{
-background:#218838;
+background:#00bcd4;
+transform:translateY(-2px);
 }
 
-.hero{
+.secondary-btn{
+background:#28a745;
+color:#fff;
+}
+
+.section{
+margin-top:50px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+
+.card{
+background:rgba(255,255,255,0.08);
+padding:20px;
+border-radius:16px;
+border:1px solid rgba(255,255,255,0.1);
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+.highlight{
+margin-top:30px;
+padding:20px;
+background:rgba(0,229,255,0.1);
+border:1px solid #00e5ff;
+border-radius:12px;
 text-align:center;
-margin-bottom:40px;
 }
 
-.highlight-box{
-  margin-top:20px;
-  padding:20px;
-  background:rgba(0,212,255,0.1);
-  border:1px solid #00d4ff;
-  border-radius:12px;
-  text-align:center;
+.footer{
+margin-top:60px;
+text-align:center;
+opacity:0.6;
+font-size:14px;
 }
 
-.learn-btn{
-  display:inline-block;
-  margin-top:10px;
-  padding:10px 18px;
-  background:#00d4ff;
-  color:#000;
-  font-weight:bold;
-  border-radius:6px;
-  text-decoration:none;
-}
-
-.learn-btn:hover{
-  background:#00aacc;
-}
-  
 </style>
 
 </head>
@@ -105,47 +121,73 @@ margin-bottom:40px;
 <div class="container">
 
 <div class="hero">
-<h1>🌦 IoT Weather Station using ESP8266 & ESP32</h1>
+<h1>🌦 GPCA Weather Station</h1>
 
-<p>
-This IoT Weather Station project is a real-time smart weather monitoring system.
-It tracks temperature, humidity, wind speed, rainfall, and visibility using sensors and displays live data on an interactive dashboard.
+<p class="sub">
+A real-time IoT weather monitoring system built using ESP8266 & ESP32.
+Track live temperature, humidity, wind, and rainfall directly from sensors to a web dashboard.
 </p>
 
-<a href="/dashboard" class="btn">🚀 Open Live Dashboard</a>
+<a href="/dashboard" class="btn">🚀 View Live Dashboard</a>
 <br>
-<div class="highlight-box">
-  <p>📘 Want to understand how this system actually works?</p>
-  <a href="/about" class="learn-btn">👉 View Full Project Explanation</a>
+<a href="/about" class="btn secondary-btn">📘 How It Works</a>
+
+<div class="highlight">
+⚡ Live data updates every few seconds with automatic alerts and device status tracking.
 </div>
 
 </div>
+
 
 <div class="section">
 <h2>📊 Features</h2>
-<ul>
-<li>Real-time temperature and humidity monitoring</li>
-<li>Wind speed and wind direction tracking</li>
-<li>Rain detection system</li>
-<li>Visibility monitoring</li>
-<li>Cloud-based live dashboard</li>
-<li>Automatic weather alert system</li>
-</ul>
+
+<div class="grid">
+
+<div class="card">🌡 Real-time temperature & humidity</div>
+<div class="card">🌧 Rain detection system</div>
+<div class="card">🌬 Wind speed tracking</div>
+<div class="card">📡 Live cloud dashboard</div>
+<div class="card">⚠ Automatic weather alerts</div>
+<div class="card">📈 Data analytics & trends</div>
+
 </div>
-  
-<h2>🌐 Live Weather Dashboard</h2>
-<p>
-View real-time weather data including temperature, humidity, wind, and rainfall using our IoT system powered by ESP8266 or ESP32.
-</p>
-  
+
+</div>
+
+
+<div class="section">
+<h2>⚙️ System Flow</h2>
+
+<div class="grid">
+
+<div class="card">Sensors collect environmental data</div>
+<div class="card">ESP8266/ESP32 processes readings</div>
+<div class="card">Data sent via WiFi (JSON)</div>
+<div class="card">Flask backend stores & processes</div>
+<div class="card">Dashboard displays live updates</div>
+
+</div>
+
+</div>
+
+
 <div class="section">
 <h2>🌍 Applications</h2>
-<ul>
-<li>Agriculture and crop monitoring</li>
-<li>Smart cities and climate tracking</li>
-<li>Weather research and analysis</li>
-<li>Disaster management systems</li>
-</ul>
+
+<div class="grid">
+
+<div class="card">🌾 Agriculture monitoring</div>
+<div class="card">🏙 Smart city systems</div>
+<div class="card">📊 Weather analysis</div>
+<div class="card">🚨 Disaster monitoring</div>
+
+</div>
+
+</div>
+
+<div class="footer">
+Built as an IoT project • Real-time weather monitoring system
 </div>
 
 </div>

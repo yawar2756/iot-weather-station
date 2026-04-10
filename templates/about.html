@@ -8,10 +8,11 @@
 
 <title>About IoT Weather Station | ESP8266 & ESP32 Project</title>
 
-<meta name="description" content="Detailed explanation of IoT weather station project using ESP8266 and ESP32. Learn sensors, working process, backend, and dashboard system.">
+<meta name="description" content="IoT weather station project built using ESP8266/ESP32 with real-time monitoring and live dashboard.">
 
-<meta name="keywords" content="IoT weather station project, ESP8266 weather station, ESP32 IoT project, weather monitoring system, IoT project explanation">
+<meta name="keywords" content="IoT weather station, ESP8266 project, ESP32 weather system, real time dashboard">
 
+<!-- 🔒 keep this so About doesn't outrank homepage -->
 <meta name="robots" content="noindex, follow">
 
 <link rel="canonical" href="https://gpca-weather-station.onrender.com/about">
@@ -40,15 +41,39 @@ color:#00d4ff;
 margin-bottom:30px;
 }
 
+.card{
+background: rgba(255,255,255,0.08);
+padding:20px;
+border-radius:15px;
+border:1px solid rgba(255,255,255,0.1);
+margin-top:15px;
+}
+
+ul{
+padding-left:18px;
+}
+
 .btn{
 display:inline-block;
-margin-top:20px;
+margin-top:25px;
 padding:12px 20px;
 background:#28a745;
 border-radius:8px;
 color:white;
 text-decoration:none;
 font-weight:bold;
+}
+
+.btn:hover{
+background:#218838;
+}
+
+.highlight{
+background: rgba(0,212,255,0.15);
+padding:15px;
+border-radius:12px;
+margin-top:20px;
+border:1px solid rgba(0,212,255,0.3);
 }
 
 </style>
@@ -59,67 +84,113 @@ font-weight:bold;
 
 <div class="container">
 
-<h1>🌦 About IoT Weather Station Project</h1>
+<h1>🌦 About This Project</h1>
 
 <p>
-The IoT Weather Station is a smart environmental monitoring system developed using ESP8266 and ESP32 microcontrollers.
-It collects real-time weather data such as temperature, humidity, rainfall, wind speed, wind direction, and visibility.
-The system sends this data to a web-based dashboard for monitoring and analysis.
+I built this IoT Weather Station to track real-time environmental conditions using ESP8266/ESP32.
+The main goal was to create a simple and low-cost system that can monitor weather without depending on expensive setups.
 </p>
+
+<p>
+The system collects live data like temperature, humidity, rainfall, wind speed, and visibility, and sends it to an online dashboard for monitoring.
+</p>
+
+
+<div class="highlight">
+💡 This system updates data every few seconds and shows real-time changes directly on the dashboard.
+</div>
+
 
 <div class="section">
-<h2>⚙️ System Overview</h2>
+<h2>⚙️ How It Works</h2>
+
+<div class="card">
+<p>
+Sensors are connected to the ESP module, which reads data at regular intervals.
+The data is converted into JSON format and sent to a Flask backend over WiFi.
+</p>
 
 <p>
-This project combines sensors, microcontrollers, and cloud technology to create an efficient weather monitoring solution.
-It is designed to be low-cost, scalable, and useful for agriculture, education, research, and smart city applications.
+The backend stores this data in a PostgreSQL database and sends it to the dashboard for live visualization.
 </p>
+</div>
 
 </div>
 
-<div class="section">
-<h2>🌡 Sensors Used</h2>
 
+<div class="section">
+<h2>🧪 Sensors & Hardware</h2>
+
+<div class="card">
 <p>
-The system uses temperature and humidity sensors like DHT11 or DHT22, rain detection sensors, wind speed sensors, wind direction modules, and visibility sensors.
-These sensors continuously collect environmental data and send it to the microcontroller.
+The system uses a DHT11 sensor for temperature and humidity, along with rain and wind sensors.
+Some sensors like visibility are optional, and the system automatically handles cases when they are not connected.
 </p>
+</div>
 
 </div>
 
+
 <div class="section">
-<h2>📡 Working Process</h2>
+<h2>🧠 Backend Logic</h2>
+
+<div class="card">
+<p>
+The backend is built using Flask and manages all incoming sensor data.
+It stores data in a database, calculates statistics, and generates alerts like heat warnings, storm alerts, and rain notifications.
+</p>
 
 <p>
-The ESP8266 or ESP32 reads sensor data at regular intervals and converts it into structured JSON format.
-The data is transmitted through WiFi to a backend server using HTTP requests.
-The server stores and processes the data for visualization.
+It also detects whether the device is online or offline based on the latest data received.
 </p>
+</div>
 
 </div>
 
-<div class="section">
-<h2>🗄 Backend and Dashboard</h2>
 
-<p>
-The backend is built using Flask and stores data in a database.
-The dashboard displays real-time data using charts and analytics.
-It also provides alerts such as heat warnings, storm alerts, and rain notifications.
-</p>
+<div class="section">
+<h2>⚠️ Challenges Faced</h2>
+
+<div class="card">
+<ul>
+<li>Unstable WiFi causing delayed updates</li>
+<li>Sensor accuracy and calibration issues</li>
+<li>Server downtime during deployment</li>
+<li>Handling missing or disconnected sensors</li>
+</ul>
+</div>
 
 </div>
+
 
 <div class="section">
 <h2>🚀 Applications</h2>
 
+<div class="card">
 <ul>
 <li>Agriculture and crop monitoring</li>
-<li>Smart city environmental systems</li>
-<li>Weather research and analysis</li>
-<li>Disaster management planning</li>
+<li>Local weather tracking</li>
+<li>Educational and research projects</li>
+<li>Smart environment systems</li>
 </ul>
+</div>
 
 </div>
+
+
+<div class="section">
+<h2>🔮 Future Improvements</h2>
+
+<div class="card">
+<ul>
+<li>Add air quality and UV sensors</li>
+<li>Mobile app integration</li>
+<li>AI-based weather prediction</li>
+</ul>
+</div>
+
+</div>
+
 
 <a href="/" class="btn">⬅ Back to Home</a>
 

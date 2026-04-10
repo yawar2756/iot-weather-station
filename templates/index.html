@@ -100,8 +100,8 @@ transition:0.3s;
 }
 
 .card:hover{
-transform:translateY(-6px);
-box-shadow:0 15px 35px rgba(0,0,0,0.5);
+transform:translateY(-8px) scale(1.02);
+box-shadow:0 20px 40px rgba(0,0,0,0.6);
 }
 
 .section{
@@ -123,14 +123,54 @@ opacity:0.6;
 font-size:14px;
 }
 
+/* LIGHT MODE */
+.light{
+background:#f5f7fa;
+color:#111;
+}
+
+.light .card{
+background:#ffffff;
+color:#111;
+border:1px solid #ddd;
+}
+
+.light .btn.primary{
+background:#007bff;
+color:#fff;
+}
+
+.light .highlight{
+background:#e3f2fd;
+border:1px solid #90caf9;
+}
+
 </style>
 </head>
 
 <body>
 
+<!-- 🌙 THEME BUTTON -->
+<button id="themeToggle" style="
+position:fixed;
+top:15px;
+right:15px;
+padding:10px 14px;
+border:none;
+border-radius:8px;
+background:#00e5ff;
+color:#000;
+font-weight:bold;
+cursor:pointer;
+z-index:1000;
+">
+🌙
+</button>
+
 <div class="container fade">
 
 <div class="hero">
+
 <h1>🌦 GPCA Weather Station</h1>
 
 <p class="sub">
@@ -141,9 +181,18 @@ Live data. Smart alerts. Clean dashboard.
 <a href="/dashboard" class="btn primary">🚀 Live Dashboard</a>
 <a href="/about" class="btn secondary">📘 How it works</a>
 
+<!-- ✅ LIVE STATUS -->
+<div id="status" style="margin-top:15px; font-weight:bold;">
+🟡 Checking device...
+</div>
+
 <div class="highlight">
 ⚡ Updates every few seconds • Tracks live sensor data • Detects alerts automatically
 </div>
+
+<p style="margin-top:15px; opacity:0.7;">
+Built using ESP8266 / ESP32 • Flask Backend • Real-time Data
+</p>
 
 </div>
 
@@ -194,6 +243,39 @@ Built with IoT • Real-time system • ESP8266 / ESP32
 </div>
 
 </div>
+
+<!-- 🌙 THEME SCRIPT -->
+<script>
+const btn=document.getElementById("themeToggle");
+
+btn.onclick=()=>{
+document.body.classList.toggle("light");
+
+btn.innerText=
+document.body.classList.contains("light")?"☀":"🌙";
+};
+</script>
+
+<!-- 📡 STATUS SCRIPT -->
+<script>
+async function checkStatus(){
+try{
+const res=await fetch("/api/latest");
+const data=await res.json();
+
+document.getElementById("status").innerText =
+data.device_status==="Online"
+?"🟢 Device Online"
+:"🔴 Offline";
+
+}catch{
+document.getElementById("status").innerText="🔴 Server Error";
+}
+}
+
+checkStatus();
+setInterval(checkStatus,10000);
+</script>
 
 </body>
 </html>

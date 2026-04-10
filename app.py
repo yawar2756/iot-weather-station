@@ -34,8 +34,7 @@ def init_db():
             wind_direction TEXT,
             visibility FLOAT,
             alert TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
+            created_at TIMESTAMP DEFAULT NOW()        )
         """)
         con.commit()
         cur.close()
@@ -281,7 +280,7 @@ def export():
            rain_status, wind_speed,
            wind_direction, visibility
     FROM weather
-    WHERE created_at >= NOW() - INTERVAL '7 days'
+    WHERE created_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '7 days'
     ORDER BY created_at ASC
     """)
 

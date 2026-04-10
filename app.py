@@ -271,17 +271,18 @@ def history():
 def export():
     con = get_db()
     if not con:
-        return "Error"
+        return "Database Error"
 
     cur = con.cursor()
 
+    # ✅ FIX: last 7 days instead of LIMIT
     cur.execute("""
     SELECT created_at, temperature, humidity,
            rain_status, wind_speed,
            wind_direction, visibility
     FROM weather
-    ORDER BY created_at DESC
-    LIMIT 100
+    WHERE created_at >= NOW() - INTERVAL '7 days'
+    ORDER BY created_at ASC
     """)
 
     rows = cur.fetchall()
@@ -289,28 +290,37 @@ def export():
     cur.close()
     con.close()
 
+    import io, csv
     output = io.StringIO()
     writer = csv.writer(output)
 
+    # ✅ clean headers
     writer.writerow([
-        "Date", "Time", "Temp", "Humidity",
-        "Rain", "Wind", "Direction", "Visibility"
+        "Date", "Time", "Temperature (°C)", "Humidity (%)",
+        "Rain", "Wind Speed (km/h)", "Direction", "Visibility (%)"
     ])
 
     for r in rows:
         ts = r[0]
+
         writer.writerow([
-            ts.strftime("%d-%m-%Y"),
-            ts.strftime("%I:%M %p"),
-            r[1], r[2], r[3], r[4], r[5], r[6]
+            ts.strftime("%d-%m-%Y") if ts else "",
+            ts.strftime("%I:%M %p") if ts else "",
+            r[1] if r[1] is not None else "",
+            r[2] if r[2] is not None else "",
+            r[3] or "",
+            r[4] if r[4] is not None else "",
+            r[5] or "",
+            r[6] if r[6] not in (None, -1) else ""
         ])
 
     return Response(
         output.getvalue(),
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=weather.csv"}
+        headers={
+            "Content-Disposition": "attachment; filename=weather_last_7_days.csv"
+        }
     )
-
 
 if __name__ == "__main__":
     app.run()

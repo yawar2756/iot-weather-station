@@ -90,7 +90,7 @@ def generate_alert(temp, wind, visibility, rain):
 @app.route("/api/data", methods=["POST"])
 def receive_data():
     data = request.json
-
+    print("📥 Incoming Data:", data)
     con = get_db()
     if not con:
         return jsonify({"error": "DB failed"}), 500
@@ -98,6 +98,12 @@ def receive_data():
     try:
         temp = data.get("temperature")
         humidity = data.get("humidity")
+        
+        # ✅ FIX
+        if humidity is None or humidity == "null":
+            humidity = None
+        else:
+            humidity = float(humidity)
         rain_value = data.get("rain_value")
         rain_status = data.get("rain_status")
         wind_speed = data.get("wind_speed")

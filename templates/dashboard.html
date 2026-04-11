@@ -206,14 +206,13 @@ border:1px solid rgba(255,165,0,0.4);
   opacity:0;
   transition: opacity 1s;
 
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 60%),
-              radial-gradient(circle at 70% 60%, rgba(255,255,255,0.06), transparent 70%),
-              radial-gradient(circle at 50% 80%, rgba(255,255,255,0.05), transparent 80%);
-}
-
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.12), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.10), transparent 70%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 80%);}
 @keyframes fogMove {
   0% { transform: translateX(0); }
   50% { transform: translateX(-20px); }
@@ -394,7 +393,9 @@ else {
 }
   if (rainStatus === "rain detected" || rainStatus === "light rain" || rainStatus === "heavy rain") {
   const intensity = data.rain_value ? Math.min(200, data.rain_value / 5) : 120;
-  createRain(intensity);
+  if (!document.getElementById("rain-container").hasChildNodes()) {
+    createRain(intensity);
+}
     
 } else {
   removeRain();
@@ -558,7 +559,7 @@ function toggleFog(visibility){
   const fog=document.getElementById("fog-layer");
 
   if(visibility && visibility < 30){
-    fog.style.opacity=0.6;
+    fog.style.opacity=0.9;   // stronger
   } else {
     fog.style.opacity=0;
   }
@@ -567,24 +568,32 @@ function toggleFog(visibility){
 function triggerLightning(){
   const flash=document.getElementById("lightning");
 
-  const flashes = Math.floor(Math.random()*3)+1;
+  // strong first flash
+  flash.style.opacity = 1;
 
-  let delay = 0;
+  setTimeout(()=>{
+    flash.style.opacity = 0;
 
-  for(let i=0;i<flashes;i++){
-    setTimeout(()=>{
-      flash.style.opacity = Math.random()*0.8 + 0.2;
+    // smaller random flickers
+    const flashes = Math.floor(Math.random()*2)+1;
 
+    let delay = 100;
+
+    for(let i=0;i<flashes;i++){
       setTimeout(()=>{
-        flash.style.opacity = 0;
-      }, 100);
+        flash.style.opacity = Math.random()*0.6;
 
-    }, delay);
+        setTimeout(()=>{
+          flash.style.opacity = 0;
+        }, 80);
 
-    delay += Math.random()*400 + 200;
-  }
-}
-  
+      }, delay);
+
+      delay += 200;
+    }
+
+  }, 120);
+}  
 /* clock */
 function liveClock(){
 document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();

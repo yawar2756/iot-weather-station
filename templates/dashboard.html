@@ -143,7 +143,7 @@ border:1px solid rgba(255,165,0,0.4);
   height: 100%;
   pointer-events: none;
   overflow: hidden;
-  z-index: 0;
+  z-index: 9999;
 }
 
 /* 🌧 Drop */
@@ -151,7 +151,8 @@ border:1px solid rgba(255,165,0,0.4);
   position: absolute;
   width: 2px;
   height: 15px;
-  background: rgba(173, 216, 230, 0.7);
+  background: rgba(173, 216, 230, 0.9);
+  box-shadow: 0 0 6px rgba(173,216,230,0.8);
   animation: rainFall linear infinite;
 }
 

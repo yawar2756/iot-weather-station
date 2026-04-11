@@ -198,25 +198,31 @@ border:1px solid rgba(255,165,0,0.4);
   position:fixed;
   top:0;
   left:0;
-  width:200%;
-  height:200%;
+  width:100%;
+  height:100%;
   pointer-events:none;
   z-index:1;
+
   opacity:0;
   transition: opacity 1s;
 
-  background: url("https://i.imgur.com/8yKQF3R.png"); /* fog texture */
-  background-size: cover;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 
-  animation: fogMove 60s linear infinite;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 60%),
+              radial-gradient(circle at 70% 60%, rgba(255,255,255,0.06), transparent 70%),
+              radial-gradient(circle at 50% 80%, rgba(255,255,255,0.05), transparent 80%);
 }
 
-@keyframes fogMove{
-  0% { transform: translate(0,0); }
-  50% { transform: translate(-10%, -5%); }
-  100% { transform: translate(0,0); }
+@keyframes fogMove {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-20px); }
+  100% { transform: translateX(0); }
 }
 
+#fog-layer {
+  animation: fogMove 20s ease-in-out infinite;
+}
 /* ⚡ LIGHTNING */
 #lightning{
   position:fixed;
@@ -226,8 +232,7 @@ border:1px solid rgba(255,165,0,0.4);
   height:100%;
   pointer-events:none;
   z-index:3;
-
-  background: linear-gradient(to bottom, #ffffff, #dfefff);
+  background: radial-gradient(circle, #ffffff, #cceeff);
   opacity:0;
   transition: opacity 0.1s;
 }

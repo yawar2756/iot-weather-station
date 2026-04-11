@@ -351,11 +351,16 @@ document.getElementById("deviceStatus").innerText="⚠ Connection Issue";
 return;
 }
 
-const data=await res.json();
+let data=await res.json();
 
 if(data.message){
-document.getElementById("deviceStatus").innerText="⏳ Waiting for sensor data...";
-return;
+  document.getElementById("deviceStatus").innerText="⏳ Waiting for sensor data...";
+
+  if(lastDataCache){
+    data = lastDataCache;
+  } else {
+    return;
+  }
 }
 
 document.getElementById("loadingText").style.display="none";
@@ -393,9 +398,7 @@ else {
 }
   if (rainStatus === "rain detected" || rainStatus === "light rain" || rainStatus === "heavy rain") {
   const intensity = data.rain_value ? Math.min(200, data.rain_value / 5) : 120;
-  if (!document.getElementById("rain-container").hasChildNodes()) {
     createRain(intensity);
-}
     
 } else {
   removeRain();
@@ -478,8 +481,7 @@ async function loadChart() {
       const date = new Date(d.time);
     
       return mode === "hourly"
-        ? ? date.getHours() % 12 || 12 + (date.getHours() >= 12 ? " PM" : " AM")
-        
+        ? ((date.getHours() % 12) || 12) + (date.getHours() >= 12 ? " PM" : " AM")
         : date.toLocaleDateString('en-IN', {
             month: 'short',
             day: 'numeric'

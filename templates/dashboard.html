@@ -463,8 +463,8 @@ async function loadChart() {
 
     const ctx = document.getElementById("tempChart").getContext("2d");
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, "rgba(0,229,255,0.6)");
-    gradient.addColorStop(1, "rgba(0,229,255,0.05)");
+    gradient.addColorStop(0, "rgba(0,229,255,0.8)");
+    gradient.addColorStop(1, "rgba(0,229,255,0.2)");
 
     // 🔥 destroy old chart (prevents bugs)
     if (chart) {
@@ -472,16 +472,14 @@ async function loadChart() {
     }
 
         // 🔥 clean data
-    const temps = data.map(d => d.temperature ?? 0);
+    const temps = data.map(d => d.temperature ?? null);
     
     const times = data.map(d => {
       const date = new Date(d.time);
     
       return mode === "hourly"
-        ? date.toLocaleTimeString('en-IN', {
-            hour: 'numeric',
-            hour12: true
-          })
+        ? ? date.getHours() % 12 || 12 + (date.getHours() >= 12 ? " PM" : " AM")
+        
         : date.toLocaleDateString('en-IN', {
             month: 'short',
             day: 'numeric'
@@ -496,7 +494,7 @@ async function loadChart() {
         datasets: [{
           label: "Temperature (°C)",
           data: temps,
-          borderColor: "#00e5ff",
+          borderColor: "#00ffff",
           backgroundColor: gradient,
           fill: true,
           tension: 0.35,
@@ -525,7 +523,7 @@ async function loadChart() {
 
         scales: {
           x: {
-            ticks: { color: "#aaa" },
+            ticks: { color: "#ddd" },
             grid: { display: false }
           },
           y: {
@@ -534,7 +532,7 @@ async function loadChart() {
               maxRotation: 0,
               minRotation: 0
             },
-            grid: { color: "rgba(255,255,255,0.05)" }
+            grid: { color: "rgba(255,255,255,0.1)" }
           }
         }
       }

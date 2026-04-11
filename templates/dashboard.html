@@ -159,21 +159,32 @@ border:1px solid rgba(255,165,0,0.4);
 /* 🌧 Drop */
 .raindrop {
   position: absolute;
-  width: 2px;
-  height: 20px;
-  background: rgba(173, 216, 230, 1);  /* FULL visibility */
-  box-shadow: 0 0 8px rgba(173,216,230,1);
+  width: 1.5px;
+  height: 18px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.9),
+    rgba(173,216,230,0.4)
+  );
+  border-radius: 50%;
+  opacity: 0.8;
+
+  transform: rotate(20deg);
+
   animation: rainFall linear infinite;
 }
 
 /* 🌧 Animation */
 @keyframes rainFall {
   0% {
-    transform: translateY(-100px) translateX(0);
+    transform: translateY(-120px) translateX(0) rotate(20deg);
+    opacity: 0;
+  }
+  10% {
     opacity: 1;
   }
   100% {
-    transform: translateY(100vh) translateX(-20px);
+    transform: translateY(100vh) translateX(-40px) rotate(20deg);
     opacity: 0;
   }
 }
@@ -268,7 +279,9 @@ function createRain(intensity = 100) {
     drop.classList.add("raindrop");
 
     drop.style.left = Math.random() * 100 + "vw";
-    drop.style.animationDuration = (Math.random() * 0.5 + 0.5) + "s";
+    drop.style.animationDuration = (Math.random() * 0.7 + 0.6) + "s";
+    drop.style.height = (Math.random() * 10 + 10) + "px";
+    drop.style.opacity = Math.random() * 0.5 + 0.5;
     drop.style.animationDelay = Math.random() * 2 + "s";
 
     container.appendChild(drop);

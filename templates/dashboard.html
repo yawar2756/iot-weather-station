@@ -157,36 +157,67 @@ border:1px solid rgba(255,165,0,0.4);
 }
 
 /* 🌧 Drop */
-.raindrop {
-  position: absolute;
-  width: 1.5px;
-  height: 18px;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.9),
-    rgba(173,216,230,0.4)
-  );
-  border-radius: 50%;
-  opacity: 0.8;
-
+.raindrop{
+  position:absolute;
+  width:1.5px;
+  height:18px;
+  background: linear-gradient(to bottom, #fff, rgba(173,216,230,0.3));
+  border-radius:50%;
   transform: rotate(20deg);
-
   animation: rainFall linear infinite;
 }
 
-/* 🌧 Animation */
-@keyframes rainFall {
-  0% {
-    transform: translateY(-120px) translateX(0) rotate(20deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(100vh) translateX(-40px) rotate(20deg);
-    opacity: 0;
-  }
+@keyframes rainFall{
+  0%{transform:translateY(-120px) translateX(0) rotate(20deg);opacity:0;}
+  10%{opacity:1;}
+  100%{transform:translateY(100vh) translateX(-40px) rotate(20deg);opacity:0;}
+}
+
+/* 🌌 SKY BACKGROUND */
+#sky-layer{
+  position:fixed;
+  width:100%;
+  height:100%;
+  top:0;
+  left:0;
+  z-index:0;
+  transition: background 1s ease;
+}
+
+/* 🌧 RAIN */
+#rain-container{
+  position:fixed;
+  width:100%;
+  height:100%;
+  z-index:1;
+  pointer-events:none;
+}
+
+/* 🌫 FOG */
+#fog-layer{
+  position:fixed;
+  width:100%;
+  height:100%;
+  top:0;
+  left:0;
+  z-index:1;
+  pointer-events:none;
+  background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+  opacity:0;
+  transition: opacity 1s;
+}
+
+/* ⚡ LIGHTNING */
+#lightning{
+  position:fixed;
+  width:100%;
+  height:100%;
+  top:0;
+  left:0;
+  background:white;
+  opacity:0;
+  z-index:3;
+  pointer-events:none;
 }
   
 </style>
@@ -196,6 +227,10 @@ border:1px solid rgba(255,165,0,0.4);
 <body>
 
 <div id="rain-container"></div>
+<div id="sky-layer"></div>
+<div id="rain-container"></div>
+<div id="fog-layer"></div>
+<div id="lightning"></div>
   
 <div class="header">
 <div>
@@ -270,19 +305,19 @@ document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
 }
 setInterval(updateCounter,1000);
 
-function createRain(intensity = 100) {
+function createRain(intensity = 120) {
   const container = document.getElementById("rain-container");
   container.innerHTML = "";
 
   for (let i = 0; i < intensity; i++) {
     const drop = document.createElement("div");
-    drop.classList.add("raindrop");
+    drop.className = "raindrop";
 
-    drop.style.left = Math.random() * 100 + "vw";
-    drop.style.animationDuration = (Math.random() * 0.7 + 0.6) + "s";
-    drop.style.height = (Math.random() * 10 + 10) + "px";
-    drop.style.opacity = Math.random() * 0.5 + 0.5;
-    drop.style.animationDelay = Math.random() * 2 + "s";
+    drop.style.left = Math.random()*100+"vw";
+    drop.style.animationDuration = (Math.random()*0.7+0.6)+"s";
+    drop.style.animationDelay = Math.random()*2+"s";
+    drop.style.height = (Math.random()*10+10)+"px";
+    drop.style.opacity = Math.random()*0.5+0.5;
 
     container.appendChild(drop);
   }
@@ -332,6 +367,17 @@ if (data.rain && data.rain.toLowerCase() !== "no rain") {
 } else {
   removeRain();
 }
+
+// 🌧 SKY CHANGE
+setSky(data.rain ? data.rain.toLowerCase() : "");
+
+// 🌫 FOG
+toggleFog(data.visibility);
+
+// ⚡ LIGHTNING (storm)
+if(data.alert && data.alert.includes("Storm")){
+  triggerLightning();
+}  
   
 smoothUpdate("minTemp",data.min_temp!=null?Number(data.min_temp).toFixed(1)+" °C":"-- °C");
 smoothUpdate("maxTemp",data.max_temp!=null?Number(data.max_temp).toFixed(1)+" °C":"-- °C");
@@ -464,6 +510,34 @@ async function loadChart() {
   }
 }
 
+function setSky(condition){
+  const sky=document.getElementById("sky-layer");
+
+  if(condition.includes("rain")){
+    sky.style.background="linear-gradient(#2c3e50,#4ca1af)";
+  }
+  else{
+    sky.style.background="linear-gradient(#0f2027,#203a43,#2c5364)";
+  }
+}
+
+function toggleFog(visibility){
+  const fog=document.getElementById("fog-layer");
+
+  if(visibility && visibility < 20){
+    fog.style.opacity=1;
+  }else{
+    fog.style.opacity=0;
+  }
+}
+
+function triggerLightning(){
+  const flash=document.getElementById("lightning");
+
+  flash.style.opacity=0.8;
+  setTimeout(()=>flash.style.opacity=0,100);
+}  
+  
 /* clock */
 function liveClock(){
 document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();

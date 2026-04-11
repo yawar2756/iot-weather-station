@@ -87,7 +87,7 @@ animation:pulse 1.5s infinite;
 .card{
 background: rgba(255,255,255,0.12);
 backdrop-filter: blur(5px);
--webkit-backdrop-filter: blur(12px);
+-webkit-backdrop-filter: blur(5px);
 padding:20px;
 border-radius:18px;
 text-align:center;
@@ -226,7 +226,6 @@ border:1px solid rgba(255,165,0,0.4);
 
 <body>
 
-<div id="rain-container"></div>
 <div id="sky-layer"></div>
 <div id="rain-container"></div>
 <div id="fog-layer"></div>
@@ -360,17 +359,32 @@ data.visibility_status==="Not Connected"
 ?"Not Connected"
 :(data.visibility!=null?Number(data.visibility).toFixed(0)+" %":"-- %"));
 
-smoothUpdate("rain",data.rain??"--");
-// 🌧 RAIN ANIMATION CONTROL
-if (data.rain && data.rain.toLowerCase() !== "no rain") {
-  createRain(120);
+const rainStatus = (data.rain || "").trim().toLowerCase();
+if (rainStatus === "no rain") {
+  smoothUpdate("rain", "No Rain");
+} 
+else if (rainStatus === "light rain") {
+  smoothUpdate("rain", "Light Rain");
+}
+else if (rainStatus === "heavy rain") {
+  smoothUpdate("rain", "Heavy Rain");
+}
+else if (rainStatus === "rain detected") {
+  smoothUpdate("rain", "Rain Detected");
+} 
+else {
+  smoothUpdate("rain", "--");
+}
+  if (rainStatus === "rain detected" || rainStatus === "light rain" || rainStatus === "heavy rain") {
+  const intensity = data.rain_value ? Math.min(200, data.rain_value / 5) : 120;
+  createRain(intensity);
+    
 } else {
   removeRain();
 }
 
 // 🌧 SKY CHANGE
-setSky(data.rain ? data.rain.toLowerCase() : "");
-
+setSky(rainStatus);
 // 🌫 FOG
 toggleFog(data.visibility);
 
@@ -430,6 +444,9 @@ async function loadChart() {
     }
 
     const ctx = document.getElementById("tempChart").getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, "rgba(0,229,255,0.6)");
+    gradient.addColorStop(1, "rgba(0,229,255,0.05)");
 
     // 🔥 destroy old chart (prevents bugs)
     if (chart) {
@@ -462,11 +479,11 @@ async function loadChart() {
           label: "Temperature (°C)",
           data: temps,
           borderColor: "#00e5ff",
-          backgroundColor: "rgba(0,229,255,0.15)",
+          backgroundColor: gradient,
           fill: true,
           tension: 0.35,
-          pointRadius: 0,
-          borderWidth: 2,
+          pointRadius: 3,
+          borderWidth: 3,
           spanGaps: true
         }]
       },
@@ -513,10 +530,9 @@ async function loadChart() {
 function setSky(condition){
   const sky=document.getElementById("sky-layer");
 
-  if(condition.includes("rain")){
+  if(condition === "rain detected" || condition === "light rain" || condition === "heavy rain"){
     sky.style.background="linear-gradient(#2c3e50,#4ca1af)";
-  }
-  else{
+  } else {
     sky.style.background="linear-gradient(#0f2027,#203a43,#2c5364)";
   }
 }

@@ -98,12 +98,15 @@ def receive_data():
     try:
         temp = data.get("temperature")
         humidity = data.get("humidity")
-        
-        # ✅ FIX
-        if humidity is None or humidity == "null":
-            humidity = None
-        else:
+
+        try:
             humidity = float(humidity)
+        except:
+            humidity = None
+
+        print("RAW DATA:", data)
+        print("HUMIDITY:", humidity)
+        
         rain_value = data.get("rain_value")
         rain_status = data.get("rain_status")
         wind_speed = data.get("wind_speed")

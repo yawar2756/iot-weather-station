@@ -5,7 +5,7 @@
 <meta name="description" content="Live IoT weather dashboard showing real-time temperature, humidity, wind speed and rainfall data.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Live Weather Dashboard | IoT Weather Station</title>
-
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -512,7 +512,9 @@ async function loadChart() {
     }
 
         // 🔥 clean data
-    const temps = data.map(d => d.temperature ?? 0);
+    const temps = data.map(d => 
+      d.temperature !== null ? Number(d.temperature) : null
+    );
     
     const times = data.map(d => {
       const date = new Date(d.time);
@@ -524,8 +526,14 @@ async function loadChart() {
             day: 'numeric'
           });
     });
+    // 🔥 STEP 3 HERE
+    const offlineIndexes = temps
+      .map((t, i) => t === null ? i : null)
+      .filter(i => i !== null);
     console.log("TEMPS:", temps);
     console.log("TIMES:", times);
+
+    
     // 🔥 create chart
     chart = new Chart(ctx, {
       type: "line",
@@ -553,18 +561,23 @@ async function loadChart() {
         responsive: true,
         maintainAspectRatio: false,
 
-        interaction: {
-          mode: "index",
-          intersect: false
-        },
-
         plugins: {
           legend: { display: false },
+        
           tooltip: {
             backgroundColor: "#111",
             titleColor: "#fff",
             bodyColor: "#ccc"
+          },
+        
+          annotation: {
+            annotations: []
           }
+        },       
+        
+        interaction: {
+          mode: "index",
+          intersect: false
         },
 
         scales: {
@@ -583,6 +596,19 @@ async function loadChart() {
         }
       }
     });
+
+    // 🔥 ADD HERE (STEP 5 FIXED FOR YOUR CODE)
+    chart.options.plugins.annotation.annotations =
+      offlineIndexes.map(i => ({
+        type: 'label',
+        xValue: times[i],
+        yValue: 15,
+        content: ['⚠ Connection Lost'],
+        color: '#ff4d4d',
+        font: { size: 10 }
+      }));
+    
+    chart.update();
 
   } catch (e) {
     console.log("chart error:", e);

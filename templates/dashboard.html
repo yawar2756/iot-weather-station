@@ -627,15 +627,27 @@ async function loadChart() {
     // 🔥 ONE LABEL PER GROUP
     chart.options.plugins.annotation.annotations = 
       groups.map(group => {
-        const start = times[group[0]];
-        const end = times[group[group.length - 1]];
+        const start = times[Math.max(0, group[0] - 0.5)];
+        const end = times[Math.min(times.length - 1, group[group.length - 1] + 0.5)];
     
         return {
           type: 'box',
           xMin: start,
           xMax: end,
-          backgroundColor: 'rgba(255, 77, 77, 0.15)', // light red
-          borderWidth: 0
+          backgroundColor: 'rgba(255, 0, 0, 0.08)',
+          borderColor: 'rgba(255, 0, 0, 0.3)',
+          borderWidth: 1,
+        
+          label: {
+            display: true,
+            content: '⚠ No Data',
+            position: 'center',
+            color: '#ff4d4d',
+            font: {
+              size: 12,
+              weight: 'bold'
+            }
+          }
         };
       });
     

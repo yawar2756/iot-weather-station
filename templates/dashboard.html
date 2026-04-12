@@ -628,24 +628,20 @@ async function loadChart() {
     // 🔥 ONE LABEL PER GROUP
     chart.options.plugins.annotation.annotations = 
       groups.map(group => {
-        const start = times[group[0]];
-        const end = times[group[group.length - 1]];
-    
         return {
           type: 'box',
           xMin: group[0],
           xMax: group[group.length - 1],
           backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          borderWidth: 0,,
-        
+          borderWidth: 0,
+    
           label: {
             display: true,
             content: 'No Data',
-            font: { size: 10 }
             position: 'center',
             color: '#ff4d4d',
             font: {
-              size: 12,
+              size: 11,
               weight: 'bold'
             }
           }

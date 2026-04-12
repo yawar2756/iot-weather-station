@@ -542,22 +542,32 @@ async function loadChart() {
       data: {
         labels: times,
         datasets: [{
-        label: "Temperature (°C)",
-        data: temps,
-        borderColor: "#00ffff",
-        backgroundColor: gradient,
-        fill: false,
-        tension: 0,
+          label: "Temperature (°C)",
+          data: temps,
+          borderColor: "#00ffff",
+          backgroundColor: gradient,
+          fill: false,
+          tension: 0,
         
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: "#00f2ff",
-        pointBorderColor: "#ffffff",
-        pointBorderWidth: 2,
-      
-        spanGaps: false,
-        stepped: false
-      }]
+          // 🔥 ADD THIS HERE
+          segment: {
+            borderDash: ctx => {
+              if (ctx.p0.parsed.y === null || ctx.p1.parsed.y === null) {
+                return [6, 6]; // dashed gap
+              }
+              return [];
+            }
+          },
+        
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: "#00f2ff",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+        
+          spanGaps: false,
+          stepped: false
+        }]
       },
       options: {
         responsive: true,
@@ -600,15 +610,33 @@ async function loadChart() {
     });
 
     // 🔥 ADD HERE (STEP 5 FIXED FOR YOUR CODE)
+    let groups = [];
+    let current = [];
+    
+    offlineIndexes.forEach((i, idx) => {
+      if (idx === 0 || i === offlineIndexes[idx - 1] + 1) {
+        current.push(i);
+      } else {
+        groups.push(current);
+        current = [i];
+      }
+    });
+    
+    if (current.length) groups.push(current);
+    
+    // 🔥 ONE LABEL PER GROUP
     chart.options.plugins.annotation.annotations =
-      offlineIndexes.map(i => ({
-        type: 'label',
-        xValue: times[i],
-        yValue: 15,
-        content: ['⚠ Connection Lost'],
-        color: '#ff4d4d',
-        font: { size: 10 }
-      }));
+      groups.map(group => {
+        const mid = group[Math.floor(group.length / 2)];
+        return {
+          type: 'label',
+          xValue: times[mid],
+          yValue: Math.max(...temps.filter(t => t !== null)) - 2,
+          content: ['⚠ Offline'],
+          color: '#ff4d4d',
+          font: { size: 12 }
+        };
+      });
     
     chart.update();
 

@@ -511,10 +511,7 @@ async function loadChart() {
     }
 
         // 🔥 clean data
-    const temps = data.map(d => {
-      const t = Number(d.temperature);
-      return (t === 0 || isNaN(t)) ? null : t;
-    });
+    const temps = data.map(d => d.temperature ?? 0);
     
     const times = data.map(d => {
       const date = new Date(d.time);

@@ -524,26 +524,30 @@ async function loadChart() {
             day: 'numeric'
           });
     });
-
+    console.log("TEMPS:", temps);
+    console.log("TIMES:", times);
     // 🔥 create chart
     chart = new Chart(ctx, {
       type: "line",
       data: {
         labels: times,
         datasets: [{
-          label: "Temperature (°C)",
-          data: temps,
-          borderColor: "#00ffff",
-          backgroundColor: gradient,
-          fill: true,
-          tension: 0,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: "#00f2ff",
-          borderWidth: 3,
-          spanGaps: true,
-          connectNulls: true
-        }]
+        label: "Temperature (°C)",
+        data: temps,
+        borderColor: "#00ffff",
+        backgroundColor: gradient,
+        fill: true,
+        tension: 0,
+        
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: "#00f2ff",
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2,
+      
+        spanGaps: false,
+        stepped: false
+      }]
       },
       options: {
         responsive: true,

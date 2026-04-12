@@ -373,8 +373,13 @@ lastUpdateTime=Date.now();
 
 smoothUpdate("temp",data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C");
 smoothUpdate("hum",data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %");
-smoothUpdate("windSpeed",data.wind_speed!=null?Number(data.wind_speed).toFixed(1)+" km/h":"-- km/h");
-
+if (data.wind_speed === -1) {
+  smoothUpdate("windSpeed", "Not Connected");
+} else {
+  smoothUpdate("windSpeed",
+    data.wind_speed != null ? Number(data.wind_speed).toFixed(1) + " km/h" : "-- km/h"
+  );
+}
 smoothUpdate("visibility",
 data.visibility_status==="Not Connected"
 ?"Not Connected"

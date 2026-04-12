@@ -78,7 +78,7 @@ def generate_alert(temp, wind, visibility, rain):
     if wind is not None and wind > 30:
         alerts.append("Storm Warning")
 
-    if visibility is not None and visibility != -1 and visibility < 20:
+    if visibility is not None and visibility not in (-1,101) and visibility < 20:
         alerts.append("Low Visibility")
 
     if rain and str(rain).lower() in ["light rain", "heavy rain"]:
@@ -207,7 +207,7 @@ def latest():
         "wind_speed": row[3],
         "wind_direction": row[4],
         "visibility": row[5],
-        "visibility_status": "Not Connected" if row[5] == -1 else "OK",
+        "visibility_status": "Not Connected" if row[5] in (-1,101) else "OK",
         "alert": row[6],
         "min_temp": float(stats[0]) if stats[0] else None,
         "max_temp": float(stats[1]) if stats[1] else None,

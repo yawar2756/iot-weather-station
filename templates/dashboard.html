@@ -531,6 +531,7 @@ async function loadChart() {
     const offlineIndexes = temps
       .map((t, i) => t === null ? i : null)
       .filter(i => i !== null);
+    console.log("OFFLINE INDEXES:", offlineIndexes);
     console.log("TEMPS:", temps);
     console.log("TIMES:", times);
 
@@ -545,7 +546,7 @@ async function loadChart() {
         data: temps,
         borderColor: "#00ffff",
         backgroundColor: gradient,
-        fill: true,
+        fill: false,
         tension: 0,
         
         pointRadius: 4,

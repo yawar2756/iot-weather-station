@@ -353,21 +353,35 @@ return;
 
 let data=await res.json();
 
+// 🔥 STEP 1 FIX (OFFLINE HANDLING)
+if(data.device_status === "Offline"){
+  document.getElementById("deviceStatus").innerText = "🔴 Device Offline";
+  document.getElementById("loadingText").innerText = "No live data";
+  smoothUpdate("temp","-- °C");
+  smoothUpdate("hum","-- %");
+  smoothUpdate("windSpeed","-- km/h");
+  smoothUpdate("visibility","--");
+  smoothUpdate("rain","--");
+
+  removeRain();
+  document.getElementById("fog-layer").style.opacity = 0;
+
+  return;
+}
+
 if(data.message){
   document.getElementById("deviceStatus").innerText="⏳ Waiting for sensor data...";
+  document.getElementById("loadingText").innerText = "No live data";
+  smoothUpdate("temp","-- °C");
+  smoothUpdate("hum","-- %");
+  smoothUpdate("windSpeed","-- km/h");
+  smoothUpdate("visibility","--");
+  smoothUpdate("rain","--");
 
-  if(lastDataCache){
-    data = lastDataCache;
-  } else {
-    // 🔥 show placeholders instead of freezing
-    smoothUpdate("temp","-- °C");
-    smoothUpdate("hum","-- %");
-    smoothUpdate("windSpeed","-- km/h");
-    smoothUpdate("visibility","-- %");
-    smoothUpdate("rain","--");
+  removeRain();
+  document.getElementById("fog-layer").style.opacity = 0;
 
-    return; // now safe
-  }
+  return;
 }
 
 document.getElementById("loadingText").style.display="none";
@@ -388,7 +402,7 @@ if (data.wind_speed === -1) {
   );
 }
 smoothUpdate("visibility",
-data.visibility_status==="Not Connected"
+(data.visibility_status || "").toLowerCase() === "not connected"
 ?"Not Connected"
 :(data.visibility!=null?Number(data.visibility).toFixed(0)+" %":"-- %"));
 
@@ -409,7 +423,9 @@ else {
   smoothUpdate("rain", "--");
 }
   if (rainStatus === "rain detected" || rainStatus === "light rain" || rainStatus === "heavy rain") {
-  const intensity = data.rain_value ? Math.min(200, data.rain_value / 5) : 120;
+  const intensity = (data.rain_value && data.rain_value > 0)
+    ? Math.min(200, data.rain_value / 5)
+    : 0;
     createRain(intensity);
     
 } else {
@@ -419,7 +435,7 @@ else {
 // 🌧 SKY CHANGE
 setSky(rainStatus);
 // 🌫 FOG
-toggleFog(data.visibility);
+toggleFog(data.visibility ?? -1);
 
 // ⚡ LIGHTNING (storm)
 if(data.alert && data.alert.includes("Storm")){
@@ -472,6 +488,15 @@ async function loadChart() {
 
     // 🚨 no data → stop
     if (!data || data.length === 0) {
+
+      if (chart) {
+        chart.destroy();
+        chart = null;
+      }
+    
+      const ctx = document.getElementById("tempChart").getContext("2d");
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    
       console.log("No chart data");
       return;
     }
@@ -487,7 +512,7 @@ async function loadChart() {
     }
 
         // 🔥 clean data
-    const temps = data.map(d => d.temperature ?? 0);
+    const temps = data.map(d => d.temperature ?? null);
     
     const times = data.map(d => {
       const date = new Date(d.time);
@@ -514,7 +539,8 @@ async function loadChart() {
           tension: 0.35,
           pointRadius: 3,
           borderWidth: 3,
-          spanGaps: true
+          spanGaps: true,
+          connectNulls: true
         }]
       },
       options: {
@@ -568,12 +594,12 @@ function setSky(condition){
 }
 
 function toggleFog(visibility){
-  const fog=document.getElementById("fog-layer");
+  const fog = document.getElementById("fog-layer");
 
-  if(visibility !== -1 && visibility < 30)
+  if(visibility !== -1 && visibility !== undefined && visibility < 30){
     fog.style.opacity = 0.4 + (30 - visibility) / 100;
   } else {
-    fog.style.opacity=0;
+    fog.style.opacity = 0;
   }
 }
 

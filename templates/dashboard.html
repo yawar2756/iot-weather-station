@@ -571,7 +571,7 @@ function toggleFog(visibility){
   const fog=document.getElementById("fog-layer");
 
   if(visibility !== -1 && visibility < 30)
-    fog.style.opacity=0.9;   // stronger
+    fog.style.opacity = 0.4 + (30 - visibility) / 100;
   } else {
     fog.style.opacity=0;
   }

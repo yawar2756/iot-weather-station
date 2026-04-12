@@ -81,11 +81,19 @@ def generate_alert(temp, wind, visibility, rain):
     if visibility is not None and visibility not in (-1,101) and visibility < 20:
         alerts.append("Low Visibility")
 
-    if rain and str(rain).lower() in ["light rain", "heavy rain"]:
+    if rain and str(rain).lower() in ["light rain", "heavy rain", "rain detected"]:
         alerts.append("Rain Alert")
 
-    return ", ".join(alerts) if alerts else "Normal"
-
+    if not alerts:
+        return "Normal"
+    
+    priority = ["Storm Warning", "Heat Alert", "Low Visibility", "Rain Alert"]
+    
+    for p in priority:
+        if p in alerts:
+            return p
+    
+    return alerts[0]
 # ================= API =================
 @app.route("/api/data", methods=["POST"])
 def receive_data():
@@ -110,10 +118,20 @@ def receive_data():
         rain_value = data.get("rain_value")
         rain_status = data.get("rain_status")
         wind_speed = data.get("wind_speed")
+
+        try:
+            wind_speed = float(wind_speed)
+        except:
+            wind_speed = -1
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
 
-        if visibility == "Not Connected":
+        try:
+            visibility = float(visibility)
+        except:
+            visibility = -1
+        
+        if visibility in (-1, 101):
             visibility = -1
 
         alert = generate_alert(temp, wind_speed, visibility, rain_status)
@@ -171,7 +189,15 @@ def latest():
     device_status = "Offline" if seconds > 60 else "Online"
 
     if device_status == "Offline":
-        return jsonify({"device_status": "Offline"})
+        return jsonify({
+            "device_status": "Offline",
+            "temperature": None,
+            "humidity": None,
+            "rain": None,
+            "wind_speed": None,
+            "visibility": None,
+            "alert": "Offline"
+        })
 
     # stats
     cur.execute("""

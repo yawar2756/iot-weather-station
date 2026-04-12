@@ -563,7 +563,7 @@ function setSky(condition){
 function toggleFog(visibility){
   const fog=document.getElementById("fog-layer");
 
-  if(visibility && visibility < 30){
+  if(visibility !== -1 && visibility < 30)
     fog.style.opacity=0.9;   // stronger
   } else {
     fog.style.opacity=0;

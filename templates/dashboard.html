@@ -625,16 +625,17 @@ async function loadChart() {
     if (current.length) groups.push(current);
     
     // 🔥 ONE LABEL PER GROUP
-    chart.options.plugins.annotation.annotations =
+    chart.options.plugins.annotation.annotations = 
       groups.map(group => {
-        const mid = group[Math.floor(group.length / 2)];
+        const start = times[group[0]];
+        const end = times[group[group.length - 1]];
+    
         return {
-          type: 'label',
-          xValue: times[mid],
-          yValue: Math.max(...temps.filter(t => t !== null)) - 2,
-          content: ['⚠ Offline'],
-          color: '#ff4d4d',
-          font: { size: 12 }
+          type: 'box',
+          xMin: start,
+          xMax: end,
+          backgroundColor: 'rgba(255, 77, 77, 0.15)', // light red
+          borderWidth: 0
         };
       });
     

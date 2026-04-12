@@ -359,7 +359,14 @@ if(data.message){
   if(lastDataCache){
     data = lastDataCache;
   } else {
-    return;
+    // 🔥 show placeholders instead of freezing
+    smoothUpdate("temp","-- °C");
+    smoothUpdate("hum","-- %");
+    smoothUpdate("windSpeed","-- km/h");
+    smoothUpdate("visibility","-- %");
+    smoothUpdate("rain","--");
+
+    return; // now safe
   }
 }
 

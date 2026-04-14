@@ -1,30 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
+<head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>About IoT Weather Station</title>
+<meta name="robots" content="noindex, follow"><style>
 
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>About IoT Weather Station | ESP8266 & ESP32 Project</title>
-
-<meta name="description" content="IoT weather station project built using ESP8266/ESP32 with real-time monitoring and live dashboard.">
-
-<meta name="keywords" content="IoT weather station, ESP8266 project, ESP32 weather system, real time dashboard">
-
-<!-- 🔒 keep this so About doesn't outrank homepage -->
-<meta name="robots" content="noindex, follow">
-
-<link rel="canonical" href="https://gpca-weather-station.onrender.com/about">
-
-<style>
+html{
+scroll-behavior:smooth;
+}
 
 body{
 margin:0;
 font-family:Segoe UI;
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 color:white;
 line-height:1.7;
+
+background: radial-gradient(circle at top, rgba(0,212,255,0.12), transparent 60%),
+linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 }
 
 .container{
@@ -33,169 +23,276 @@ margin:auto;
 padding:30px;
 }
 
+/* 🔥 HEADINGS */
 h1,h2{
 color:#00d4ff;
+letter-spacing:0.5px;
+text-align:center;
+position:relative;
 }
 
-.section{
-margin-bottom:30px;
+h1{
+font-size:32px;
+margin-bottom:10px;
 }
 
-.card{
-background: rgba(255,255,255,0.08);
-padding:20px;
-border-radius:15px;
-border:1px solid rgba(255,255,255,0.1);
-margin-top:15px;
+/* 🔥 PERFECT CENTER */
+h2{
+font-size:22px;
+margin-bottom:10px;
+width:fit-content;
+margin-left:auto;
+margin-right:auto;
 }
 
+/* 🔥 UNDERLINE */
+h2::after{
+content:"";
+display:block;
+width:100%;
+height:2px;
+background:#00d4ff;
+margin-top:8px;
+transform:scaleX(0);
+transform-origin:center;
+transition:0.4s;
+}
+
+.section.show h2::after{
+transform:scaleX(1);
+}
+
+/* 🔥 TEXT */
+p{
+max-width:750px;
+margin:15px auto;
+}
+
+/* 🔥 LIST */
 ul{
-padding-left:18px;
+padding-left:20px;
+max-width:700px;
+margin:10px auto;
 }
 
+/* 🔥 SECTION */
+.section{
+margin-bottom:35px;
+opacity:0;
+transform:translateY(25px);
+transition:0.5s;
+}
+
+.section.show{
+opacity:1;
+transform:translateY(0);
+}
+
+.section:not(:last-child){
+border-bottom:1px solid rgba(255,255,255,0.08);
+padding-bottom:25px;
+}
+
+/* 🔥 CARD */
+.card{
+background: rgba(255,255,255,0.06);
+padding:22px;
+border-radius:18px;
+border:1px solid rgba(255,255,255,0.15);
+margin:15px auto;
+max-width:800px;
+
+backdrop-filter: blur(10px);
+transition:0.3s;
+}
+
+.card:hover{
+transform: translateY(-5px);
+border-color: rgba(0,212,255,0.4);
+box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+/* 🔥 BUTTON */
 .btn{
-display:inline-block;
-margin-top:25px;
-padding:12px 20px;
-background:#28a745;
-border-radius:8px;
+display:block;
+width:fit-content;
+margin:30px auto 0;
+padding:12px 22px;
+background: linear-gradient(135deg,#28a745,#00c851);
+border-radius:10px;
 color:white;
 text-decoration:none;
 font-weight:bold;
+transition:0.3s;
 }
 
 .btn:hover{
-background:#218838;
+transform: translateY(-2px);
+box-shadow: 0 6px 20px rgba(0,255,100,0.4);
 }
 
+/* 🔥 HIGHLIGHT */
 .highlight{
-background: rgba(0,212,255,0.15);
+background: rgba(0,212,255,0.12);
 padding:15px;
 border-radius:12px;
-margin-top:20px;
-border:1px solid rgba(0,212,255,0.3);
+margin:20px auto;
+border:1px solid rgba(0,212,255,0.2);
+max-width:750px;
 }
 
-</style>
+/* 🔥 STATS */
+.stats{
+display:grid;
+grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+gap:15px;
+margin:30px 0;
+}
 
-</head>
+.stat-card{
+background: rgba(255,255,255,0.06);
+padding:15px;
+border-radius:15px;
+text-align:center;
+border:1px solid rgba(255,255,255,0.15);
+backdrop-filter: blur(10px);
+transition:0.3s;
+}
 
-<body>
+.stat-card:hover{
+transform: translateY(-5px);
+border-color: rgba(0,212,255,0.4);
+box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
 
-<div class="container">
+.stat-value{
+font-size:20px;
+font-weight:bold;
+color:#00d4ff;
+}
 
-<h1>🌦 About This Project</h1>
+.stat-label{
+font-size:13px;
+opacity:0.7;
+margin-top:5px;
+}
 
+</style></head><body><div class="container"><h1>🌦 About This Project</h1><p style="opacity:0.8; text-align:center;">
+Real-time IoT-based environmental monitoring system
+</p><div class="stats">
+<div class="stat-card"><div class="stat-value">🌡</div><div class="stat-label">Temperature</div></div>
+<div class="stat-card"><div class="stat-value">💧</div><div class="stat-label">Humidity</div></div>
+<div class="stat-card"><div class="stat-value">🌧</div><div class="stat-label">Rain</div></div>
+<div class="stat-card"><div class="stat-value">🌬</div><div class="stat-label">Wind</div></div>
+</div><!-- 🔥 OVERVIEW (FIXED STRUCTURE) --><div class="section">
+<h2>📌 Overview</h2>
+<div class="card">
 <p>
-I built this IoT Weather Station to track real-time environmental conditions using ESP8266/ESP32.
-The main goal was to create a simple and low-cost system that can monitor weather without depending on expensive setups.
+This system collects real-time environmental data using ESP8266/ESP32, processes it through a backend system, and displays it on a live dashboard for continuous monitoring.
 </p>
-
-<p>
-The system collects live data like temperature, humidity, rainfall, wind speed, and visibility, and sends it to an online dashboard for monitoring.
-</p>
-
-
-<div class="highlight">
-💡 This system updates data every few seconds and shows real-time changes directly on the dashboard.
 </div>
-
-
-<div class="section">
+</div><div class="highlight">
+💡 Updates every few seconds with live sensor data
+</div><div class="section">
 <h2>⚙️ How It Works</h2>
-
-<div class="card">
-<p>
-Sensors are connected to the ESP module, which reads data at regular intervals.
-The data is converted into JSON format and sent to a Flask backend over WiFi.
-</p>
-
-<p>
-The backend stores this data in a PostgreSQL database and sends it to the dashboard for live visualization.
-</p>
-</div>
-
-</div>
-
-
-<div class="section">
-<h2>🧪 Sensors & Hardware</h2>
-
-<div class="card">
-<p>
-The system uses a DHT11 sensor for temperature and humidity, along with rain and wind sensors.
-Some sensors like visibility are optional, and the system automatically handles cases when they are not connected.
-</p>
-</div>
-
-</div>
-
-
-<div class="section">
-<h2>🧠 Backend Logic</h2>
-
-<div class="card">
-<p>
-The backend is built using Flask and manages all incoming sensor data.
-It stores data in a database, calculates statistics, and generates alerts like heat warnings, storm alerts, and rain notifications.
-</p>
-
-<p>
-It also detects whether the device is online or offline based on the latest data received.
-</p>
-</div>
-
-</div>
-
-
-<div class="section">
-<h2>⚠️ Challenges Faced</h2>
-
 <div class="card">
 <ul>
-<li>Unstable WiFi causing delayed updates</li>
-<li>Sensor accuracy and calibration issues</li>
-<li>Server downtime during deployment</li>
-<li>Handling missing or disconnected sensors</li>
+<li>📡 Sensors collect environmental data</li>
+<li>📶 ESP sends data via WiFi</li>
+<li>🧠 Flask backend processes and stores data</li>
+<li>📊 Dashboard displays real-time updates</li>
 </ul>
 </div>
-
-</div>
-
-
-<div class="section">
-<h2>🚀 Applications</h2>
-
+</div><div class="section">
+<h2>🧪 Sensors & Hardware</h2>
 <div class="card">
 <ul>
-<li>Agriculture and crop monitoring</li>
+<li>🌡 DHT11 sensor for temperature & humidity</li>
+<li>🌧 Rain sensor for rainfall detection</li>
+<li>🌬 Wind sensor for wind speed</li>
+<li>👁 Optional visibility sensor support</li>
+</ul>
+</div>
+</div><div class="section">
+<h2>🧠 Backend Logic</h2>
+<div class="card">
+<ul>
+<li>🧠 Flask backend processes incoming data</li>
+<li>💾 Stores data in PostgreSQL database</li>
+<li>📊 Generates analytics and statistics</li>
+<li>⚠️ Triggers alerts (rain, heat, etc.)</li>
+<li>📡 Detects device online/offline status</li>
+</ul>
+</div>
+</div><div class="section">
+<h2>⚠️ Challenges Faced</h2>
+<div class="card">
+<ul>
+<li>Unstable WiFi connections</li>
+<li>Sensor calibration issues</li>
+<li>Server downtime</li>
+<li>Handling missing data</li>
+</ul>
+</div>
+</div><div class="section">
+<h2>⚠️ Limitations & Drawbacks</h2>
+<div class="card">
+<ul>
+<li>Dependent on sensor stability</li>
+<li>Requires continuous internet</li>
+<li>Data gaps during downtime</li>
+<li>Limited accuracy of DHT11</li>
+<li>Needs stable power supply</li>
+<li>Basic API security</li>
+</ul>
+</div>
+</div><div class="section">
+<h2>🚀 Applications</h2>
+<div class="card">
+<ul>
+<li>Agriculture monitoring</li>
 <li>Local weather tracking</li>
-<li>Educational and research projects</li>
+<li>Research & education</li>
 <li>Smart environment systems</li>
 </ul>
 </div>
-
-</div>
-
-
-<div class="section">
-<h2>🔮 Future Improvements</h2>
-
+</div><div class="section">
+<h2>🛠 Tech Stack</h2>
 <div class="card">
 <ul>
-<li>Add air quality and UV sensors</li>
-<li>Mobile app integration</li>
-<li>AI-based weather prediction</li>
+<li><b>Hardware:</b> ESP8266 / ESP32</li>
+<li><b>Frontend:</b> HTML, CSS, JS, Chart.js</li>
+<li><b>Backend:</b> Flask (Python)</li>
+<li><b>Database:</b> PostgreSQL</li>
+<li><b>Deployment:</b> Render</li>
 </ul>
 </div>
-
+</div><div class="section">
+<h2>🔮 Future Improvements</h2>
+<div class="card">
+<ul>
+<li>Air quality & UV sensors</li>
+<li>Mobile app integration</li>
+<li>AI-based predictions</li>
+</ul>
 </div>
+</div><p style="opacity:0.6; font-size:14px; margin-top:40px; text-align:center;">
+Built as part of an IoT-based smart monitoring system project.
+</p><a href="/" class="btn">⬅ Back to Home</a>
 
+</div><script>
+const sections = document.querySelectorAll(".section");
 
-<a href="/" class="btn">⬅ Back to Home</a>
+function reveal(){
+sections.forEach(sec=>{
+const top = sec.getBoundingClientRect().top;
+if(top < window.innerHeight - 100){
+sec.classList.add("show");
+}
+});
+}
 
-</div>
-
-</body>
-
+window.addEventListener("scroll", reveal);
+reveal();
+</script></body>
 </html>

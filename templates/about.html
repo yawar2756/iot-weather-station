@@ -11,18 +11,45 @@ body{
 margin:0;
 font-family:Segoe UI;
 color:white;
-line-height:1.7;
-
-background: radial-gradient(circle at top, rgba(0,212,255,0.12), transparent 60%),
-linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+overflow-x:hidden;
+background:
+radial-gradient(circle at 20% 80%, rgba(0,150,255,0.08), transparent 50%),
+radial-gradient(circle at 80% 20%, rgba(0,229,255,0.06), transparent 50%),
+linear-gradient(160deg,#0b1f2a,#121e2a,#1c2b36);
+}
+  
+body::before{
+content:"";
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:url("https://www.transparenttextures.com/patterns/noise.png");
+opacity:0.04;
+pointer-events:none;
 }
 
 .container{
 max-width:950px;
 margin:auto;
 padding:30px;
+position:relative;
 }
 
+.container::before{
+content:"";
+position:absolute;
+top:-120px;
+left:60%;
+transform:translateX(-50%);
+width:700px;
+height:700px;
+background:radial-gradient(circle, rgba(0,229,255,0.08), transparent 70%);
+filter:blur(120px);
+z-index:-1;
+}
+  
 /* 🔥 HEADINGS */
 h1,h2{
 color:#00d4ff;
@@ -97,11 +124,10 @@ padding-bottom:25px;
 .card{
 background: rgba(255,255,255,0.06);
 padding:22px;
-border-radius:18px;
-border:1px solid rgba(255,255,255,0.15);
+border-radius:16px;
+border:1px solid rgba(255,255,255,0.08);
 margin:15px auto;
 max-width:800px;
-
 backdrop-filter: blur(10px);
 transition:0.3s;
 }

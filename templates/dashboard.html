@@ -950,35 +950,46 @@ async function loadChart() {
 
     // 🚨 no data → stop
     if (!data || data.length === 0) {
-
       if (chart) {
         chart.destroy();
         chart = null;
       }
-    
-      const ctx = document.getElementById("tempChart").getContext("2d");
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    
-      console.log("No chart data");
+
+      const canvas = document.getElementById("tempChart");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       return;
     }
 
-    const ctx = document.getElementById("tempChart").getContext("2d");
+    const canvas = document.getElementById("tempChart");
+    const ctx = canvas.getContext("2d");
+
+    // 🔥🔥🔥 MAIN FIX (ANTI-BLUR)
+    const dpr = window.devicePixelRatio || 2;
+
+    canvas.style.width = "100%";
+    canvas.style.height = "320px";
+
+    canvas.width = canvas.offsetWidth * dpr;
+    canvas.height = 320 * dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // CRITICAL LINE
+
+    // 🎨 gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, "rgba(0,229,255,0.8)");
     gradient.addColorStop(1, "rgba(0,229,255,0.2)");
 
-    // 🔥 destroy old chart (prevents bugs)
-    if (chart) {
-      chart.destroy();
-    }
+    // 🔥 destroy old chart
+    if (chart) chart.destroy();
 
-        // 🔥 clean data
-    const temps = data.map(d => d.temperature ?? 0);
-    
+    // clean data
+    const temps = data.map(d => d.temperature ?? null);
+
     const times = data.map(d => {
       const date = new Date(d.time);
-    
+
       return mode === "hourly"
         ? ((date.getHours() % 12) || 12) + (date.getHours() >= 12 ? " PM" : " AM")
         : date.toLocaleDateString('en-IN', {
@@ -986,16 +997,8 @@ async function loadChart() {
             day: 'numeric'
           });
     });
-    // 🔥 STEP 3 HERE
-    const offlineIndexes = temps
-      .map((t, i) => t === null ? i : null)
-      .filter(i => i !== null);
-    console.log("OFFLINE INDEXES:", offlineIndexes);
-    console.log("TEMPS:", temps);
-    console.log("TIMES:", times);
 
-    
-    // 🔥 create chart
+    // 🚀 create chart
     chart = new Chart(ctx, {
       type: "line",
       data: {
@@ -1007,42 +1010,39 @@ async function loadChart() {
           backgroundColor: gradient,
           fill: false,
           tension: 0.4,
-        
-          // 🔥 ADD THIS HERE
+
           segment: {
             borderDash: ctx => {
               if (ctx.p0.parsed.y === null || ctx.p1.parsed.y === null) {
-                return [6, 6]; // dashed gap
+                return [6, 6];
               }
               return [];
             }
           },
-        
+
+          borderWidth: 3,
           pointRadius: 4,
           pointHoverRadius: 6,
           pointBackgroundColor: "#00f2ff",
           pointBorderColor: "#ffffff",
           pointBorderWidth: 2,
-        
-          spanGaps: false,
-          stepped: false
+          spanGaps: false
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        devicePixelRatio: dpr, // 🔥 important
 
         plugins: {
           legend: { display: false },
-        
           tooltip: {
             backgroundColor: "#111",
             titleColor: "#fff",
             bodyColor: "#ccc"
           }
-  
-        },       
-        
+        },
+
         interaction: {
           mode: "index",
           intersect: false
@@ -1050,23 +1050,17 @@ async function loadChart() {
 
         scales: {
           x: {
-            type: 'category',
             ticks: { color: "#ddd" },
             grid: { display: false }
           },
           y: {
-            ticks: {
-              autoSkip: false,
-              maxRotation: 0,
-              minRotation: 0
-            },
+            ticks: { color: "#ddd" },
             grid: { color: "rgba(255,255,255,0.1)" }
           }
         }
       }
     });
 
-    
   } catch (e) {
     console.log("chart error:", e);
   }

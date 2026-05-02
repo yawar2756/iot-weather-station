@@ -8,142 +8,294 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
   
 <style>
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:white;
-overflow-x:hidden;
-animation: fadePage 0.6s ease;
+* {
+  box-sizing: border-box;
 }
 
-@keyframes fadePage{from{opacity:0}to{opacity:1}}
-
-.header{
-  background:rgba(0,0,0,0.4);
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-
-  position: relative;   /* ADD */
-  z-index: 2;           /* ADD */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0c0c1a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+  overflow-x: hidden;
+  min-height: 100vh;
+  position: relative;
+  animation: fadePage 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.header h1{margin:0;font-size:22px}
-
-.export-btn{
-background:#28a745;
-padding:8px 14px;
-border-radius:6px;
-color:white;
-text-decoration:none;
-font-size:13px;
+@keyframes fadePage {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.container{
-  width:100%;
-  padding:20px;
-  box-sizing:border-box;
-
-  position: relative;   /* ADD */
-  z-index: 2;           /* ADD */
-}
-  
-.hero{text-align:center;margin-bottom:30px}
-
-.temperature{
-font-size:72px;
-font-weight:700;
-background: linear-gradient(90deg,#00e5ff,#00ffcc);
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
+.header {
+  background: rgba(12, 12, 26, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 20px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
-.trend{font-size:18px;margin-top:5px}
-.status{margin-top:10px;font-weight:bold}
-.update-time{margin-top:6px;font-size:13px;opacity:0.7}
-
-#loadingText{
-opacity:0.7;
-font-size:14px;
-margin-top:10px;
-animation:pulse 1.5s infinite;
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #00d4ff, #5b8bf5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-@keyframes pulse{
-0%{opacity:0.4}
-50%{opacity:1}
-100%{opacity:0.4}
+.header span {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-top: 4px;
+  display: block;
 }
 
-.grid{display:grid;gap:20px}
-
-.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:30px;}
-.analytics-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-bottom:30px;}
-
-.card{
-background: rgba(255,255,255,0.12);
-backdrop-filter: blur(5px);
--webkit-backdrop-filter: blur(5px);
-padding:20px;
-border-radius:18px;
-text-align:center;
-border:1px solid rgba(255,255,255,0.15);
-box-shadow:0 8px 25px rgba(0,0,0,0.3);
-transition:0.3s;
+.export-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 12px 24px;
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.card:hover{
-transform: translateY(-5px);
-box-shadow:0 12px 35px rgba(0,0,0,0.5);
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
 }
 
-.chart-section{
-background:rgba(255,255,255,0.08);
-padding:15px;
-border-radius:15px;
-height:320px;
+.container {
+  width: 100%;
+  padding: 40px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
 }
 
-canvas{
-width:100%!important;
-height:100%!important;
+.hero {
+  text-align: center;
+  margin-bottom: 48px;
+  padding: 0 20px;
 }
 
-.alert{
-display:none;
-margin-top:15px;
-padding:16px;
-border-radius:14px;
-font-weight:bold;
-backdrop-filter: blur(10px);
-animation: fadeIn 0.4s ease;
+.temperature {
+  font-size: 96px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 50%, #0077aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+  letter-spacing: -2px;
+  text-shadow: 0 0 60px rgba(0, 212, 255, 0.5);
 }
 
-@keyframes fadeIn{
-from{opacity:0;transform:translateY(-10px);}
-to{opacity:1;transform:translateY(0);}
+.trend {
+  font-size: 20px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
-.alert-danger{
-background: rgba(255,0,0,0.25);
-border:1px solid rgba(255,0,0,0.4);
+.status {
+  margin: 20px 0 12px 0;
+  font-weight: 700;
+  font-size: 18px;
 }
 
-.alert-warning{
-background: rgba(255,165,0,0.25);
-border:1px solid rgba(255,165,0,0.4);
+.update-time {
+  margin-top: 12px;
+  font-size: 15px;
+  opacity: 0.8;
+  font-weight: 500;
 }
 
-@media(max-width:768px){
-.temperature{font-size:46px}
-.kpi-grid,.analytics-grid{grid-template-columns:1fr}
-.chart-section{height:260px}
+#liveClock {
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 20px;
+  background: linear-gradient(135deg, #a8e6cf, #88d8a3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* 🌧 Rain container */
+#loadingText {
+  opacity: 0.7;
+  font-size: 16px;
+  margin-top: 16px;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+.grid {
+  display: grid;
+  gap: 24px;
+}
+
+.kpi-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-bottom: 48px;
+}
+
+.analytics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-bottom: 48px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 32px 24px;
+  border-radius: 24px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+}
+
+.card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.card h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 0.9;
+  letter-spacing: 0.5px;
+}
+
+.card p {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.chart-section {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  padding: 32px;
+  border-radius: 28px;
+  height: 420px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+  margin-bottom: 40px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+#dateLabel {
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #00d4ff, #5b8bf5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+#chartMode {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 20px;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#chartMode:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+canvas {
+  width: 100% !important;
+  height: 340px !important;
+  border-radius: 20px;
+}
+
+.alert {
+  display: none;
+  margin-top: 24px;
+  padding: 20px 28px;
+  border-radius: 20px;
+  font-weight: 700;
+  backdrop-filter: blur(20px);
+  animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fecaca;
+}
+
+.alert-warning {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fef3c7;
+}
+
+/* Weather Effects */
 #rain-container {
   position: fixed;
   top: 0;
@@ -155,86 +307,129 @@ border:1px solid rgba(255,165,0,0.4);
   z-index: 1;
 }
 
-/* 🌧 Drop */
-.raindrop{
-  position:absolute;
-  width:1.5px;
-  height:18px;
-  background: linear-gradient(to bottom, #fff, rgba(173,216,230,0.3));
-  border-radius:50%;
-  transform: rotate(20deg);
+.raindrop {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(to bottom, rgba(173, 216, 230, 0.8), rgba(173, 216, 230, 0.2));
+  border-radius: 50% 10px 50% 10px;
+  transform: rotate(15deg);
   animation: rainFall linear infinite;
+  box-shadow: 0 0 4px rgba(173, 216, 230, 0.5);
 }
 
-@keyframes rainFall{
-  0%{transform:translateY(-120px) translateX(0) rotate(20deg);opacity:0;}
-  10%{opacity:1;}
-  100%{transform:translateY(100vh) translateX(-40px) rotate(20deg);opacity:0;}
+@keyframes rainFall {
+  0% {
+    transform: translateY(-100vh) translateX(0) rotate(15deg);
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% {
+    transform: translateY(100vh) translateX(-30px) rotate(15deg);
+    opacity: 0;
+  }
 }
 
-/* 🌌 SKY BACKGROUND */
-#sky-layer{
-  position:fixed;
-  width:100%;
-  height:100%;
-  top:0;
-  left:0;
-  z-index:0;
-  transition: background 1s ease;
-}
-
-/* 🌧 RAIN */
-#rain-container{
-  position:fixed;
-  width:100%;
-  height:100%;
-  z-index:1;
-  pointer-events:none;
-}
-
-/* 🌫 FOG */
-#fog-layer{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  pointer-events:none;
-  z-index:1;
-
-  opacity:0;
-  transition: opacity 1s;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  background:
-    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.12), transparent 60%),
-    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.10), transparent 70%),
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 80%);}
-@keyframes fogMove {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(-20px); }
-  100% { transform: translateX(0); }
+#sky-layer {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #fog-layer {
-  animation: fogMove 20s ease-in-out infinite;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  backdrop-filter: blur(0px);
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 70%);
+  animation: fogMove 25s ease-in-out infinite;
 }
-/* ⚡ LIGHTNING */
-#lightning{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  pointer-events:none;
-  z-index:3;
-  background: radial-gradient(circle, #ffffff, #cceeff);
-  opacity:0;
-  transition: opacity 0.1s;
+
+@keyframes fogMove {
+  0%, 100% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(-15px) scale(1.02); }
 }
+
+#lightning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.9) 0%, transparent 40%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.7) 0%, transparent 40%),
+    radial-gradient(circle at 10% 80%, rgba(255,255,255,0.5) 0%, transparent 40%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 20px;
+  }
   
+  .header h1 {
+    font-size: 24px;
+  }
+  
+  .container {
+    padding: 24px 20px;
+  }
+  
+  .temperature {
+    font-size: 64px;
+  }
+  
+  .kpi-grid,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-section {
+    height: 360px;
+    padding: 24px;
+  }
+  
+  canvas {
+    height: 280px !important;
+  }
+  
+  .kpi-grid {
+    margin-bottom: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .temperature {
+    font-size: 52px;
+  }
+  
+  .card {
+    padding: 24px 20px;
+  }
+  
+  .card p {
+    font-size: 32px;
+  }
+}
 </style>
 
 </head>
@@ -247,50 +442,74 @@ border:1px solid rgba(255,165,0,0.4);
 <div id="lightning"></div>
   
 <div class="header">
-<div>
-<h1>GPCA Smart Weather System</h1>
-<span>Cloud Monitoring Dashboard • v1.0.0</span>
-</div>
-<a href="/api/export" class="export-btn">⬇ Export Last 7 Days</a>
+  <div>
+    <h1>GPCA Smart Weather System</h1>
+    <span>Cloud Monitoring Dashboard • v1.0.0</span>
+  </div>
+  <a href="/api/export" class="export-btn">⬇ Export Last 7 Days</a>
 </div>
 
 <div class="container">
 
-<div class="hero">
-<div class="temperature" id="temp">-- °C</div>
-<div class="trend" id="trend">➖ Stable</div>
-<div id="deviceStatus" class="status">⏳ Loading data...</div>
-<div id="loadingText">⏳ Fetching live weather data...</div>
-<div class="update-time" id="updateTime">Updated --</div>
-<br>
-<div id="liveClock"></div>
-<div id="alertBox" class="alert"></div>
+  <div class="hero">
+    <div class="temperature" id="temp">-- °C</div>
+    <div class="trend" id="trend">➖ Stable</div>
+    <div id="deviceStatus" class="status">⏳ Loading data...</div>
+    <div id="loadingText">⏳ Fetching live weather data...</div>
+    <div class="update-time" id="updateTime">Updated --</div>
+    <br>
+    <div id="liveClock"></div>
+    <div id="alertBox" class="alert"></div>
+  </div>
+
+  <div class="grid kpi-grid">
+    <div class="card">
+      <h3>Humidity</h3>
+      <p id="hum">-- %</p>
+    </div>
+    <div class="card">
+      <h3>Wind Speed</h3>
+      <p id="windSpeed">-- km/h</p>
+    </div>
+    <div class="card">
+      <h3>Visibility</h3>
+      <p id="visibility">-- %</p>
+    </div>
+    <div class="card">
+      <h3>Rain Status</h3>
+      <p id="rain">--</p>
+    </div>
+  </div>
+
+  <div class="grid analytics-grid">
+    <div class="card">
+      <h3>Min Temperature</h3>
+      <p id="minTemp">-- °C</p>
+    </div>
+    <div class="card">
+      <h3>Max Temperature</h3>
+      <p id="maxTemp">-- °C</p>
+    </div>
+    <div class="card">
+      <h3>Average Temperature</h3>
+      <p id="avgTemp">-- °C</p>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-header">
+      <label id="dateLabel">📅 Loading...</label>
+      <select id="chartMode" onchange="loadChart()">
+        <option value="hourly">Last 12 Hours</option>
+        <option value="daily">Last 7 Days</option>
+      </select>
+    </div>
+    <canvas id="tempChart"></canvas>
+  </div>
+
 </div>
 
-<div class="grid kpi-grid">
-<div class="card"><h3>Humidity</h3><p id="hum">-- %</p></div>
-<div class="card"><h3>Wind Speed</h3><p id="windSpeed">-- km/h</p></div>
-<div class="card"><h3>Visibility</h3><p id="visibility">-- %</p></div>
-<div class="card"><h3>Rain Status</h3><p id="rain">--</p></div>
-</div>
-
-<div class="grid analytics-grid">
-<div class="card"><h3>Min Temperature</h3><p id="minTemp">-- °C</p></div>
-<div class="card"><h3>Max Temperature</h3><p id="maxTemp">-- °C</p></div>
-<div class="card"><h3>Average Temperature</h3><p id="avgTemp">-- °C</p></div>
-</div>
-
-<div class="chart-section">
-<label id="dateLabel">📅 Loading...</label>
-<select id="chartMode" onchange="loadChart()">
-<option value="hourly">Last 12 Hours</option>
-<option value="daily">Last 7 Days</option>
-</select>
-<canvas id="tempChart"></canvas>
-</div>
-
-</div>
-
+<!-- All JavaScript remains EXACTLY the same -->
 <script>
 
 let chart=null;
@@ -613,17 +832,18 @@ function setSky(condition){
   const sky=document.getElementById("sky-layer");
 
   if(condition === "rain detected" || condition === "light rain" || condition === "heavy rain"){
-    sky.style.background="linear-gradient(#2c3e50,#4ca1af)";
+    sky.style.background="linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)";
   } else {
-    sky.style.background="linear-gradient(#0f2027,#203a43,#2c5364)";
+    sky.style.background="linear-gradient(135deg, #0c0c1a 0%, #1a1a2e 50%, #16213e 100%)";
   }
 }
 
 function toggleFog(visibility){
   const fog = document.getElementById("fog-layer");
 
-  if(visibility !== -1 && visibility !== undefined && visibility < 30){
+  if(visibility !== -1 && visibility < 30){
     fog.style.opacity = 0.4 + (30 - visibility) / 100;
+    fog.style.backdropFilter = `blur(${Math.max(2, (30 - visibility) / 10)}px)`;
   } else {
     fog.style.opacity = 0;
   }

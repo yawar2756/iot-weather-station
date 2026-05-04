@@ -257,19 +257,17 @@ def history():
     if mode == "daily":
         cur.execute("""
         SELECT 
-            t.day,
-            ROUND(AVG(w.temperature)::numeric, 2) as temperature
-        FROM generate_series(
-            date_trunc('day', NOW() - INTERVAL '6 days'),
-            date_trunc('day', NOW()),
-            INTERVAL '1 day'
-        ) as t(day)
-        
-        LEFT JOIN weather w
-        ON DATE(w.created_at) = t.day
-        
-        GROUP BY t.day
-        ORDER BY t.day ASC
+            date_trunc('hour', created_at) AS hour,
+            ROUND(AVG(temperature)::numeric, 2) AS temperature,
+            ROUND(AVG(humidity)::numeric, 2) AS humidity,
+            MAX(rain_status) AS rain_status,
+            ROUND(AVG(wind_speed)::numeric, 2) AS wind_speed,
+            MAX(wind_direction) AS wind_direction,
+            ROUND(AVG(visibility)::numeric, 2) AS visibility
+        FROM weather
+        WHERE created_at >= NOW() - INTERVAL '7 days'
+        GROUP BY hour
+        ORDER BY hour ASC;
         """)
     else:
         cur.execute("""

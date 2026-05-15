@@ -645,8 +645,17 @@ if(data.message){
 document.getElementById("loadingText").style.display="none";
 lastDataCache=data;
 
-document.getElementById("deviceStatus").innerText =
-data.device_status==="Online"?"🟢 Device Online":"🔴 Offline";
+const statusEl=document.getElementById("deviceStatus");
+
+statusEl.innerText=
+data.device_status==="Online"
+?"🟢 Device Online"
+:"🔴 Offline";
+
+statusEl.style.color=
+data.device_status==="Online"
+?"#00ff99"
+:"#ff4444";
 
 lastUpdateTime=Date.now();
 
@@ -659,10 +668,23 @@ if (data.wind_speed === -1) {
     data.wind_speed != null ? Number(data.wind_speed).toFixed(1) + " km/h" : "-- km/h"
   );
 }
-smoothUpdate("visibility",
+if(
 (data.visibility_status || "").toLowerCase() === "not connected"
-?"Not Connected"
-:(data.visibility!=null?Number(data.visibility).toFixed(0)+" %":"-- %"));
+||
+data.visibility === -1
+||
+data.visibility === 101
+){
+    smoothUpdate("visibility","Not Connected");
+}
+else{
+    smoothUpdate(
+        "visibility",
+        data.visibility != null
+        ? Number(data.visibility).toFixed(0)+" %"
+        : "-- %"
+    );
+}
 
 const rainStatus = (data.rain || "").trim().toLowerCase();
 if (rainStatus === "no rain") {
@@ -680,7 +702,7 @@ else if (rainStatus === "rain detected") {
 else {
   smoothUpdate("rain", "--");
 }
-  if (rainStatus === "rain detected" || rainStatus === "light rain" || rainStatus === "heavy rain") {
+  if (rainStatus === "light rain" || rainStatus === "heavy rain") {
   const intensity = (data.rain_value && data.rain_value > 0)
     ? Math.min(200, data.rain_value / 5)
     : 0;
@@ -712,7 +734,23 @@ const alertBox=document.getElementById("alertBox");
 
 if(data.alert && data.alert!=="Normal"){
 alertBox.style.display="block";
-alertBox.className="alert "+(data.alert.includes("Storm")||data.alert.includes("Heat")?"alert-danger":"alert-warning");
+alertBox.className="alert";
+
+if(data.alert.includes("Storm")){
+    alertBox.style.background="#ff3b30";
+}
+else if(data.alert.includes("Heat")){
+    alertBox.style.background="#ff9500";
+}
+else if(data.alert.includes("Rain")){
+    alertBox.style.background="#0099ff";
+}
+else if(data.alert.includes("Visibility")){
+    alertBox.style.background="#7f5af0";
+}
+else{
+    alertBox.style.background="#00aa66";
+}
 alertBox.innerText="⚠ "+data.alert;
 }else{
 alertBox.style.display="none";
@@ -934,7 +972,7 @@ startClock();
 updateDate();
 });
 
-setInterval(()=>{if(!document.hidden)fetchData();},10000);
+setInterval(()=>{if(!document.hidden)fetchData();},12000);
 setInterval(()=>{if(!document.hidden)loadChart();},150000);
  
 </script>

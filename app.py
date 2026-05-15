@@ -34,7 +34,8 @@ def init_db():
             wind_direction TEXT,
             visibility FLOAT,
             alert TEXT,
-            created_at TIMESTAMP DEFAULT NOW()        )
+            created_at TIMESTAMP DEFAULT NOW()
+            )    
         """)
         con.commit()
         cur.close()
@@ -81,7 +82,10 @@ def generate_alert(temp, wind, visibility, rain):
     if visibility is not None and visibility not in (-1,101) and visibility < 20:
         alerts.append("Low Visibility")
 
-    if rain and str(rain).lower() in ["light rain", "heavy rain", "rain detected"]:
+    if rain and str(rain).lower() in [
+        "light rain",
+        "heavy rain"
+    ]:
         alerts.append("Rain Alert")
 
     if not alerts:
@@ -105,6 +109,10 @@ def receive_data():
 
     try:
         temp = data.get("temperature")
+        try:
+            temp = float(temp)
+        except:
+            temp = None
         humidity = data.get("humidity")
 
         try:
@@ -114,8 +122,12 @@ def receive_data():
 
         print("RAW DATA:", data)
         print("HUMIDITY:", humidity)
-        
+        print("TEMP:", temp)
         rain_value = data.get("rain_value")
+        try:
+            rain_value = float(rain_value)
+        except:
+            rain_value = -1
         rain_status = data.get("rain_status")
         wind_speed = data.get("wind_speed")
 
@@ -125,6 +137,8 @@ def receive_data():
             wind_speed = -1
         wind_direction = data.get("wind_direction")
         visibility = data.get("visibility")
+        print("RAIN:", rain_status)
+        print("VISIBILITY:", visibility)
 
         try:
             visibility = float(visibility)
@@ -186,7 +200,7 @@ def latest():
     now = datetime.utcnow()
 
     seconds = (now - created_time).total_seconds()
-    device_status = "Offline" if seconds > 60 else "Online"
+    device_status = "Offline" if seconds > 180 else "Online"
 
     if device_status == "Offline":
         return jsonify({
@@ -218,7 +232,7 @@ def latest():
     trend = "Stable"
     if len(temps) >= 3:
         diff = temps[0] - temps[-1]
-        if diff > 1:
+        if diff > 0.5:
             trend = "Rising"
         elif diff < -1:
             trend = "Falling"
@@ -293,7 +307,10 @@ def history():
     con.close()
 
     return jsonify([
-        {"time": str(r[0]), "temperature": r[1] if r[1] else None}
+        {
+            "time": str(r[0]),
+            "temperature": r[1] if r[1] is not None else None
+        }
         for r in rows
     ])
 
@@ -343,7 +360,7 @@ def export():
             r[3] or "",
             r[4] if r[4] is not None else "",
             r[5] or "",
-            r[6] if r[6] not in (None, -1) else ""
+            r[6] if r[6] not in (None, -1,101) else ""
         ])
 
     return Response(

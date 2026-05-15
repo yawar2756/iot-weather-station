@@ -200,7 +200,7 @@ def latest():
     now = datetime.utcnow()
 
     seconds = (now - created_time).total_seconds()
-    device_status = "Offline" if seconds > 180 else "Online"
+    device_status = "Offline" if seconds > 30 else "Online"
 
     if device_status == "Offline":
         return jsonify({

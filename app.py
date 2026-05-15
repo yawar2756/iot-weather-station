@@ -196,6 +196,18 @@ def latest():
     if not row:
         return jsonify({"message": "No data yet"})
 
+    # ✅ MAJORITY VOTE — stable visibility (fixes 25/101 flickering)
+    cur.execute("""
+    SELECT visibility FROM weather
+    ORDER BY id DESC
+    LIMIT 3
+    """)
+    vis_rows = cur.fetchall()
+    vis_vals = [r[0] for r in vis_rows if r[0] is not None]
+    not_connected_count = sum(1 for v in vis_vals if v in (-1, 101))
+    stable_visibility = -1 if not_connected_count >= 2 else row[5]
+    # ✅ END MAJORITY VOTE
+
     created_time = row[7]
     now = datetime.utcnow()
 
@@ -246,10 +258,10 @@ def latest():
         "rain": row[2],
         "wind_speed": row[3],
         "wind_direction": row[4],
-        "visibility": row[5],
+        "visibility": stable_visibility,
         "visibility_status":
-            "Not Connected" if row[5] in (-1,101)
-            else ("Dark" if row[5] < 50 else "Bright"),
+            "Not Connected" if stable_visibility in (-1, 101)
+            else ("Dark" if stable_visibility < 50 else "Bright"),
         "alert": row[6],
         "min_temp": float(stats[0]) if stats[0] else None,
         "max_temp": float(stats[1]) if stats[1] else None,

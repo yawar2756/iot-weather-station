@@ -247,7 +247,9 @@ def latest():
         "wind_speed": row[3],
         "wind_direction": row[4],
         "visibility": row[5],
-        "visibility_status": "Not Connected" if row[5] in (-1,101) else "OK",
+        ""visibility_status":
+            "Not Connected" if row[5] in (-1,101)
+            else ("Dark" if row[5] < 50 else "Bright"),
         "alert": row[6],
         "min_temp": float(stats[0]) if stats[0] else None,
         "max_temp": float(stats[1]) if stats[1] else None,

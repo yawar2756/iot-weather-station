@@ -678,10 +678,10 @@ data.visibility === 101
     smoothUpdate("visibility","Not Connected");
 }
 else{
-    smoothUpdate(
-            "visibility",
-            data.visibility_status || "--"
-        );
+    smoothUpdate("visibility",
+      data.visibility === -1 ? "Not Connected" :
+      (data.visibility_status + " (" + data.visibility + "%)")
+    );
 }
 
 const rainStatus = (data.rain || "").trim().toLowerCase();

@@ -679,11 +679,9 @@ data.visibility === 101
 }
 else{
     smoothUpdate(
-        "visibility",
-        data.visibility != null
-        ? Number(data.visibility).toFixed(0)+" %"
-        : "-- %"
-    );
+            "visibility",
+            data.visibility_status || "--"
+        );
 }
 
 const rainStatus = (data.rain || "").trim().toLowerCase();

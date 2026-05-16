@@ -261,7 +261,7 @@ def latest():
         "visibility": stable_visibility,
         "visibility_status":
             "Not Connected" if stable_visibility in (-1, 101)
-            else ("Dark" if stable_visibility < 50 else "Bright"),
+            else ("Low" if stable_visibility < 50 else "Good"),
         "alert": row[6],
         "min_temp": float(stats[0]) if stats[0] else None,
         "max_temp": float(stats[1]) if stats[1] else None,

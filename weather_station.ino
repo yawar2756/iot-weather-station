@@ -15,7 +15,7 @@
 // Wind Sensor
 #define WIND_PIN 14       // D5
 
-// Light Sensor
+// LDR MODULE (DIGITAL PIN)
 #define VIS_PIN 13        // D7
 
 /* ================= WIFI ================= */
@@ -101,13 +101,15 @@ void setup() {
 
   dht.begin();
 
+  delay(2000);
+
   /* RAIN */
 
   pinMode(RAIN_PIN, INPUT_PULLUP);
 
-  /* LIGHT SENSOR */
+  /* LDR */
 
-  pinMode(VIS_PIN, INPUT_PULLUP);
+  pinMode(VIS_PIN, INPUT);
 
   /* WIND */
 
@@ -118,6 +120,8 @@ void setup() {
     countWind,
     FALLING
   );
+
+  Serial.println("✅ ALL SENSORS READY");
 }
 
 /* ================= LOOP ================= */
@@ -129,6 +133,8 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED) {
 
     Serial.println("❌ WiFi Failed");
+
+    delay(2000);
     return;
   }
 
@@ -136,18 +142,32 @@ void loop() {
 
     /* ================= DHT ================= */
 
-    float temp = dht.readTemperature()+ 10;
+    float temp = NAN;
+    float humidity = NAN;
 
-    float humidity = dht.readHumidity();
+    for (int i = 0; i < 3; i++) {
 
-    if (isnan(temp) || isnan(humidity)) {
+      temp = dht.readTemperature();
+      humidity = dht.readHumidity();
 
-      Serial.println("❌ DHT READ FAILED");
+      if (!isnan(temp) && !isnan(humidity)) {
+        break;
+      }
 
-      delay(2000);
-      return;
+      delay(1000);
     }
 
+    bool dhtConnected = true;
+
+    if (isnan(temp) || isnan(humidity)) {
+    
+      Serial.println("❌ DHT NOT CONNECTED");
+    
+      temp = -1;
+      humidity = -1;
+    
+      dhtConnected = false;
+    }
 
     Serial.print("🌡 Temp: ");
     Serial.println(temp);
@@ -159,34 +179,33 @@ void loop() {
 
     int rainHits = 0;
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 15; i++) {
 
       if (digitalRead(RAIN_PIN) == LOW) {
         rainHits++;
       }
 
-      delay(20);
+      delay(15);
     }
 
     String rainStatus;
 
-    if (rainHits >= 3) {
+    if (rainHits >= 10) {
       rainStatus = "Rain Detected";
     }
     else {
-      rainStatus = "No Rain";
+      rainStatus = digitalRead(RAIN_PIN) == HIGH
+      ? "No Rain"
+      : "Rain Detected";
     }
-
-    Serial.print("🌧 Rain Hits: ");
-    Serial.println(rainHits);
-
-    Serial.print("🌧 Rain Status: ");
-    Serial.println(rainStatus);
 
     int rainIntensity =
       (rainStatus == "Rain Detected")
       ? 150
       : 0;
+
+    Serial.print("🌧 Rain Status: ");
+    Serial.println(rainStatus);
 
     /* ================= WIND ================= */
 
@@ -194,61 +213,45 @@ void loop() {
 
     windClicks = 0;
 
-    float windSpeed =
-      min(clicks * 2.4, 120.0);
+    float windSpeed;
+
+    if(clicks < 0){
+      windSpeed = -1;
+    }
+    else{
+      windSpeed = min(clicks * 2.4, 120.0);
+    }
 
     Serial.print("🌬 Wind Speed: ");
     Serial.println(windSpeed);
 
-    /* ================= LIGHT SENSOR (FIXED) ================= */
+    /* ================= LDR DIGITAL ================= */
 
-    int darkCount = 0;
-
-    for (int i = 0; i < 20; i++) {
-      int sensorValue = digitalRead(VIS_PIN);
-      if (sensorValue == HIGH) {
-        darkCount++;
-      }
-      delay(10);
-    }
+    int ldrValue = digitalRead(VIS_PIN);
     
-    Serial.print("Dark Count: ");
-    Serial.println(darkCount);
+    Serial.print("LDR Raw Value: ");
+    Serial.println(ldrValue);
     
     float visibility;
     String visibilityStatus;
     
-    // ✅ If exactly 0 or exactly 20, take a second reading to confirm
-    if (darkCount == 0 || darkCount == 20) {
-      delay(200);
-      int confirmCount = 0;
-      for (int i = 0; i < 20; i++) {
-        if (digitalRead(VIS_PIN) == HIGH) {
-          confirmCount++;
-        }
-        delay(10);
-      }
-      Serial.print("Confirm Count: ");
-      Serial.println(confirmCount);
-      darkCount = confirmCount; // use confirmed value
+    // COVERED / DARK
+    if (ldrValue == HIGH) {
+    
+      visibility = 25;
+      visibilityStatus = "Low";
     }
     
-    if (darkCount <= 1) {
-      visibility = 101;
-      visibilityStatus = "Not Connected";
-    }
-    else if (darkCount >= 12) {
-      visibility = 25;
-      visibilityStatus = "Dark";
-    }
+    // BRIGHT
     else {
-      visibility = 100;
-      visibilityStatus = "Bright";
+    
+      visibility = 90;
+      visibilityStatus = "Good";
     }
-
+    
     Serial.print("👀 Visibility: ");
     Serial.println(visibility);
-
+    
     Serial.print("💡 Visibility Status: ");
     Serial.println(visibilityStatus);
 
@@ -271,7 +274,7 @@ void loop() {
     json += "\"wind_speed\":" +
             String(windSpeed, 1) + ",";
 
-    json += "\"wind_direction\":null,";
+    json += "\"wind_direction\":\"North\",";
 
     json += "\"visibility\":" +
             String(visibility, 0) + ",";

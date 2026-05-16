@@ -326,12 +326,11 @@ def history():
         FROM generate_series(
             date_trunc(
                 'hour',
-                NOW() AT TIME ZONE 'Asia/Kolkata'
-                - INTERVAL '11 hours'
+                NOW() - INTERVAL '11 hours'
             ),
             date_trunc(
                 'hour',
-                NOW() AT TIME ZONE 'Asia/Kolkata'
+                NOW()
             ),
             INTERVAL '1 hour'
         ) as t(hour)

@@ -679,8 +679,9 @@ data.visibility === 101
 }
 else{
     smoothUpdate("visibility",
-      data.visibility === -1 ? "Not Connected" :
-      (data.visibility_status + " (" + data.visibility + "%)")
+      data.visibility === -1
+      ? "Not Connected"
+      : data.visibility_status
     );
 }
 

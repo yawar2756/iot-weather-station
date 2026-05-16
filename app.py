@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, Response
 import psycopg2
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import csv
 import io
 
@@ -277,73 +277,87 @@ def latest():
 
 
 # ================= HISTORY (FINAL FIXED) =================
+# ================= HISTORY (FINAL FIXED) =================
 @app.route("/api/history")
 def history():
+
     mode = request.args.get("mode", "hourly")
 
     con = get_db()
+
     if not con:
         return jsonify([])
 
     cur = con.cursor()
 
+    # ================= DAILY =================
     if mode == "daily":
+
         cur.execute("""
         SELECT
             d.day,
             ROUND(AVG(w.temperature)::numeric, 2) AS temperature
-    
+
         FROM generate_series(
             date_trunc(
                 'day',
                 NOW() AT TIME ZONE 'Asia/Kolkata'
-                - INTERVAL '6 days'
-            ),
+            ) - INTERVAL '6 days',
+
             date_trunc(
                 'day',
                 NOW() AT TIME ZONE 'Asia/Kolkata'
             ),
+
             INTERVAL '1 day'
         ) AS d(day)
-    
+
         LEFT JOIN weather w
         ON date_trunc(
             'day',
             w.created_at AT TIME ZONE 'Asia/Kolkata'
         ) = d.day
+
         AND w.temperature != -1
-    
+
         GROUP BY d.day
         ORDER BY d.day ASC
         """)
-        
+
+    # ================= HOURLY =================
     else:
+
         cur.execute("""
         SELECT 
             t.hour,
-            ROUND(AVG(w.temperature)::numeric, 2) as temperature
-        
+            ROUND(AVG(w.temperature)::numeric, 2) AS temperature
+
         FROM generate_series(
             date_trunc(
                 'hour',
-                NOW() - INTERVAL '11 hours'
-            ),
+                NOW() AT TIME ZONE 'Asia/Kolkata'
+            ) - INTERVAL '11 hours',
+
             date_trunc(
                 'hour',
-                NOW()
+                NOW() AT TIME ZONE 'Asia/Kolkata'
             ),
+
             INTERVAL '1 hour'
-        ) as t(hour)
-        
+        ) AS t(hour)
+
         LEFT JOIN weather w
         ON date_trunc(
             'hour',
             w.created_at AT TIME ZONE 'Asia/Kolkata'
         ) = t.hour
-        
+
+        AND w.temperature != -1
+
         GROUP BY t.hour
         ORDER BY t.hour ASC
         """)
+
     rows = cur.fetchall()
 
     cur.close()
@@ -356,7 +370,6 @@ def history():
         }
         for r in rows
     ])
-
 
 # ================= EXPORT =================
 @app.route("/api/export")
@@ -423,9 +436,9 @@ def export():
             r[1] if r[1] is not None else "",
             r[2] if r[2] is not None else "",
             r[3] or "",
-            r[4] if r[4] is not None else "",
+            "" if r[4] in (None, -1) else r[4],
             r[5] or "",
-            r[6] if r[6] not in (None, -1,101) else ""
+            "" if r[6] in (None, -1, 101) else r[6],
         ])
 
     return Response(

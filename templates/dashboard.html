@@ -675,7 +675,7 @@ smoothUpdate(
       ? Number(data.humidity).toFixed(0) + " %"
       : "-- %")
 );
-if (data.wind_speed === -1) {
+if (data.wind_speed == -1) {
   smoothUpdate("windSpeed", "Not Connected");
 } else {
   smoothUpdate("windSpeed",
@@ -700,9 +700,12 @@ else{
 }
 
 const rainStatus = (data.rain || "").trim().toLowerCase();
-if (rainStatus === "no rain") {
+if (rainStatus === "not connected") {
+  smoothUpdate("rain", "Not Connected");
+}
+else if (rainStatus === "no rain") {
   smoothUpdate("rain", "No Rain");
-} 
+}
 else if (rainStatus === "light rain") {
   smoothUpdate("rain", "Light Rain");
 }
@@ -711,7 +714,7 @@ else if (rainStatus === "heavy rain") {
 }
 else if (rainStatus === "rain detected") {
   smoothUpdate("rain", "Rain Detected");
-} 
+}
 else {
   smoothUpdate("rain", "--");
 }

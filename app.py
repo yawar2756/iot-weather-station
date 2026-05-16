@@ -343,7 +343,6 @@ def history():
         GROUP BY t.hour
         ORDER BY t.hour ASC
         """)
-
     rows = cur.fetchall()
 
     cur.close()

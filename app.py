@@ -348,7 +348,7 @@ def history():
         LEFT JOIN weather w
         ON date_trunc(
             'hour',
-            w.created_at AT TIME ZONE 'Asia/Kolkata'
+            w.created_at
         ) = t.hour
         
         AND w.temperature != -1

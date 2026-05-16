@@ -6,17 +6,17 @@
 /* ================= PINS ================= */
 
 // DHT11
-#define DHTPIN 2          // D4
+#define DHTPIN D4
 #define DHTTYPE DHT11
 
 // Rain Sensor
-#define RAIN_PIN 12       // D6
+#define RAIN_PIN D6
 
 // Wind Sensor
-#define WIND_PIN 14       // D5
+#define WIND_PIN D5
 
-// LDR MODULE (DIGITAL PIN)
-#define VIS_PIN 13        // D7
+// LDR MODULE
+#define VIS_PIN D2
 
 /* ================= WIFI ================= */
 
@@ -31,7 +31,7 @@ const char* serverUrl =
 const char* apiKey =
 "gpcaweatherstation25";
 
-/* ================= SENSOR ================= */
+/* ================= DHT ================= */
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -58,7 +58,6 @@ void reconnectWiFi() {
   Serial.println("📡 Reconnecting WiFi...");
 
   WiFi.disconnect();
-
   WiFi.begin(ssid, password);
 
   unsigned long start = millis();
@@ -81,8 +80,7 @@ void setup() {
 
   Serial.begin(115200);
 
-  Serial.println();
-  Serial.println("🚀 SYSTEM STARTING");
+  Serial.println("\n🚀 SYSTEM STARTING");
 
   /* WIFI */
 
@@ -94,24 +92,18 @@ void setup() {
     Serial.print(".");
   }
 
-  Serial.println();
-  Serial.println("✅ WiFi Connected");
+  Serial.println("\n✅ WiFi Connected");
 
   /* DHT */
 
   dht.begin();
-
   delay(2000);
 
-  /* RAIN */
+  /* SENSOR MODES */
 
   pinMode(RAIN_PIN, INPUT_PULLUP);
 
-  /* LDR */
-
-  pinMode(VIS_PIN, INPUT);
-
-  /* WIND */
+  pinMode(VIS_PIN, INPUT_PULLUP);
 
   pinMode(WIND_PIN, INPUT_PULLUP);
 
@@ -160,12 +152,12 @@ void loop() {
     bool dhtConnected = true;
 
     if (isnan(temp) || isnan(humidity)) {
-    
+
       Serial.println("❌ DHT NOT CONNECTED");
-    
+
       temp = -1;
       humidity = -1;
-    
+
       dhtConnected = false;
     }
 
@@ -177,34 +169,26 @@ void loop() {
 
     /* ================= RAIN ================= */
 
-    int rainHits = 0;
-
-    for (int i = 0; i < 15; i++) {
-
-      if (digitalRead(RAIN_PIN) == LOW) {
-        rainHits++;
-      }
-
-      delay(15);
-    }
-
+    int rainRaw = digitalRead(RAIN_PIN);
+    
     String rainStatus;
-
-    if (rainHits >= 10) {
+    int rainIntensity;
+    
+    // WATER DETECTED
+    if (rainRaw == LOW) {
+    
       rainStatus = "Rain Detected";
+      rainIntensity = 150;
     }
+    
+    // NORMAL
     else {
-      rainStatus = digitalRead(RAIN_PIN) == HIGH
-      ? "No Rain"
-      : "Rain Detected";
+    
+      rainStatus = "No Rain";
+      rainIntensity = 0;
     }
-
-    int rainIntensity =
-      (rainStatus == "Rain Detected")
-      ? 150
-      : 0;
-
-    Serial.print("🌧 Rain Status: ");
+    
+    Serial.print("🌧 Rain: ");
     Serial.println(rainStatus);
 
     /* ================= WIND ================= */
@@ -215,11 +199,20 @@ void loop() {
 
     float windSpeed;
 
-    if(clicks < 0){
+    // disconnected
+    if (
+      digitalRead(WIND_PIN) == HIGH &&
+      clicks == 0
+    ) {
+
       windSpeed = -1;
     }
-    else{
-      windSpeed = min(clicks * 2.4, 120.0);
+
+    // connected
+    else {
+
+      windSpeed =
+        min(clicks * 2.4, 120.0);
     }
 
     Serial.print("🌬 Wind Speed: ");

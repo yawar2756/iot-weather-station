@@ -322,14 +322,16 @@ def history():
         SELECT 
             t.hour,
             ROUND(AVG(w.temperature)::numeric, 2) as temperature
+        
         FROM generate_series(
             date_trunc(
                 'hour',
-                NOW() - INTERVAL '11 hours'
+                NOW() AT TIME ZONE 'Asia/Kolkata'
+                - INTERVAL '11 hours'
             ),
             date_trunc(
                 'hour',
-                NOW()
+                NOW() AT TIME ZONE 'Asia/Kolkata'
             ),
             INTERVAL '1 hour'
         ) as t(hour)
@@ -337,7 +339,7 @@ def history():
         LEFT JOIN weather w
         ON date_trunc(
             'hour',
-            w.created_at
+            w.created_at AT TIME ZONE 'Asia/Kolkata'
         ) = t.hour
         
         GROUP BY t.hour

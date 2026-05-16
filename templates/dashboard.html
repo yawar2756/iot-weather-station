@@ -659,8 +659,22 @@ data.device_status==="Online"
 
 lastUpdateTime=Date.now();
 
-smoothUpdate("temp",data.temperature!=null?Number(data.temperature).toFixed(1)+" °C":"-- °C");
-smoothUpdate("hum",data.humidity!=null?Number(data.humidity).toFixed(0)+" %":"-- %");
+smoothUpdate(
+  "temp",
+  data.temperature == -1
+  ? "Not Connected"
+  : (data.temperature != null
+      ? Number(data.temperature).toFixed(1) + " °C"
+      : "-- °C")
+);
+smoothUpdate(
+  "hum",
+  data.humidity == -1
+  ? "Not Connected"
+  : (data.humidity != null
+      ? Number(data.humidity).toFixed(0) + " %"
+      : "-- %")
+);
 if (data.wind_speed === -1) {
   smoothUpdate("windSpeed", "Not Connected");
 } else {

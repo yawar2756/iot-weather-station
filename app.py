@@ -227,15 +227,20 @@ def latest():
 
     # stats
     cur.execute("""
-    SELECT MIN(temperature), MAX(temperature), AVG(temperature)
+    SELECT
+    MIN(temperature),
+    MAX(temperature),
+    AVG(temperature)
     FROM weather
     WHERE created_at >= NOW() - INTERVAL '12 hours'
+    AND temperature != -1
     """)
     stats = cur.fetchone()
 
     # trend
     cur.execute("""
     SELECT temperature FROM weather
+    WHERE temperature != -1
     ORDER BY id DESC
     LIMIT 6
     """)
@@ -285,7 +290,7 @@ def history():
     if mode == "daily":
         cur.execute("""
         SELECT 
-            date_trunc('hour', created_at) AS hour,
+            date_trunc('day', created_at) AS day,
             ROUND(AVG(temperature)::numeric, 2) AS temperature,
             ROUND(AVG(humidity)::numeric, 2) AS humidity,
             MAX(rain_status) AS rain_status,
@@ -294,9 +299,11 @@ def history():
             ROUND(AVG(visibility)::numeric, 2) AS visibility
         FROM weather
         WHERE created_at >= NOW() - INTERVAL '7 days'
-        GROUP BY hour
-        ORDER BY hour ASC;
+        AND temperature != -1
+        GROUP BY day
+        ORDER BY day ASC;
         """)
+        
     else:
         cur.execute("""
         SELECT 

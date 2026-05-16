@@ -325,12 +325,11 @@ def history():
         FROM generate_series(
             date_trunc(
                 'hour',
-                NOW() AT TIME ZONE 'Asia/Kolkata'
-                - INTERVAL '11 hours'
+                NOW() - INTERVAL '11 hours'
             ),
             date_trunc(
                 'hour',
-                NOW() AT TIME ZONE 'Asia/Kolkata'
+                NOW()
             ),
             INTERVAL '1 hour'
         ) as t(hour)
@@ -392,7 +391,6 @@ def export():
     
     WHERE
     created_at >= NOW() - INTERVAL '7 days'
-    AND created_at >= NOW() - INTERVAL '24 hours'
     
     AND temperature != -1
     

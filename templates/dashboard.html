@@ -623,7 +623,12 @@ if(data.device_status === "Offline"){
 
   removeRain();
   document.getElementById("fog-layer").style.opacity = 0;
-
+  document.getElementById("deviceStatus").style.color = "#ff4444";
+  document.getElementById("alertBox").style.display = "none";
+  smoothUpdate("minTemp", "-- °C");
+  smoothUpdate("maxTemp", "-- °C");
+  smoothUpdate("avgTemp", "-- °C");
+  document.getElementById("trend").innerText = "➖ Stable";
   return;
 }
 
@@ -719,10 +724,10 @@ else {
   smoothUpdate("rain", "--");
 }
   if (rainStatus === "light rain" || rainStatus === "heavy rain") {
-  const intensity = (data.rain_value && data.rain_value > 0)
-    ? Math.min(200, data.rain_value / 5)
-    : 0;
-    createRain(intensity);
+  const intensity = rainStatus === "heavy rain" ? 180
+                : rainStatus === "light rain" ? 80
+                : 0;
+createRain(intensity);
     
 } else {
   removeRain();

@@ -388,7 +388,7 @@ def export():
     SELECT
         date_trunc(
         'hour',
-        created_at AT TIME ZONE 'Asia/Kolkata'
+        created_at + INTERVAL '5 hours 30 minutes'
         ) AS hour,
     
         ROUND(AVG(temperature)::numeric,2) AS temperature,

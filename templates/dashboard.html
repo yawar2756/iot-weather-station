@@ -819,13 +819,13 @@ async function loadChart() {
     const dpr = window.devicePixelRatio || 2;
 
     canvas.style.width = "100%";
-    canvas.style.height = "320px";
+    canvas.style.height = "380px";
 
     canvas.width = canvas.offsetWidth * dpr;
-    canvas.height = 320 * dpr;
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // CRITICAL LINE
-
+    canvas.height = 380 * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    
     // 🎨 gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, "rgba(0,229,255,0.8)");
@@ -882,8 +882,6 @@ async function loadChart() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        devicePixelRatio: dpr, // 🔥 important
-
         plugins: {
           legend: { display: false },
           tooltip: {

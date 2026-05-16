@@ -390,7 +390,9 @@ def export():
     
     FROM weather
     
-    WHERE created_at >= NOW() - INTERVAL '7 days'
+    WHERE
+    created_at >= NOW() - INTERVAL '7 days'
+    AND created_at >= NOW() - INTERVAL '24 hours'
     
     AND temperature != -1
     

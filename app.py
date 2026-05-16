@@ -277,7 +277,6 @@ def latest():
 
 
 # ================= HISTORY (FINAL FIXED) =================
-# ================= HISTORY (FINAL FIXED) =================
 @app.route("/api/history")
 def history():
 
@@ -331,33 +330,32 @@ def history():
         SELECT 
             t.hour,
             ROUND(AVG(w.temperature)::numeric, 2) AS temperature
-
+        
         FROM generate_series(
             date_trunc(
                 'hour',
                 NOW() AT TIME ZONE 'Asia/Kolkata'
             ) - INTERVAL '11 hours',
-
+        
             date_trunc(
                 'hour',
                 NOW() AT TIME ZONE 'Asia/Kolkata'
             ),
-
+        
             INTERVAL '1 hour'
         ) AS t(hour)
-
+        
         LEFT JOIN weather w
         ON date_trunc(
             'hour',
             w.created_at AT TIME ZONE 'Asia/Kolkata'
         ) = t.hour
-
+        
         AND w.temperature != -1
-
+        
         GROUP BY t.hour
         ORDER BY t.hour ASC
         """)
-
     rows = cur.fetchall()
 
     cur.close()

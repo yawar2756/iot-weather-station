@@ -194,6 +194,8 @@ def latest():
     row = cur.fetchone()
 
     if not row:
+        cur.close()
+        con.close()
         return jsonify({"message": "No data yet"})
 
     # ✅ MAJORITY VOTE — stable visibility (fixes 25/101 flickering)
@@ -215,16 +217,19 @@ def latest():
     device_status = "Offline" if seconds > 35 else "Online"
 
     if device_status == "Offline":
+        cur.close()
+        con.close()
+        # ✅ CORRECTED
         return jsonify({
             "device_status": "Offline",
             "temperature": None,
             "humidity": None,
             "rain": None,
             "wind_speed": None,
+            "wind_direction": None,   # ← ADD THIS LINE
             "visibility": None,
             "alert": "Offline"
         })
-
     # stats
     cur.execute("""
     SELECT
@@ -249,7 +254,7 @@ def latest():
     trend = "Stable"
     if len(temps) >= 3:
         diff = temps[0] - temps[-1]
-        if diff > 0.5:
+        if diff > 1:
             trend = "Rising"
         elif diff < -1:
             trend = "Falling"
@@ -415,7 +420,7 @@ def export():
     cur.close()
     con.close()
 
-    import io, csv
+   
     output = io.StringIO()
     writer = csv.writer(output)
 

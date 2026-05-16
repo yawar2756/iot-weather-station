@@ -314,7 +314,7 @@ def history():
         LEFT JOIN weather w
         ON date_trunc(
             'day',
-            w.created_at AT TIME ZONE 'Asia/Kolkata'
+            w.created_at + INTERVAL '5 hours 30 minutes'
         ) = d.day
 
         AND w.temperature != -1
@@ -348,7 +348,7 @@ def history():
         LEFT JOIN weather w
         ON date_trunc(
             'hour',
-            timezone('Asia/Kolkata', w.created_at)
+            w.created_at + INTERVAL '5 hours 30 minutes'
         ) = t.hour
         
         AND w.temperature != -1

@@ -289,19 +289,22 @@ def history():
 
     if mode == "daily":
         cur.execute("""
-        SELECT 
-            date_trunc('day', created_at) AS day,
-            ROUND(AVG(temperature)::numeric, 2) AS temperature,
-            ROUND(AVG(humidity)::numeric, 2) AS humidity,
-            MAX(rain_status) AS rain_status,
-            ROUND(AVG(wind_speed)::numeric, 2) AS wind_speed,
-            MAX(wind_direction) AS wind_direction,
-            ROUND(AVG(visibility)::numeric, 2) AS visibility
-        FROM weather
-        WHERE created_at >= NOW() - INTERVAL '7 days'
-        AND temperature != -1
-        GROUP BY day
-        ORDER BY day ASC;
+        SELECT
+            d.day,
+            ROUND(AVG(w.temperature)::numeric, 2) AS temperature
+    
+        FROM generate_series(
+            date_trunc('day', NOW() - INTERVAL '6 days'),
+            date_trunc('day', NOW()),
+            INTERVAL '1 day'
+        ) AS d(day)
+    
+        LEFT JOIN weather w
+        ON date_trunc('day', w.created_at) = d.day
+        AND w.temperature != -1
+    
+        GROUP BY d.day
+        ORDER BY d.day ASC
         """)
         
     else:
@@ -347,12 +350,30 @@ def export():
 
     # ✅ FIX: last 7 days instead of LIMIT
     cur.execute("""
-    SELECT created_at, temperature, humidity,
-           rain_status, wind_speed,
-           wind_direction, visibility
+    SELECT
+        date_trunc('hour', created_at) AS hour,
+    
+        ROUND(AVG(temperature)::numeric,2) AS temperature,
+    
+        ROUND(AVG(humidity)::numeric,2) AS humidity,
+    
+        MAX(rain_status) AS rain_status,
+    
+        ROUND(AVG(wind_speed)::numeric,2) AS wind_speed,
+    
+        MAX(wind_direction) AS wind_direction,
+    
+        ROUND(AVG(visibility)::numeric,2) AS visibility
+    
     FROM weather
-    WHERE created_at >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '7 days'
-    ORDER BY created_at ASC
+    
+    WHERE created_at >= NOW() - INTERVAL '7 days'
+    
+    AND temperature != -1
+    
+    GROUP BY hour
+    
+    ORDER BY hour ASC
     """)
 
     rows = cur.fetchall()

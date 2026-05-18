@@ -102,24 +102,20 @@ def generate_alert(temp, wind, visibility, rain):
 
     # RAIN
     try:
-        rain_text = str(rain).lower()
+        rain_text = str(rain).lower().strip()
 
-        # RAIN
-try:
-    rain_text = str(rain).lower().strip()
+        if rain_text in [
+            "rain detected",
+            "light rain",
+            "heavy rain",
+            "drizzle",
+            "storm"
+        ]:
+            alerts.append("Rain Alert")
 
-    if rain_text in [
-        "rain detected",
-        "light rain",
-        "heavy rain",
-        "drizzle",
-        "storm"
-    ]:
-        alerts.append("Rain Alert")
+    except:
+        pass
 
-except:
-    pass
-   
     if not alerts:
         return "Normal"
 

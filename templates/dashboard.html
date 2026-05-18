@@ -754,27 +754,68 @@ data.trend==="Falling"?"📉 Falling":"➖ Stable";
 const alertBox=document.getElementById("alertBox");
 
 if(data.alert && data.alert!=="Normal"){
-alertBox.style.display="block";
-alertBox.className="alert";
+
+alertBox.style.display = "block";
+alertBox.className = "alert";
 
 if(data.alert.includes("Storm")){
-    alertBox.style.background="#ff3b30";
+
+    alertBox.style.background =
+    "linear-gradient(135deg,#ff0844,#ff3b30)";
+
+    alertBox.style.boxShadow =
+    "0 0 35px rgba(255,59,48,0.55)";
+
+    alertBox.innerText = "⛈ STORM WARNING";
+
 }
 else if(data.alert.includes("Heat")){
-    alertBox.style.background="#ff9500";
+
+    alertBox.style.background =
+    "linear-gradient(135deg,#ff9500,#ffcc00)";
+
+    alertBox.style.boxShadow =
+    "0 0 35px rgba(255,149,0,0.55)";
+
+    alertBox.innerText = "🔥 HEAT ALERT";
+
 }
 else if(data.alert.includes("Rain")){
-    alertBox.style.background="#0099ff";
+
+    alertBox.style.background =
+    "linear-gradient(135deg,#007cf0,#00dfd8)";
+
+    alertBox.style.boxShadow =
+    "0 0 35px rgba(0,153,255,0.55)";
+
+    alertBox.innerText = "🌧 RAIN ALERT";
+
 }
 else if(data.alert.includes("Visibility")){
-    alertBox.style.background="#7f5af0";
+
+    alertBox.style.background =
+    "linear-gradient(135deg,#7f5af0,#6246ea)";
+
+    alertBox.style.boxShadow =
+    "0 0 35px rgba(127,90,240,0.55)";
+
+    alertBox.innerText = "🌫 LOW VISIBILITY";
+
 }
 else{
-    alertBox.style.background="#00aa66";
+
+    alertBox.style.background =
+    "linear-gradient(135deg,#00c853,#00e676)";
+
+    alertBox.style.boxShadow =
+    "0 0 35px rgba(0,230,118,0.45)";
+
+    alertBox.innerText = "⚠ WEATHER ALERT";
 }
-alertBox.innerText="⚠ "+data.alert;
-}else{
-alertBox.style.display="none";
+
+}
+else{
+    alertBox.style.display = "none";
 }
 
 }catch(e){

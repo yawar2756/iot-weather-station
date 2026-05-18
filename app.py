@@ -71,32 +71,63 @@ def health():
 
 # ================= ALERT =================
 def generate_alert(temp, wind, visibility, rain):
+
     alerts = []
 
-    if temp is not None and temp > 40:
-        alerts.append("Heat Alert")
+    # TEMP
+    try:
+        if temp is not None and temp >= 40:
+            alerts.append("Heat Alert")
 
-    if wind is not None and wind > 30:
-        alerts.append("Storm Warning")
+        elif temp is not None and temp <= 5:
+            alerts.append("Cold Alert")
+    except:
+        pass
 
-    if visibility is not None and visibility not in (-1,101) and visibility < 20:
-        alerts.append("Low Visibility")
+    # WIND
+    try:
+        if wind not in [None, -1]:
+            if float(wind) >= 30:
+                alerts.append("Storm Warning")
+    except:
+        pass
 
-    if rain and str(rain).lower() in [
-        "light rain",
-        "heavy rain"
-    ]:
-        alerts.append("Rain Alert")
+    # VISIBILITY
+    try:
+        if visibility not in [None, -1, 101]:
+            if float(visibility) < 50:
+                alerts.append("Low Visibility")
+    except:
+        pass
+
+    # RAIN
+    try:
+        rain_text = str(rain).lower()
+
+        if any(word in rain_text for word in [
+            "rain",
+            "storm",
+            "drizzle"
+        ]):
+            alerts.append("Rain Alert")
+    except:
+        pass
 
     if not alerts:
         return "Normal"
-    
-    priority = ["Storm Warning", "Heat Alert", "Low Visibility", "Rain Alert"]
-    
+
+    priority = [
+        "Storm Warning",
+        "Heat Alert",
+        "Cold Alert",
+        "Low Visibility",
+        "Rain Alert"
+    ]
+
     for p in priority:
         if p in alerts:
             return p
-    
+
     return alerts[0]
 # ================= API =================
 @app.route("/api/data", methods=["POST"])

@@ -433,12 +433,18 @@ canvas {
 
 /* ALERTS - EXECUTIVE */
 .alert {
-  display: none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   margin-top: 35px;
   padding: 28px 50px;
   border-radius: 28px;
   font-weight: 800;
   font-size: 18px;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  
   backdrop-filter: blur(40px);
   animation: premiumAlert 0.6s cubic-bezier(0.23,1,0.32,1);
   box-shadow: var(--shadow-2);
@@ -464,6 +470,36 @@ canvas {
 .alert-warning {
   background: rgba(251,191,36,0.22);
   border: 1px solid rgba(251,191,36,0.45);
+}
+  .alert::before{
+content:"";
+position:absolute;
+top:0;
+left:-120%;
+width:80%;
+height:100%;
+background:linear-gradient(
+90deg,
+transparent,
+rgba(255,255,255,0.45),
+transparent
+);
+animation:alertShine 2.8s linear infinite;
+z-index:1;
+}
+
+@keyframes alertShine{
+0%{left:-120%;}
+100%{left:140%;}
+}
+
+@keyframes pulse{
+0%,100%{
+transform:scale(1);
+}
+50%{
+transform:scale(1.18);
+}
 }
 
 /* RESPONSIVE - PERFECT */
@@ -723,10 +759,16 @@ else if (rainStatus === "rain detected") {
 else {
   smoothUpdate("rain", "--");
 }
-  if (rainStatus === "light rain" || rainStatus === "heavy rain") {
-  const intensity = rainStatus === "heavy rain" ? 180
-                : rainStatus === "light rain" ? 80
-                : 0;
+  if (
+  rainStatus === "light rain" ||
+  rainStatus === "heavy rain" ||
+  rainStatus === "rain detected"
+  ) {
+  const intensity =
+  rainStatus === "heavy rain" ? 220 :
+  rainStatus === "light rain" ? 120 :
+  rainStatus === "rain detected" ? 160 :
+  0;
 createRain(intensity);
     
 } else {
@@ -755,7 +797,7 @@ const alertBox=document.getElementById("alertBox");
 
 if(data.alert && data.alert!=="Normal"){
 
-alertBox.style.display = "block";
+alertBox.style.display = "flex";
 alertBox.className = "alert";
 
 if(data.alert.includes("Storm")){
@@ -788,7 +830,44 @@ else if(data.alert.includes("Rain")){
     alertBox.style.boxShadow =
     "0 0 35px rgba(0,153,255,0.55)";
 
-    alertBox.innerText = "🌧 RAIN ALERT";
+    alertBox.innerHTML = `
+    <div style="
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    position:relative;
+    z-index:5;
+    ">
+    
+    <div style="
+    font-size:42px;
+    animation:pulse 1.5s infinite;
+    ">
+    🌧
+    </div>
+    
+    <div>
+    <div style="
+    font-size:34px;
+    font-weight:900;
+    letter-spacing:1px;
+    ">
+    RAIN ALERT
+    </div>
+    
+    <div style="
+    font-size:13px;
+    opacity:0.82;
+    margin-top:4px;
+    letter-spacing:2px;
+    ">
+    LIVE WEATHER WARNING
+    </div>
+    </div>
+    
+    </div>
+    `;
 
 }
 else if(data.alert.includes("Visibility")){

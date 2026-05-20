@@ -407,12 +407,12 @@ body {
   position: absolute;
   top: 15px;
   right: 55px;
-  background: rgb(39, 167, 181);
+  background: rgba(255,255,255,0.08);
   backdrop-filter: blur(25px);
   border: 1px solid var(--glass-border);
   border-radius: 25px;
   padding: 12px 25px;
-  color: rgb(0, 0, 0);
+  color: white;
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
@@ -421,7 +421,7 @@ body {
 
 #chartMode:hover {
   font-weight: bold;
-  background: rgb(238, 176, 176);
+  background: rgba(255,255,255,0.14);
   transform: scale(1.08);
   box-shadow: var(--shadow-1);
 }
@@ -510,7 +510,10 @@ transform:scale(1.18);
 
 @media (max-width: 768px) {
   .container { padding: 50px 30px 30px; }
-  .temperature { font-size: 90px !important; }
+  .temperature {
+  font-size:72px !important;
+  line-height:1.1;
+  }
   .hero { padding: 70px 40px; margin-bottom: 50px; }
   .kpi-grid,.analytics-grid { grid-template-columns: 1fr; gap: 25px; }
   .chart-section { height: 380px; padding: 40px; }
@@ -537,7 +540,26 @@ transform:scale(1.18);
 <div class="header">
 <div>
 <h1>GPCA Smart Weather System</h1>
-<span>Cloud Monitoring Dashboard • v1.0.0</span>
+
+<span style="
+display:flex;
+align-items:center;
+gap:8px;
+">
+
+<span style="
+width:10px;
+height:10px;
+background:#00ff99;
+border-radius:50%;
+display:inline-block;
+box-shadow:0 0 10px #00ff99;
+animation:pulse 1.5s infinite;
+"></span>
+
+Real-Time Environmental Analytics • GPCA IoT Lab
+
+</span>
 </div>
 <a href="/api/export" class="export-btn">⬇ Export Last 7 Days</a>
 </div>

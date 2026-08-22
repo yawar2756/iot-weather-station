@@ -352,6 +352,7 @@ The main objectives of the project are:
 ## 👨‍💻 Developed By
 
 **Yawar Nazir Sheikh**
+**Muhammad Yaseen**
 Computer Science Engineering Student
 
 Government Polytechnic College Anantnag

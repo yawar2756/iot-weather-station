@@ -354,7 +354,7 @@ The main objectives of the project are:
 **Yawar Nazir Sheikh &**
 **Muhammad Yaseen**
 
-They are Computer Science Engineering Students at Govt Polytechnic College Anantnag
+Computer Science Engineering Students at Govt Polytechnic College Anantnag
 
 ---
 

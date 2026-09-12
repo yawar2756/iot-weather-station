@@ -414,6 +414,38 @@ body::after {
   background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
+/* ===== CREDIT ===== */
+
+.credit-box {
+    transition: all 0.3s ease;
+}
+
+/* Light Mode - high contrast credit */
+.light .credit-box {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(15, 23, 42, 0.10) !important;
+    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.12) !important;
+    color: #334155 !important;
+}
+
+.light .credit-box .credit-name {
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: #0891b2 !important;
+    background-clip: initial !important;
+    color: #0891b2 !important;
+}
+
+.light .credit-box .credit-subtitle {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+.light .credit-box .credit-station {
+    color: #475569 !important;
+    opacity: 1 !important;
+}
+  
 /* Status Colors */
 .status-online { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.5); }
 .status-offline { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.5); }
@@ -549,13 +581,13 @@ body::after {
   </section>
 
 <!-- CREDIT -->
-<div style="
+<div class="credit-wrapper" style="
 text-align:center;
 margin-top:50px;
 padding-bottom:50px;
 ">
 
-<div style="
+<div class="credit-box" style="
 display:inline-block;
 padding:18px 35px;
 border-radius:22px;
@@ -570,7 +602,8 @@ color:rgba(255,255,255,0.82);
 
 ⚡ Developed by
 
-<a href="https://www.linkedin.com/in/yawar99"
+<a class="credit-name"
+   href="https://www.linkedin.com/in/yawar99"
    target="_blank"
    rel="noopener noreferrer"
    style="
@@ -579,13 +612,14 @@ color:rgba(255,255,255,0.82);
      -webkit-text-fill-color:transparent;
      font-weight:900;
      text-decoration:none;
-   ">
+">
   Yawar Nazir Sheikh
 </a>
 
 &nbsp;&amp;&nbsp;
 
-<a href="https://www.linkedin.com/in/muhammad-yaseen-39128937b"
+<a class="credit-name"
+   href="https://www.linkedin.com/in/muhammad-yaseen-39128937b"
    target="_blank"
    rel="noopener noreferrer"
    style="
@@ -594,13 +628,13 @@ color:rgba(255,255,255,0.82);
      -webkit-text-fill-color:transparent;
      font-weight:900;
      text-decoration:none;
-   ">
+">
   Muhammad Yaseen
 </a>
 
 <br>
 
-<span style="
+<span class="credit-subtitle" style="
 font-size:12px;
 opacity:0.7;
 letter-spacing:1px;
@@ -608,7 +642,7 @@ letter-spacing:1px;
 
 <br>
 
-<span style="
+<span class="credit-station" style="
 font-size:12px;
 opacity:0.72;
 letter-spacing:1.5px;

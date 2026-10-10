@@ -1,368 +1,97 @@
-# 🌦️ GPCA Smart Weather Station
+# IoT Weather Station
 
-> A real-time IoT weather monitoring system built with **ESP8266, environmental sensors, Flask, PostgreSQL, and a web dashboard**.
+Real-time weather monitoring with ESP8266/ESP32 sensor nodes, a Flask backend, Supabase (PostgreSQL) storage, and a web dashboard.
 
-The **GPCA Smart Weather Station** collects environmental data from connected sensors, sends it to a cloud-based backend, stores historical readings, and presents the information through a responsive web dashboard.
+**Live demo:** https://gpca-weather-station.onrender.com/
+**Built for:** Government Polytechnic College Anantnag, with Muhammad Yaseen
 
----
-
-## ✨ Features
-
-* 🌡️ Real-time temperature monitoring
-* 💧 Humidity monitoring
-* 🌧️ Rain detection
-* 💨 Wind monitoring
-* 👁️ Visibility monitoring
-* 📊 Real-time weather dashboard
-* 📈 Historical weather analytics
-* 🕐 Last 12 hours and last 7 days data
-* 🔌 Device online/offline detection
-* ⚠️ Weather condition alerts
-* 📥 Historical data export
-* 🔐 API key authentication
-* 🛡️ API rate limiting
-* 🗄️ PostgreSQL database
-* 🌐 REST API
+> The dashboard is a live demo. Readings depend on the connected hardware and deployment status. It is not a certified meteorological instrument.
 
 ---
 
-## 🏗️ System Architecture
+## Architecture
 
-```text
-                    ┌─────────────────────┐
-                    │   Weather Sensors   │
-                    │                     │
-                    │ DHT11               │
-                    │ Rain Sensor         │
-                    │ Wind Sensor         │
-                    │ Visibility Sensor   │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │      ESP8266        │
-                    │                     │
-                    │ Sensor Processing   │
-                    │ Wi-Fi Communication │
-                    └──────────┬──────────┘
-                               │
-                         HTTP / REST API
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │    Flask Backend    │
-                    │                     │
-                    │ REST API            │
-                    │ Authentication      │
-                    │ Rate Limiting       │
-                    │ Data Processing     │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │     PostgreSQL      │
-                    │                     │
-                    │ Weather Readings    │
-                    │ Historical Data     │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │   Web Dashboard     │
-                    │                     │
-                    │ Live Data           │
-                    │ Charts              │
-                    │ Alerts              │
-                    │ Analytics           │
-                    └─────────────────────┘
+```mermaid
+flowchart LR
+    A[Environmental sensors] --> B[ESP8266 / ESP32]
+    B -->|Wi-Fi telemetry| C[Flask backend / API]
+    C --> D[(Supabase / PostgreSQL)]
+    D --> E[Web dashboard]
 ```
 
----
+## Hardware
 
-## 🔧 Hardware
+| Component | Role |
+|---|---|
+| ESP8266 / ESP32 | Reads sensors and posts data over Wi-Fi |
+| [SENSOR_1, e.g. DHT22] | [temperature / humidity] |
+| [SENSOR_2] | [e.g. pressure] |
 
-| Component               | Purpose                                |
-| ----------------------- | -------------------------------------- |
-| ESP8266                 | IoT controller and Wi-Fi communication |
-| DHT11                   | Temperature and humidity               |
-| Rain Sensor             | Rain detection                         |
-| Wind Speed Sensor       | Wind measurement                       |
-| LDR / Visibility Sensor | Visibility estimation                  |
+**Wiring:** see `docs/wiring.png` <!-- TODO: add a wiring diagram or photo -->
 
-### Pin Configuration
+## Project structure
 
-| Component         | ESP8266 Pin |
-| ----------------- | ----------- |
-| DHT11             | D4 / GPIO2  |
-| Rain Sensor       | D6 / GPIO12 |
-| Visibility Sensor | A0          |
-| Wind Sensor       | D5 / GPIO14 |
-
-> Pin configuration should match the hardware version being used for the deployment.
-
----
-
-## 💻 Software Stack
-
-### Hardware / Firmware
-
-* ESP8266
-* Arduino IDE
-* C/C++
-* DHT11 library
-* Wi-Fi networking
-
-### Backend
-
-* Python
-* Flask
-* REST API
-* PostgreSQL
-* psycopg2
-* Flask-Limiter
-
-### Frontend
-
-* HTML5
-* CSS3
-* JavaScript
-* Chart.js
-
-### Infrastructure
-
-* PostgreSQL / Supabase
-* Cloud deployment
-* Git & GitHub
-
----
-
-## 🔄 Data Flow
-
-```text
-Sensors
-   ↓
-ESP8266
-   ↓
-Collect sensor readings
-   ↓
-Create JSON payload
-   ↓
-POST /api/data
-   ↓
-Flask API
-   ↓
-Validate + process data
-   ↓
-PostgreSQL
-   ↓
-Dashboard API
-   ↓
-Charts + live weather information
+```
+iot-weather-station/
+├── firmware/      # ESP8266/ESP32 sketch
+├── backend/       # Flask app
+├── dashboard/     # HTML / CSS / JS frontend
+└── docs/          # wiring, screenshots
 ```
 
----
+<!-- TODO: confirm these folder names match the repo -->
 
-## 🔌 API
+## Setup
 
-The backend provides REST endpoints for sending and retrieving weather data.
-
-| Endpoint       | Method | Purpose                     |
-| -------------- | ------ | --------------------------- |
-| `/api/data`    | POST   | Receive sensor readings     |
-| `/api/latest`  | GET    | Get latest weather data     |
-| `/api/history` | GET    | Get historical weather data |
-| `/api/export`  | GET    | Export weather data         |
-| `/api/ping`    | GET    | API connectivity check      |
-| `/health`      | GET    | Backend health check        |
-
-### Example Sensor Payload
-
-```json
-{
-  "temperature": 24.5,
-  "humidity": 68,
-  "rain": false,
-  "wind_speed": 2.4,
-  "visibility": "Good"
-}
-```
-
----
-
-## 📊 Dashboard
-
-The dashboard provides a real-time view of the weather station.
-
-### Dashboard capabilities
-
-* Current weather conditions
-* Sensor status
-* Device status
-* Temperature and humidity
-* Historical charts
-* Weather alerts
-* Live updates
-* Statistical summaries
-* Data export
-
-### Screenshots
-
-> Add your best dashboard screenshot here.
-
-```text
-docs/images/dashboard.png
-```
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repository
+### 1. Backend
 
 ```bash
 git clone https://github.com/yawar2756/iot-weather-station.git
-cd iot-weather-station
-```
-
-### 2. Create a virtual environment
-
-```bash
+cd iot-weather-station/backend
 python -m venv venv
-```
-
-Activate it:
-
-**Windows**
-
-```bash
-venv\Scripts\activate
-```
-
-**Linux / macOS**
-
-```bash
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
-
 Create a `.env` file:
 
-```env
-DATABASE_URL=your_postgresql_connection_string
-API_KEY=your_api_key
-SECRET_KEY=your_secret_key
+```
+SUPABASE_URL=your_project_url
+SUPABASE_KEY=your_anon_or_service_key
 ```
 
-> Never commit real credentials, API keys, passwords, or database connection strings to GitHub.
-
-### 5. Run the application
+Run:
 
 ```bash
 python app.py
 ```
 
-The application should then be available on the local server configured by the Flask application.
+### 2. Firmware
 
----
+1. Open `firmware/` in the Arduino IDE.
+2. Install the board package for ESP8266 or ESP32.
+3. Set your Wi-Fi SSID, password, and backend URL in the config section.
+4. Flash the board.
 
-## 🔐 Security
+## API
 
-The project includes several backend security measures:
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/readings` | [Device posts a reading] |
+| GET | `/api/readings` | [Latest readings] |
 
-* API key authentication
-* API rate limiting
-* Environment-based configuration
-* PostgreSQL SSL connection
-* Separation of secrets from source code
+<!-- TODO: replace with your real endpoints and a sample request/response -->
 
-Sensitive credentials should always be stored as environment variables.
+## Known limitations
 
----
+- [e.g. No retry if Wi-Fi drops mid-post]
+- [e.g. Alerts are dashboard-only, no email/SMS]
 
-## 📁 Project Structure
+## Roadmap
 
-```text
-iot-weather-station/
-│
-├── static/
-│   ├── css/
-│   ├── js/
-│   └── images/
-│
-├── templates/
-│   ├── index.html
-│   ├── dashboard.html
-│   └── about.html
-│
-├── app.py
-├── requirements.txt
-├── weather_station.ino
-├── robots.txt
-├── sitemap.xml
-└── README.md
-```
+- [ ] [Next feature you actually plan to build]
 
----
+## Author
 
-## 🎯 Project Objectives
-
-The main objectives of the project are:
-
-1. Collect real-time environmental data using IoT sensors.
-2. Transmit sensor readings through an ESP8266.
-3. Process and store weather data using a cloud backend.
-4. Provide a real-time web-based monitoring dashboard.
-5. Maintain historical weather records.
-6. Detect device and sensor availability.
-7. Provide useful weather analytics from collected data.
-
----
-
-## ⚠️ Limitations
-
-* Sensor accuracy depends on the quality and calibration of the hardware.
-* DHT11 provides relatively limited temperature and humidity accuracy.
-* Visibility estimation using an LDR is an approximation rather than a professional meteorological measurement.
-* Wind measurements depend on the connected wind sensor and its calibration.
-* Internet connectivity is required for cloud-based monitoring.
-
----
-
-## 🔮 Future Improvements
-
-* Add more accurate professional-grade sensors
-* Add automatic weather forecasting
-* Add AI-based weather anomaly detection
-* Add mobile application support
-* Add WebSocket-based real-time communication
-* Add automated notifications
-* Improve sensor calibration
-* Add downloadable reports
-* Add long-term weather analytics
-
----
-
-## 👨‍💻 Developed By
-
-**Yawar Nazir Sheikh &**
-**Muhammad Yaseen**
-
-Computer Science Engineering Students at Govt Polytechnic College Anantnag
-
----
-
-## 📜 License
-
-This project is developed as an academic project.
-See the repository license for usage and distribution terms.
-
----
-
-### ⭐ If you find this project useful, consider starring the repository.
+**Yawar Nazir Sheikh**
+[GitHub](https://github.com/yawar2756) · [LinkedIn](https://www.linkedin.com/in/yawar99/)

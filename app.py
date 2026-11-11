@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, Response
+from flask import Flask, request, jsonify, render_template, Response, send_file
 import psycopg2
 import os
 from datetime import datetime
@@ -47,6 +47,14 @@ if DATABASE_URL:
         init_db()
     except Exception as e:
         print("DB INIT SKIPPED:", e)
+
+# ================= SEO FILES =================
+
+@app.route("/sitemap.xml")
+def sitemap():
+    sitemap_path = os.path.join(app.root_path, "sitemap.xml")
+    return send_file(sitemap_path, mimetype="application/xml")
+
 
 # ================= PAGES =================
 @app.route("/")

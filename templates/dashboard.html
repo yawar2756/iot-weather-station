@@ -1,1098 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="description" content="Live IoT weather dashboard showing real-time temperature, humidity, wind speed and rainfall data.">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GPCA Live Weather Dashboard | Government Polytechnic College Anantnag</title>
-<link rel="icon" type="image/png" href="/static/favicon.png">
-<meta name="keywords" content="GPCA dashboard, Government Polytechnic College Anantnag weather dashboard, IoT weather monitoring">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-<style>
-/* PREMIUM WEATHER APP v3.0 */
-:root {
-  --bg-dark: #0a0a12;
-  --glass-main: rgba(255,255,255,0.06);
-  --glass-hover: rgba(255,255,255,0.11);
-  --glass-border: rgba(255,255,255,0.13);
-  --text-main: #ffffff;
-  --text-dim: rgba(255,255,255,0.65);
-  --gradient-primary: 135deg, #667eea 0%, #764ba2 50%, #f093fb 100%;
-  --shadow-1: 0 25px 50px -12px rgba(0,0,0,0.35);
-  --shadow-2: 0 35px 80px -20px rgba(0,0,0,0.45);
-  --shadow-3: 0 50px 120px -25px rgba(0,0,0,0.55);
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg-dark);
-  color: var(--text-main);
-  overflow-x: hidden;
-  animation: pageLoad 1s cubic-bezier(0.23,1,0.32,1);
-}
-
-@keyframes pageLoad {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* 🌌 PREMIUM SKY SYSTEM */
-#sky-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  transition: all 2s cubic-bezier(0.23,1,0.32,1);
-}
-
-.sky-clear {
-  background: 
-    radial-gradient(ellipse 70% 60% at 25% 25%, rgba(102,126,234,0.4) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 75% 15%, rgba(255,255,255,0.25) 0%, transparent 60%),
-    linear-gradient(135deg, #1e3a8a 0%, #3b82f6 25%, #60a5fa 60%, #93c5fd 100%);
-}
-
-.sky-rain {
-  background: 
-    radial-gradient(ellipse 60% 50% at 35% 75%, rgba(59,130,246,0.35) 0%, transparent 60%),
-    radial-gradient(ellipse 45% 35% at 75% 65%, rgba(71,85,105,0.3) 0%, transparent 60%),
-    linear-gradient(135deg, #1e293b 0%, #334155 40%, #475569 85%, #64748b 100%);
-}
-
-.sky-storm {
-  background: 
-    radial-gradient(ellipse 55% 45% at 20% 80%, rgba(30,41,74,0.5) 0%, transparent 60%),
-    linear-gradient(135deg, #0f172a 0%, #1e1b4b 35%, #312e81 75%, #1e1b4b 100%);
-}
-
-.sky-fog {
-  background: 
-    radial-gradient(circle 400px at 30% 70%, rgba(255,255,255,0.18) 0%, transparent 70%),
-    radial-gradient(circle 300px at 70% 40%, rgba(255,255,255,0.12) 0%, transparent 70%),
-    linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-}
-
-/* WEATHER EFFECTS */
-#rain-container {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 8;
-}
-
-.raindrop {
-  position: absolute;
-  width: 1.2px;
-  height: 22px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(135,206,250,0.5));
-  border-radius: 50% 15% 50% 15%;
-  animation: premiumRain linear infinite;
-  box-shadow: 0 0 4px rgba(255,255,255,0.4);
-}
-
-@keyframes premiumRain {
-  0% { 
-    transform: translateY(-120vh) translateX(0) rotate(12deg); 
-    opacity: 0; 
-  }
-  8% { opacity: 1; }
-  92% { opacity: 1; }
-  100% { 
-    transform: translateY(120vh) translateX(-25px) rotate(12deg); 
-    opacity: 0; 
-  }
-}
-
-#fog-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 6;
-  opacity: 0;
-  transition: all 1.8s cubic-bezier(0.23,1,0.32,1);
-  backdrop-filter: blur(0.8px);
-  background: 
-    radial-gradient(circle 350px at 25% 75%, rgba(255,255,255,0.16) 0%, transparent 65%),
-    radial-gradient(circle 280px at 75% 35%, rgba(255,255,255,0.11) 0%, transparent 65%),
-    radial-gradient(circle 500px at 50% 55%, rgba(255,255,255,0.08) 0%, transparent 80%);
-}
-
-#lightning {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 25;
-  opacity: 0;
-  transition: opacity 0.06s ease;
-  background: 
-    radial-gradient(circle 40% at 35% 25%, rgba(255,255,255,0.98) 0%, transparent 45%),
-    radial-gradient(circle 30% at 65% 75%, rgba(255,255,255,0.85) 0%, transparent 45%),
-    radial-gradient(circle 60% at 15% 60%, rgba(255,255,255,0.7) 0%, transparent 50%);
-}
-
-/* HEADER - EXECUTIVE */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 150;
-  background: rgba(10,10,18,0.97);
-  backdrop-filter: blur(50px);
-  -webkit-backdrop-filter: blur(50px);
-  padding: 28px 50px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-1);
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 32px;
-  font-weight: 900;
-  background: linear-gradient(var(--gradient-primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.8px;
-}
-
-.header span {
-  display: block;
-  font-size: 14px;
-  opacity: 0.7;
-  font-weight: 500;
-  margin-top: 4px;
-}
-
-.export-btn {
-  background: linear-gradient(var(--gradient-primary));
-  padding: 16px 32px;
-  border-radius: 50px;
-  color: white;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 700;
-  box-shadow: var(--shadow-2);
-  transition: all 0.5s cubic-bezier(0.23,1,0.32,1);
-  border: 1px solid rgba(255,255,255,0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-.export-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
-  transition: left 0.7s;
-}
-
-.export-btn:hover {
-  transform: translateY(-4px) scale(1.06);
-  box-shadow: var(--shadow-3);
-}
-
-.export-btn:hover::before { left: 100%; }
-
-/* CONTAINER */
-.container {
-  position: relative;
-  z-index: 100;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 80px 60px 60px;
-}
-
-/* HERO SECTION - FLAGSHIP */
-.hero {
-  text-align: center;
-  background: var(--glass-main);
-  backdrop-filter: blur(60px);
-  -webkit-backdrop-filter: blur(60px);
-  padding: 100px 80px;
-  border-radius: 40px;
-  border: 1px solid var(--glass-border);
-  margin-bottom: 80px;
-  box-shadow: var(--shadow-3);
-  position: relative;
-  overflow: hidden;
-}
-
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(145deg,transparent 0%,rgba(255,255,255,0.03) 50%,transparent 100%);
-  pointer-events: none;
-}
-
-.temperature {
-  font-size: 140px;
-  font-weight: 900;
-  line-height: 1;
-  margin: 0 0 25px 0;
-  letter-spacing: -4px;
-  background: linear-gradient(135deg,#ffffff 0%,#f8fafc 60%,rgba(255,255,255,0.85) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 8px 40px rgba(0,0,0,0.4);
-  position: relative;
-}
-
-.temperature::after {
-  content: '';
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 5px;
-  background: linear-gradient(90deg,var(--gradient-primary));
-  border-radius: 3px;
-  box-shadow: 0 4px 20px rgba(102,126,234,0.4);
-}
-
-.trend {
-  font-size: 26px;
-  margin: 20px 0;
-  font-weight: 800;
-  opacity: 0.95;
-  letter-spacing: -0.5px;
-}
-
-.status {
-  margin: 30px 0 20px 0;
-  font-weight: 700;
-  font-size: 18px;
-  padding: 20px 40px;
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(25px);
-  border-radius: 50px;
-  display: inline-block;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-1);
-}
-
-.update-time {
-  margin-top: 20px;
-  font-size: 16px;
-  opacity: 0.75;
-  font-weight: 600;
-}
-
-#liveClock {
-  font-size: 28px;
-  margin-top: 25px;
-  font-weight: 800;
-  opacity: 0.9;
-  letter-spacing: -0.5px;
-}
-
-#loadingText {
-  opacity: 0.75;
-  font-size: 18px;
-  margin-top: 15px;
-  font-weight: 600;
-  animation: premiumPulse 2.2s infinite;
-}
-
-@keyframes premiumPulse {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.02); }
-}
-
-/* KPI GRID - EXECUTIVE */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-  gap: 35px;
-  margin-bottom: 70px;
-}
-
-.analytics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
-  gap: 35px;
-  margin-bottom: 70px;
-}
-
-.card {
-  background: var(--glass-main);
-  backdrop-filter: blur(35px);
-  -webkit-backdrop-filter: blur(35px);
-  padding: 45px 40px;
-  border-radius: 28px;
-  text-align: center;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-2);
-  transition: all 0.5s cubic-bezier(0.23,1,0.32,1);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent);
-}
-
-.card:hover {
-  transform: translateY(-15px) scale(1.03);
-  background: var(--glass-hover);
-  border-color: rgba(255,255,255,0.28);
-  box-shadow: var(--shadow-3);
-}
-
-.card h3 {
-  margin: 0 0 20px 0;
-  font-size: 16px;
-  font-weight: 700;
-  opacity: 0.85;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-.card p {
-  margin: 0;
-  font-size: 48px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: -1px;
-}
-
-/* CHART SECTION - PROFESSIONAL */
-.chart-section {
-  position: relative;
-  background: var(--glass-main);
-  backdrop-filter: blur(45px);
-  -webkit-backdrop-filter: blur(45px);
-  padding: 55px;
-  border-radius: 32px;
-  height: 480px;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-3);
-}
-
-.chart-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);
-}
-
-#dateLabel {
-  position: absolute;
-  top: 20px;
-  left: 50px;
-  font-size: 18px;
-  font-weight: 800;
-  z-index: 10;
-  letter-spacing: -0.3px;
-}
-
-#chartMode {
-  position: absolute;
-  top: 15px;
-  right: 55px;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(25px);
-  border: 1px solid var(--glass-border);
-  border-radius: 25px;
-  padding: 12px 25px;
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.23,1,0.32,1);
-}
-
-#chartMode:hover {
-  font-weight: bold;
-  background: rgba(255,255,255,0.14);
-  transform: scale(1.08);
-  box-shadow: var(--shadow-1);
-}
-
-canvas {
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 24px;
-}
-
-/* ALERTS - EXECUTIVE */
-.alert {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  margin-top: 35px;
-  padding: 28px 50px;
-  border-radius: 28px;
-  font-weight: 800;
-  font-size: 18px;
-  position:relative;
-  overflow:hidden;
-  isolation:isolate;
-  
-  backdrop-filter: blur(40px);
-  animation: premiumAlert 0.6s cubic-bezier(0.23,1,0.32,1);
-  box-shadow: var(--shadow-2);
-  letter-spacing: -0.3px;
-}
-
-@keyframes premiumAlert {
-  from { 
-    opacity: 0; 
-    transform: translateY(25px) scale(0.95); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0) scale(1); 
-  }
-}
-
-.alert-danger {
-  background: rgba(239,68,68,0.22);
-  border: 1px solid rgba(239,68,68,0.45);
-}
-
-.alert-warning {
-  background: rgba(251,191,36,0.22);
-  border: 1px solid rgba(251,191,36,0.45);
-}
-  .alert::before{
-content:"";
-position:absolute;
-top:0;
-left:-120%;
-width:80%;
-height:100%;
-background:linear-gradient(
-90deg,
-transparent,
-rgba(255,255,255,0.45),
-transparent
-);
-animation:alertShine 2.8s linear infinite;
-z-index:1;
-}
-
-@keyframes alertShine{
-0%{left:-120%;}
-100%{left:140%;}
-}
-
-@keyframes pulse{
-0%,100%{
-transform:scale(1);
-}
-50%{
-transform:scale(1.18);
-}
-}
-
-/* RESPONSIVE - PERFECT */
-@media (max-width: 1200px) {
-  .kpi-grid,.analytics-grid { grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); }
-}
-
-@media (max-width: 768px) {
-  .container { padding: 50px 30px 30px; }
-  .temperature {
-  font-size:72px !important;
-  line-height:1.1;
-  }
-  .hero { padding: 70px 40px; margin-bottom: 50px; }
-  .kpi-grid,.analytics-grid { grid-template-columns: 1fr; gap: 25px; }
-  .chart-section { height: 380px; padding: 40px; }
-  .header { padding: 24px 30px; }
-  .card { padding: 35px 30px; }
-}
-
-@media (max-width: 480px) {
-  .temperature { font-size: 70px !important; }
-  .hero { padding: 50px 25px; }
-  .chart-section { height: 320px; padding: 30px; }
-}
-</style>
-</head>
-
-<body>
-
-<!-- YOUR ORIGINAL HTML & JS EXACTLY UNCHANGED -->
-<div id="sky-layer"></div>
-<div id="rain-container"></div>
-<div id="fog-layer"></div>
-<div id="lightning"></div>
-  
-<div class="header">
-<div>
-<h1>GPCA Smart Weather System</h1>
-
-<span style="
-display:flex;
-align-items:center;
-gap:8px;
-">
-
-<span style="
-width:10px;
-height:10px;
-background:#00ff99;
-border-radius:50%;
-display:inline-block;
-box-shadow:0 0 10px #00ff99;
-animation:pulse 1.5s infinite;
-"></span>
-
-Real-Time Environmental Analytics • GPCA IoT Lab
-
-</span>
-</div>
-<a href="/api/export" class="export-btn">⬇ Export Last 7 Days</a>
-</div>
-
-<div class="container">
-
-<div class="hero">
-<div class="temperature" id="temp">-- °C</div>
-<div class="trend" id="trend">➖ Stable</div>
-<div id="deviceStatus" class="status">⏳ Loading data...</div>
-<div id="loadingText">⏳ Fetching live weather data...</div>
-<div class="update-time" id="updateTime">Updated --</div>
-<br>
-<div id="liveClock"></div>
-<div id="alertBox" class="alert"></div>
-</div>
-
-<div class="kpi-grid">
-<div class="card"><h3>Humidity</h3><p id="hum">-- %</p></div>
-<div class="card"><h3>Wind Speed</h3><p id="windSpeed">-- km/h</p></div>
-<div class="card"><h3>Visibility</h3><p id="visibility">-- %</p></div>
-<div class="card"><h3>Rain Status</h3><p id="rain">--</p></div>
-</div>
-
-<div class="analytics-grid">
-<div class="card"><h3>Min Temperature</h3><p id="minTemp">-- °C</p></div>
-<div class="card"><h3>Max Temperature</h3><p id="maxTemp">-- °C</p></div>
-<div class="card"><h3>Average Temperature</h3><p id="avgTemp">-- °C</p></div>
-</div>
-
-<div class="chart-section">
-<label id="dateLabel">📅 Loading...</label>
-<select id="chartMode" onchange="loadChart()">
-<option value="hourly">Last 12 Hours</option>
-<option value="daily">Last 7 Days</option>
-</select>
-<canvas id="tempChart"></canvas>
-</div>
-
-<!-- CREDIT -->
-<div style="
-text-align:center;
-margin-top:45px;
-padding-bottom:60px;
-">
-
-<div style="
-display:inline-block;
-padding:18px 35px;
-border-radius:20px;
-background:rgba(255,255,255,0.06);
-backdrop-filter:blur(25px);
-border:1px solid rgba(255,255,255,0.1);
-box-shadow:0 10px 30px rgba(0,0,0,0.25);
-font-size:15px;
-font-weight:600;
-color:rgba(255,255,255,0.8);
-">
-
-⚡ Developed by 
-<a href="https://www.linkedin.com/in/yawar99"
-   target="_blank"
-   rel="noopener noreferrer"
-   style="
-     background:linear-gradient(135deg,#00e5ff,#00ff99);
-     -webkit-background-clip:text;
-     -webkit-text-fill-color:transparent;
-     font-weight:900;
-     text-decoration:none;
-   ">
-  Yawar Nazir Sheikh
-</a>
-
-&nbsp;&amp;&nbsp;
-
-<a href="https://www.linkedin.com/in/muhammad-yaseen-39128937b"
-   target="_blank"
-   rel="noopener noreferrer"
-   style="
-     background:linear-gradient(135deg,#00e5ff,#00ff99);
-     -webkit-background-clip:text;
-     -webkit-text-fill-color:transparent;
-     font-weight:900;
-     text-decoration:none;
-   ">
-  Muhammad Yaseen
-</a>
-
-<br>
-
-<span style="
-font-size:12px;
-opacity:0.7;
-letter-spacing:1px;
-">
-GPCA  WEATHER STATION
-</span>
-
-</div>
-
-</div>
-
-</div>
-<!-- YOUR ORIGINAL JAVASCRIPT UNCHANGED -->
-<script>
-
-let chart=null;
-let lastUpdateTime=null;
-let clockTimer=null;
-let lastDataCache=null;
-
-function smoothUpdate(id,value){
-const el=document.getElementById(id);
-if(!el)return;
-if(el.innerText===value)return;
-
-// cancel any previous animation timeout
-if(el._updateTimeout) clearTimeout(el._updateTimeout);
-
-el.style.transition="opacity 0.2s ease";
-el.style.opacity=0;
-
-el._updateTimeout = setTimeout(()=>{
-  el.innerText=value;
-  el.style.opacity=1;
-
-  el.classList.remove("updating"); // reset if already running
-  void el.offsetWidth; // force reflow (important)
-  el.classList.add("updating");
-
-},200);
-}
-
-function updateCounter(){
-if(!lastUpdateTime)return;
-const sec=Math.floor((Date.now()-lastUpdateTime)/1000);
-document.getElementById("updateTime").innerText="Updated "+sec+"s ago";
-}
-setInterval(updateCounter,1000);
-
-function createRain(intensity = 120) {
-  const container = document.getElementById("rain-container");
-  container.innerHTML = "";
-
-  for (let i = 0; i < intensity; i++) {
-    const drop = document.createElement("div");
-    drop.className = "raindrop";
-
-    drop.style.left = Math.random()*100+"vw";
-    drop.style.animationDuration = (Math.random()*0.7+0.6)+"s";
-    drop.style.animationDelay = Math.random()*2+"s";
-    drop.style.height = (Math.random()*10+10)+"px";
-    drop.style.opacity = Math.random()*0.5+0.5;
-
-    container.appendChild(drop);
-  }
-}
-
-function removeRain() {
-  document.getElementById("rain-container").innerHTML = "";
-}
-  
-async function fetchData(){
-try{
-const res=await fetch("/api/latest");
-
-if(!res.ok){
-document.getElementById("deviceStatus").innerText="⚠ Connection Issue";
-return;
-}
-
-let data=await res.json();
-
-// 🔥 STEP 1 FIX (OFFLINE HANDLING)
-if(data.device_status === "Offline"){
-  document.getElementById("deviceStatus").innerText = "🔴 Device Offline";
-  document.getElementById("loadingText").innerText = "No live data";
-  smoothUpdate("temp","-- °C");
-  smoothUpdate("hum","-- %");
-  smoothUpdate("windSpeed","-- km/h");
-  smoothUpdate("visibility","--");
-  smoothUpdate("rain","--");
-
-  removeRain();
-  document.getElementById("fog-layer").style.opacity = 0;
-  document.getElementById("deviceStatus").style.color = "#ff4444";
-  document.getElementById("alertBox").style.display = "none";
-  smoothUpdate("minTemp", "-- °C");
-  smoothUpdate("maxTemp", "-- °C");
-  smoothUpdate("avgTemp", "-- °C");
-  document.getElementById("trend").innerText = "➖ Stable";
-  return;
-}
-
-if(data.message){
-  document.getElementById("deviceStatus").innerText="⏳ Waiting for sensor data...";
-  document.getElementById("loadingText").innerText = "No live data";
-  smoothUpdate("temp","-- °C");
-  smoothUpdate("hum","-- %");
-  smoothUpdate("windSpeed","-- km/h");
-  smoothUpdate("visibility","--");
-  smoothUpdate("rain","--");
-
-  removeRain();
-  document.getElementById("fog-layer").style.opacity = 0;
-
-  return;
-}
-
-document.getElementById("loadingText").style.display="none";
-lastDataCache=data;
-
-const statusEl=document.getElementById("deviceStatus");
-
-statusEl.innerText=
-data.device_status==="Online"
-?"🟢 Device Online"
-:"🔴 Offline";
-
-statusEl.style.color=
-data.device_status==="Online"
-?"#00ff99"
-:"#ff4444";
-
-lastUpdateTime=Date.now();
-
-smoothUpdate(
-  "temp",
-  data.temperature == -1
-  ? "Not Connected"
-  : (data.temperature != null
-      ? Number(data.temperature).toFixed(1) + " °C"
-      : "-- °C")
-);
-smoothUpdate(
-  "hum",
-  data.humidity == -1
-  ? "Not Connected"
-  : (data.humidity != null
-      ? Number(data.humidity).toFixed(0) + " %"
-      : "-- %")
-);
-if (data.wind_speed == -1) {
-  smoothUpdate("windSpeed", "Not Connected");
-} else {
-  smoothUpdate("windSpeed",
-    data.wind_speed != null ? Number(data.wind_speed).toFixed(1) + " km/h" : "-- km/h"
-  );
-}
-if(
-(data.visibility_status || "").toLowerCase() === "not connected"
-||
-data.visibility === -1
-||
-data.visibility === 101
-){
-    smoothUpdate("visibility","Not Connected");
-}
-else{
-    smoothUpdate("visibility",
-      data.visibility === -1
-      ? "Not Connected"
-      : data.visibility_status
-    );
-}
-
-const rainStatus = (data.rain || "").trim().toLowerCase();
-if (rainStatus === "not connected") {
-  smoothUpdate("rain", "Not Connected");
-}
-else if (rainStatus === "no rain") {
-  smoothUpdate("rain", "No Rain");
-}
-else if (rainStatus === "light rain") {
-  smoothUpdate("rain", "Light Rain");
-}
-else if (rainStatus === "heavy rain") {
-  smoothUpdate("rain", "Heavy Rain");
-}
-else if (rainStatus === "rain detected") {
-  smoothUpdate("rain", "Rain Detected");
-}
-else {
-  smoothUpdate("rain", "--");
-}
-  if (
-  rainStatus === "light rain" ||
-  rainStatus === "heavy rain" ||
-  rainStatus === "rain detected"
-  ) {
-  const intensity =
-  rainStatus === "heavy rain" ? 220 :
-  rainStatus === "light rain" ? 120 :
-  rainStatus === "rain detected" ? 160 :
-  0;
-createRain(intensity);
-    
-} else {
-  removeRain();
-}
-
-// 🌧 SKY CHANGE
-setSky(rainStatus);
-// 🌫 FOG
-toggleFog(data.visibility ?? -1);
-
-// ⚡ LIGHTNING (storm)
-if(data.alert && data.alert.includes("Storm")){
-  triggerLightning();
-}  
-  
-smoothUpdate("minTemp",data.min_temp!=null?Number(data.min_temp).toFixed(1)+" °C":"-- °C");
-smoothUpdate("maxTemp",data.max_temp!=null?Number(data.max_temp).toFixed(1)+" °C":"-- °C");
-smoothUpdate("avgTemp",data.avg_temp!=null?Number(data.avg_temp).toFixed(1)+" °C":"-- °C");
-
-document.getElementById("trend").innerText=
-data.trend==="Rising"?"📈 Rising":
-data.trend==="Falling"?"📉 Falling":"➖ Stable";
-
-const alertBox=document.getElementById("alertBox");
-
-if(data.alert && data.alert!=="Normal"){
-
-alertBox.style.display = "flex";
-alertBox.className = "alert";
-
-if(data.alert.includes("Storm")){
-
-    alertBox.style.background =
-    "linear-gradient(135deg,#ff0844,#ff3b30)";
-
-    alertBox.style.boxShadow =
-    "0 0 35px rgba(255,59,48,0.55)";
-
-    alertBox.innerText = "⛈ STORM WARNING";
-
-}
-else if(data.alert.includes("Heat")){
-
-    alertBox.style.background =
-    "linear-gradient(135deg,#ff9500,#ffcc00)";
-
-    alertBox.style.boxShadow =
-    "0 0 35px rgba(255,149,0,0.55)";
-
-    alertBox.innerText = "🔥 HEAT ALERT";
-
-}
-else if(data.alert.includes("Rain")){
-
-    alertBox.style.background =
-    "linear-gradient(135deg,#007cf0,#00dfd8)";
-
-    alertBox.style.boxShadow =
-    "0 0 35px rgba(0,153,255,0.55)";
-
-    alertBox.innerHTML = `
-    <div style="
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:18px;
-    position:relative;
-    z-index:5;
-    ">
-    
-    <div style="
-    font-size:42px;
-    animation:pulse 1.5s infinite;
-    ">
-    🌧
-    </div>
-    
-    <div>
-    <div style="
-    font-size:34px;
-    font-weight:900;
-    letter-spacing:1px;
-    ">
-    RAIN ALERT
-    </div>
-    
-    <div style="
-    font-size:13px;
-    opacity:0.82;
-    margin-top:4px;
-    letter-spacing:2px;
-    ">
-    LIVE WEATHER WARNING
-    </div>
-    </div>
-    
-    </div>
-    `;
-
-}
-else if(data.alert.includes("Visibility")){
-
-    alertBox.style.background =
-    "linear-gradient(135deg,#7f5af0,#6246ea)";
-
-    alertBox.style.boxShadow =
-    "0 0 35px rgba(127,90,240,0.55)";
-
-    alertBox.innerText = "🌫 LOW VISIBILITY";
-
-}
-else{
-
-    alertBox.style.background =
-    "linear-gradient(135deg,#00c853,#00e676)";
-
-    alertBox.style.boxShadow =
-    "0 0 35px rgba(0,230,118,0.45)";
-
-    alertBox.innerText = "⚠ WEATHER ALERT";
-}
-
-}
-else{
-    alertBox.style.display = "none";
-}
-
-}catch(e){
-console.log("fetch error:",e);
-
-if(lastDataCache){
-const d=lastDataCache;
-
-smoothUpdate("temp",d.temperature!=null?Number(d.temperature).toFixed(1)+" °C":"-- °C");
-smoothUpdate("hum",d.humidity!=null?Number(d.humidity).toFixed(0)+" %":"-- %");
-
-document.getElementById("deviceStatus").innerText="⚠ Showing last data";
-}else{
-document.getElementById("deviceStatus").innerText="🔴 Offline";
-}
-}
-}
-
-/* chart */
-async function loadChart() {
-  try {
-    const mode = document.getElementById("chartMode").value;
-
-    const res = await fetch("/api/history?mode=" + mode);
-    if (!res.ok) return;
-
-    let data = await res.json();
-
-    // 🚨 no data → stop
-    if (!data || data.length === 0) {
-      if (chart) {
-        chart.destroy();
-        chart = null;
-      }
-
-      const canvas = document.getElementById("tempChart");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      return;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Dashboard | GPCA Smart Weather</title>
+
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
     }
 
-    const canvas = document.getElementById("tempChart");
-    const ctx = canvas.getContext("2d");
+    .stat-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
 
-    // 🔥🔥🔥 MAIN FIX (ANTI-BLUR)
-    const dpr = window.devicePixelRatio || 2;
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
 
-    canvas.style.width = "100%";
-    canvas.style.height = "380px";
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
 
-    canvas.width = canvas.offsetWidth * dpr;
-    canvas.height = 380 * dpr;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-    
-    // 🎨 gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, "rgba(0,229,255,0.8)");
-    gradient.addColorStop(1, "rgba(0,229,255,0.2)");
+    .stat-footer {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
 
-    // 🔥 destroy old chart
-    if (chart) chart.destroy();
+    .main-chart-panel {
+      grid-column: span 3;
+      min-height: 400px;
+    }
 
-    // clean data
-    const temps = data.map(d =>
-        d.temperature !== null
-        ? parseFloat(d.temperature)
-        : 0
-    );
+    .side-panel {
+      grid-column: span 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
 
-    const times = data.map(d => {
-      const date = new Date(d.time);
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
 
-      return mode === "hourly"
-        ? ((date.getHours() % 12) || 12) + (date.getHours() >= 12 ? " PM" : " AM")
-        : date.toLocaleDateString('en-IN', {
-            month: 'short',
-            day: 'numeric'
-          });
-    });
+    .chart-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
 
-    // 🚀 create chart
-    chart = new Chart(ctx, {
-      type: "line",
+    .control-btn {
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .control-btn.active {
+      background: var(--primary);
+      color: #0B0F19;
+      border-color: var(--primary);
+    }
+
+    #alert-banner {
+      display: none;
+      margin-bottom: 2rem;
+      padding: 1rem 2rem;
+      border-radius: var(--radius-md);
+      align-items: center;
+      gap: 1rem;
+      font-weight: 600;
+    }
+
+    .alert-active {
+      display: flex !important;
+    }
+
+    .weather-icon-lg {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    @media (max-width: 1100px) {
+      .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+      .main-chart-panel { grid-column: span 2; }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .main-chart-panel { grid-column: span 1; }
+      .side-panel { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon"><i class="fas fa-wind"></i></div>
+      <div class="brand-title">
+        <h1>Dashboard</h1>
+        <div class="brand-subtitle"><i class="fas fa-circle pulse-dot" style="color: var(--success); font-size: 6px;"></i> Live Monitoring</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="/" class="btn btn-secondary">Home</a>
+      <a href="/api/export" class="btn btn-secondary"><i class="fas fa-download"></i> Export Data</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- Weather Alerts -->
+    <div id="alert-banner" class="panel status-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span id="alert-text">Weather Alert: High temperature detected.</span>
+    </div>
+
+    <!-- Top Stats Row -->
+    <div class="dashboard-grid">
+      <div class="panel stat-panel">
+        <span class="stat-label">Temperature</span>
+        <div class="stat-value" id="val-temp">--°C</div>
+        <div class="stat-footer" id="val-temp-range">Range: -- / --</div>
+      </div>
+      <div class="panel stat-panel">
+        <span class="stat-label">Humidity</span>
+        <div class="stat-value" id="val-hum">--%</div>
+        <div class="stat-footer" id="val-trend">Trend: Stable</div>
+      </div>
+      <div class="panel stat-panel">
+        <span class="stat-label">Wind Speed</span>
+        <div class="stat-value" id="val-wind">-- km/h</div>
+        <div class="stat-footer" id="val-direction">Direction: North</div>
+      </div>
+      <div class="panel stat-panel">
+        <span class="stat-label">System Status</span>
+        <div class="stat-value" id="val-status">--</div>
+        <div class="stat-footer" id="val-update">Last update: --s ago</div>
+      </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="dashboard-grid">
+      <div class="panel main-chart-panel">
+        <div class="chart-header">
+          <h3>Temperature Analysis</h3>
+          <div class="chart-controls">
+            <button class="control-btn active" onclick="setChartMode('hourly', this)">12 Hours</button>
+            <button class="control-btn" onclick="setChartMode('daily', this)">7 Days</button>
+          </div>
+        </div>
+        <div style="height: 300px; position: relative;">
+          <canvas id="weatherChart"></canvas>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel" style="text-align: center;">
+          <div class="weather-icon-lg"><i class="fas fa-cloud-sun"></i></div>
+          <h3 id="val-rain">Clear Sky</h3>
+          <p class="stat-footer">Current Precipitation</p>
+        </div>
+        <div class="panel">
+          <h4 style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted);">VISIBILITY INDEX</h4>
+          <div class="stat-value" id="val-vis">--%</div>
+          <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px; margin-top: 1rem; overflow: hidden;">
+            <div id="vis-bar" style="width: 0%; height: 100%; background: var(--primary); transition: width 1s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="project-credit">
+      <p>&copy; 2024 GPCA Smart Weather Station • Government Polytechnic College Anantnag</p>
+    </footer>
+  </main>
+
+  <script>
+    let weatherChart = null;
+    let chartMode = 'hourly';
+    let lastUpdate = Date.now();
+
+    // Configuration for Chart.js
+    const chartConfig = {
+      type: 'line',
       data: {
-        labels: times,
+        labels: [],
         datasets: [{
-          label: "Temperature (°C)",
-          data: temps,
-          borderColor: "#00ffff",
-          backgroundColor: gradient,
-          fill: false,
-          tension: 0.4,
-
-          segment: {
-            borderDash: ctx => {
-              if (ctx.p0.parsed.y === null || ctx.p1.parsed.y === null) {
-                return [6, 6];
-              }
-              return [];
-            }
-          },
-
+          label: 'Temperature (°C)',
+          data: [],
+          borderColor: '#38BDF8',
+          backgroundColor: 'rgba(56, 189, 248, 0.1)',
           borderWidth: 3,
+          fill: true,
+          tension: 0.4,
           pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: "#00f2ff",
-          pointBorderColor: "#ffffff",
-          pointBorderWidth: 2,
-          spanGaps: false
+          pointBackgroundColor: '#38BDF8',
+          pointBorderWidth: 0
         }]
       },
       options: {
@@ -1101,111 +236,112 @@ async function loadChart() {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: "#111",
-            titleColor: "#fff",
-            bodyColor: "#ccc"
+            backgroundColor: '#0F172A',
+            padding: 12,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 },
+            displayColors: false,
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1
           }
         },
-
-        interaction: {
-          mode: "index",
-          intersect: false
-        },
-
         scales: {
           x: {
-            ticks: { color: "#ddd" },
-            grid: { display: false }
+            grid: { display: false },
+            ticks: { color: '#64748B', font: { size: 11 } }
           },
           y: {
-            ticks: { color: "#ddd" },
-            grid: { color: "rgba(255,255,255,0.1)" }
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#64748B', font: { size: 11 } }
           }
         }
       }
-    });
+    };
 
-  } catch (e) {
-    console.log("chart error:", e);
-  }
-}
+    async function fetchData() {
+      try {
+        const response = await fetch('/api/latest');
+        const data = await response.json();
 
-function setSky(condition){
-  const sky=document.getElementById("sky-layer");
+        if (data.device_status === 'Offline') {
+          document.getElementById('val-status').innerText = 'Offline';
+          document.getElementById('val-status').style.color = 'var(--danger)';
+          return;
+        }
 
-  if(condition === "rain detected" || condition === "light rain" || condition === "heavy rain"){
-    sky.style.background="linear-gradient(135deg, #1e293b 0%, #334155 30%, #475569 70%, #0f172a 100%)";
-  } else {
-    sky.style.background="linear-gradient(135deg, #0a0e17 0%, #1a2332 25%, #2d3b55 50%, #1e2a44 75%, #0f1829 100%)";
-  }
-}
+        // Update Stats
+        document.getElementById('val-temp').innerText = (data.temperature || '--') + '°C';
+        document.getElementById('val-temp-range').innerText = `Range: ${data.min_temp || '--'}°C / ${data.max_temp || '--'}°C`;
+        document.getElementById('val-hum').innerText = (data.humidity || '--') + '%';
+        document.getElementById('val-trend').innerText = `Trend: ${data.trend || 'Stable'}`;
+        document.getElementById('val-wind').innerText = (data.wind_speed || '--') + ' km/h';
+        document.getElementById('val-direction').innerText = `Direction: ${data.wind_direction || 'North'}`;
+        document.getElementById('val-status').innerText = 'Operational';
+        document.getElementById('val-status').style.color = 'var(--success)';
+        document.getElementById('val-rain').innerText = data.rain || 'No Precipitation';
+        document.getElementById('val-vis').innerText = (data.visibility || '--') + '%';
+        document.getElementById('vis-bar').style.width = (data.visibility || 0) + '%';
 
-function toggleFog(visibility){
-  const fog = document.getElementById("fog-layer");
+        // Alerts
+        const banner = document.getElementById('alert-banner');
+        if (data.alert && data.alert !== 'Normal') {
+          banner.classList.add('alert-active');
+          document.getElementById('alert-text').innerText = data.alert;
+        } else {
+          banner.classList.remove('alert-active');
+        }
 
-  if(visibility !== -1 && visibility < 30){
-    fog.style.opacity = 0.4 + (30 - visibility) / 100;
-  } else {
-    fog.style.opacity = 0;
-  }
-}
-
-function triggerLightning(){
-  const flash=document.getElementById("lightning");
-
-  // strong first flash
-  flash.style.opacity = 1;
-
-  setTimeout(()=>{
-    flash.style.opacity = 0;
-
-    // smaller random flickers
-    const flashes = Math.floor(Math.random()*2)+1;
-
-    let delay = 100;
-
-    for(let i=0;i<flashes;i++){
-      setTimeout(()=>{
-        flash.style.opacity = Math.random()*0.6;
-
-        setTimeout(()=>{
-          flash.style.opacity = 0;
-        }, 80);
-
-      }, delay);
-
-      delay += 200;
+        lastUpdate = Date.now();
+      } catch (error) {
+        console.error('Fetch error:', error);
+      }
     }
 
-  }, 120);
-}  
-/* clock */
-function liveClock(){
-document.getElementById("liveClock").innerText="🕒 "+new Date().toLocaleTimeString();
-}
+    async function updateChart() {
+      try {
+        const response = await fetch(`/api/history?mode=${chartMode}`);
+        const historyData = await response.json();
 
-function updateDate(){
-const now=new Date();
-document.getElementById("dateLabel").innerText="📅 "+now.toLocaleDateString('en-US',{month:'long',day:'numeric'});
-}
+        const labels = historyData.map(d => {
+          const date = new Date(d.time);
+          return chartMode === 'hourly'
+            ? date.getHours() + ':00'
+            : date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+        });
 
-function startClock(){
-liveClock();
-if(clockTimer)clearInterval(clockTimer);
-clockTimer=setInterval(liveClock,1000);
-}
+        const temps = historyData.map(d => d.temperature);
 
-window.addEventListener("load",()=>{
-fetchData();
-loadChart();
-startClock();
-updateDate();
-});
+        if (!weatherChart) {
+          const ctx = document.getElementById('weatherChart').getContext('2d');
+          weatherChart = new Chart(ctx, chartConfig);
+        }
 
-setInterval(()=>{if(!document.hidden)fetchData();},10000);
-setInterval(()=>{if(!document.hidden)loadChart();},150000);
- 
-</script>
+        weatherChart.data.labels = labels;
+        weatherChart.data.datasets[0].data = temps;
+        weatherChart.update();
+      } catch (error) {
+        console.error('Chart error:', error);
+      }
+    }
 
+    function setChartMode(mode, btn) {
+      chartMode = mode;
+      document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateChart();
+    }
+
+    function updateClock() {
+      const sec = Math.floor((Date.now() - lastUpdate) / 1000);
+      document.getElementById('val-update').innerText = `Last update: ${sec}s ago`;
+    }
+
+    // Initialize
+    fetchData();
+    updateChart();
+    setInterval(fetchData, 10000);
+    setInterval(updateClock, 1000);
+    setInterval(updateChart, 300000); // Update chart every 5 mins
+  </script>
 </body>
 </html>

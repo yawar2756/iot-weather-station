@@ -2,328 +2,150 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <DHT.h>
+#include "config.h"
 
-/* ================= PINS ================= */
+/* ================= HARDWARE CONFIG ================= */
 
-// DHT11
+// DHT11 Sensor
 #define DHTPIN D4
 #define DHTTYPE DHT11
 
-// Rain Sensor
+// Precipitation Sensor
 #define RAIN_PIN D6
 
-// Wind Sensor
+// Wind Speed Anemometer
 #define WIND_PIN D5
 
-// LDR MODULE
+// Visibility/Light Sensor
 #define VIS_PIN D2
 
-/* ================= WIFI ================= */
-
-const char* ssid = "R";
-const char* password = "111111000";
-
-/* ================= SERVER ================= */
-
-const char* serverUrl =
-"https://gpca-weather-station.onrender.com/api/data";
-
-const char* apiKey =
-"gpcaweatherstation25";
-
-/* ================= DHT ================= */
+/* ================= GLOBAL OBJECTS ================= */
 
 DHT dht(DHTPIN, DHTTYPE);
-
-/* ================= TIMER ================= */
-
 unsigned long lastSend = 0;
-const long interval = 12000;
-
-/* ================= WIND ================= */
-
 volatile int windClicks = 0;
+
+/* ================= INTERRUPT SERVICE ================= */
 
 ICACHE_RAM_ATTR void countWind() {
   windClicks++;
 }
 
-/* ================= WIFI RECONNECT ================= */
+/* ================= SYSTEM UTILITIES ================= */
 
 void reconnectWiFi() {
-
-  if (WiFi.status() == WL_CONNECTED)
-    return;
+  if (WiFi.status() == WL_CONNECTED) return;
 
   Serial.println("📡 Reconnecting WiFi...");
-
   WiFi.disconnect();
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   unsigned long start = millis();
-
-  while (
-    WiFi.status() != WL_CONNECTED &&
-    millis() - start < 10000
-  ) {
-
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
     delay(500);
     Serial.print(".");
   }
-
   Serial.println();
 }
 
-/* ================= SETUP ================= */
+/* ================= SYSTEM SETUP ================= */
 
 void setup() {
-
   Serial.begin(115200);
+  Serial.println("\n🚀 GPCA WEATHER SYSTEM INITIALIZING");
 
-  Serial.println("\n🚀 SYSTEM STARTING");
-
-  /* WIFI */
-
-  WiFi.begin(ssid, password);
-
+  // Network Initialization
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED) {
-
     delay(500);
     Serial.print(".");
   }
+  Serial.println("\n✅ Network Connected");
 
-  Serial.println("\n✅ WiFi Connected");
-
-  /* DHT */
-
+  // Sensor Initialization
   dht.begin();
-  delay(2000);
-
-  /* SENSOR MODES */
-
   pinMode(RAIN_PIN, INPUT_PULLUP);
-
   pinMode(VIS_PIN, INPUT_PULLUP);
-
   pinMode(WIND_PIN, INPUT_PULLUP);
 
-  attachInterrupt(
-    digitalPinToInterrupt(WIND_PIN),
-    countWind,
-    FALLING
-  );
-
-  Serial.println("✅ ALL SENSORS READY");
+  attachInterrupt(digitalPinToInterrupt(WIND_PIN), countWind, FALLING);
+  Serial.println("✅ All Sensors Synchronized");
 }
 
-/* ================= LOOP ================= */
+/* ================= MAIN PROCESSING LOOP ================= */
 
 void loop() {
-
   reconnectWiFi();
 
   if (WiFi.status() != WL_CONNECTED) {
-
-    Serial.println("❌ WiFi Failed");
-
+    Serial.println("❌ Network Failure");
     delay(2000);
     return;
   }
 
-  if (millis() - lastSend >= interval) {
+  if (millis() - lastSend >= DATA_INTERVAL) {
 
-    /* ================= DHT ================= */
-
-    float temp = NAN;
-    float humidity = NAN;
-
-    for (int i = 0; i < 3; i++) {
-
-      temp = dht.readTemperature();
-      humidity = dht.readHumidity();
-
-      if (!isnan(temp) && !isnan(humidity)) {
-        break;
-      }
-
-      delay(1000);
-    }
-
-    bool dhtConnected = true;
+    // 🌡️ Temperature & Humidity
+    float temp = dht.readTemperature();
+    float humidity = dht.readHumidity();
 
     if (isnan(temp) || isnan(humidity)) {
-
-      Serial.println("❌ DHT NOT CONNECTED");
-
+      Serial.println("❌ Sensor Read Failure: DHT11");
       temp = -1;
       humidity = -1;
-
-      dhtConnected = false;
     }
 
-    Serial.print("🌡 Temp: ");
-    Serial.println(temp);
-
-    Serial.print("💧 Humidity: ");
-    Serial.println(humidity);
-
-    /* ================= RAIN ================= */
-
+    // 🌧️ Precipitation
     int rainRaw = digitalRead(RAIN_PIN);
-    
-    String rainStatus;
-    int rainIntensity;
-    
-    // WATER DETECTED
-    if (rainRaw == LOW) {
-    
-      rainStatus = "Rain Detected";
-      rainIntensity = 150;
-    }
-    
-    // NORMAL
-    else {
-    
-      rainStatus = "No Rain";
-      rainIntensity = 0;
-    }
-    
-    Serial.print("🌧 Rain: ");
-    Serial.println(rainStatus);
+    String rainStatus = (rainRaw == LOW) ? "Rain Detected" : "No Rain";
+    int rainIntensity = (rainRaw == LOW) ? 150 : 0;
 
-    /* ================= WIND ================= */
-
+    // 🌬️ Wind Speed
     int clicks = windClicks;
-
     windClicks = 0;
+    float windSpeed = (digitalRead(WIND_PIN) == HIGH && clicks == 0) ? -1 : (min(clicks * 2.4, 120.0));
 
-    float windSpeed;
-
-    // disconnected
-    if (
-      digitalRead(WIND_PIN) == HIGH &&
-      clicks == 0
-    ) {
-
-      windSpeed = -1;
-    }
-
-    // connected
-    else {
-
-      windSpeed =
-        min(clicks * 2.4, 120.0);
-    }
-
-    Serial.print("🌬 Wind Speed: ");
-    Serial.println(windSpeed);
-
-    /* ================= LDR DIGITAL ================= */
-
+    // 👁️ Visibility (LDR approximation)
     int ldrValue = digitalRead(VIS_PIN);
-    
-    Serial.print("LDR Raw Value: ");
-    Serial.println(ldrValue);
-    
-    float visibility;
-    String visibilityStatus;
-    
-    // COVERED / DARK
-    if (ldrValue == HIGH) {
-    
-      visibility = 25;
-      visibilityStatus = "Low";
-    }
-    
-    // BRIGHT
-    else {
-    
-      visibility = 90;
-      visibilityStatus = "Good";
-    }
-    
-    Serial.print("👀 Visibility: ");
-    Serial.println(visibility);
-    
-    Serial.print("💡 Visibility Status: ");
-    Serial.println(visibilityStatus);
+    float visibility = (ldrValue == HIGH) ? 25 : 90;
+    String visibilityStatus = (ldrValue == HIGH) ? "Low" : "Good";
 
-    /* ================= JSON ================= */
-
+    // 📦 Data Packaging
     String json = "{";
-
-    json += "\"temperature\":" +
-            String(temp, 1) + ",";
-
-    json += "\"humidity\":" +
-            String(humidity, 1) + ",";
-
-    json += "\"rain_value\":" +
-            String(rainIntensity) + ",";
-
-    json += "\"rain_status\":\"" +
-            rainStatus + "\",";
-
-    json += "\"wind_speed\":" +
-            String(windSpeed, 1) + ",";
-
+    json += "\"temperature\":" + String(temp, 1) + ",";
+    json += "\"humidity\":" + String(humidity, 1) + ",";
+    json += "\"rain_value\":" + String(rainIntensity) + ",";
+    json += "\"rain_status\":\"" + rainStatus + "\",";
+    json += "\"wind_speed\":" + String(windSpeed, 1) + ",";
     json += "\"wind_direction\":\"North\",";
-
-    json += "\"visibility\":" +
-            String(visibility, 0) + ",";
-
-    json += "\"visibility_status\":\"" +
-            visibilityStatus + "\",";
-
+    json += "\"visibility\":" + String(visibility, 0) + ",";
+    json += "\"visibility_status\":\"" + visibilityStatus + "\",";
     json += "\"device\":\"ESP8266\"";
-
     json += "}";
 
-    Serial.println("📦 JSON:");
-    Serial.println(json);
-
-    /* ================= SEND ================= */
-
+    // 📡 Cloud Transmission
     WiFiClientSecure client;
-
     client.setInsecure();
-
     HTTPClient http;
 
-    if (http.begin(client, serverUrl)) {
-
-      http.addHeader(
-        "Content-Type",
-        "application/json"
-      );
-
-      http.addHeader(
-        "x-api-key",
-        apiKey
-      );
+    if (http.begin(client, SERVER_URL)) {
+      http.addHeader("Content-Type", "application/json");
+      http.addHeader("x-api-key", API_KEY);
 
       int httpCode = http.POST(json);
-
-      Serial.print("📡 HTTP Response: ");
+      Serial.print("📡 HTTP Payload Sent. Response: ");
       Serial.println(httpCode);
 
       if (httpCode > 0) {
-
         String response = http.getString();
-
-        Serial.println("✅ Server Response:");
-        Serial.println(response);
+        Serial.println("✅ Response Received: " + response);
+      } else {
+        Serial.println("❌ Cloud Communication Error");
       }
-      else {
-
-        Serial.println("❌ POST FAILED");
-      }
-
       http.end();
     }
 
     Serial.println("--------------------------------");
-
     lastSend = millis();
   }
 }

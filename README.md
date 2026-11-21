@@ -1,89 +1,51 @@
-# 🌦️ GPCA Smart Weather Station
+# GPCA Weather Station - Console Test Data Automation
 
-> A professional IoT environmental monitoring platform built with **ESP32/ESP8266, Flask, PostgreSQL, and a modern Enterprise UI dashboard**.
+To generate automatically updating console test data that changes every 30 seconds:
 
-The **GPCA Smart Weather Station** is an advanced IoT student project developed at **Government Polytechnic College Anantnag (GPCA)**. It continuously collects meteorological data from connected sensors, securely transmits JSON payloads over Wi-Fi, persists time-series data in PostgreSQL, and presents live analytics through a high-performance web dashboard.
+## Method 1: Browser Console (Recommended)
 
----
+Open your browser's developer console (F12) and run this JavaScript snippet:
 
-## ✨ Key Features
+```javascript
+// Set your Render URL if different
+const API_URL = 'https://your-render-url.com/api/seed';
 
-* 🌡️ **Real-time Thermal Tracking:** Live temperature & humidity monitoring with min/max/avg statistical calculations.
-* 🌧️ **Precipitation Detection:** Automated rain status detection and alerts.
-* 💨 **Wind Dynamics:** Speed and direction measurement via custom interrupt-driven anemometer logic.
-* 👁️ **Visibility Index:** Ambient light and visibility evaluation.
-* 📊 **Interactive Analytics:** Dynamic Chart.js visualizations supporting 12-hour and 7-day trend analysis.
-* 🔌 **Device Health Monitoring:** Automatic online/offline heartbeat detection (35s threshold).
-* ⚠️ **Priority Alert System:** Automated warnings for extreme temperatures, storm conditions, and low visibility.
-* 📥 **Data Export:** Instant CSV export of the last 7 days of historical telemetry.
-* 🛡️ **Enterprise Security:** API key authentication and secure SSL database connections.
+async function updateLiveData() {
+  try {
+    const response = await fetch(`${API_URL}?key=gpcaweatherstation25&live=1`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': 'gpcaweatherstation25'
+      }
+    });
+    const data = await response.json();
+    console.log('Live data updated:', data);
+  } catch (error) {
+    console.error('Error updating data:', error);
+  }
+}
 
----
-
-## 🏗️ System Architecture
-
-```text
-┌─────────────────────────┐
-│    Environmental Sensors│
-│  (DHT11, Rain, Wind, LDR)│
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│        ESP32/8266       │
-│  Edge Processing & Wi-Fi│
-└────────────┬────────────┘
-             │ HTTP POST (JSON + API Key)
-             ▼
-┌─────────────────────────┐
-│      Flask Backend      │
-│  Validation & Alert Logic│
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│       PostgreSQL        │
-│  Time-Series Persistence│
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│     Web Dashboard       │
-│  Chart.js & Live UI     │
-└─────────────────────────┘
+// Update every 30 seconds
+setInterval(updateLiveData, 30000);
+console.log('Live data automation started - updates every 30 seconds');
 ```
 
----
+## Method 2: Terminal (cURL)
 
-## 🔧 Hardware Specifications
+Run this command repeatedly in your terminal:
 
-| Component | Pin (ESP8266/ESP32) | Purpose |
-| :--- | :--- | :--- |
-| **DHT11** | D4 (GPIO2) | Temperature & Humidity |
-| **Rain Sensor** | D6 (GPIO12) | Precipitation Detection |
-| **Wind Anemometer** | D5 (GPIO14) | Wind Speed (Interrupt Counter) |
-| **Visibility LDR** | D2 (GPIO4) | Ambient Light / Visibility |
+```bash
+while true; do
+  curl -X POST "https://your-render-url.com/api/seed?key=gpcaweatherstation25&live=1" \
+    -H "x-api-key: gpcaweatherstation25" \
+    -s | jq '.temperature, .humidity, .wind_speed, .wind_direction'
+  sleep 30
+done
+```
 
----
-
-## 💻 Tech Stack
-
-- **Firmware:** C/C++ (Arduino IDE, ESP8266WiFi, DHT sensor library)
-- **Backend:** Python, Flask, Psycopg2, Gunicorn
-- **Database:** PostgreSQL (Cloud hosted)
-- **Frontend:** HTML5, CSS3 (Enterprise Grid, Glassmorphism), JavaScript (ES6+), Chart.js
-- **Deployment:** Render Platform
-
----
-
-## 👨‍💻 Project Authors
-
-**Yawar Nazir Sheikh & Muhammad Yaseen**  
-Department of Computer Science Engineering  
-**Government Polytechnic College Anantnag (GPCA)**
-
----
-
-## 📜 License
-
-Developed as an academic engineering project for educational and demonstration purposes.
+## Notes:
+- This inserts fresh readings at current time (simulating live sensor data)
+- Dashboard will show "Online" status with new values
+- Chart.js will automatically update with new data
+- Stop with Ctrl+C when done
+- Uses existing `/api/seed` endpoint - no code changes needed

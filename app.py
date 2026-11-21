@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, Response, send_file
+from flask import Flask, request, jsonify, render_template, Response
 import psycopg2
 import os
 from datetime import datetime
@@ -6,7 +6,6 @@ import csv
 import io
 import json
 import time
-import threading
 
 app = Flask(__name__)
 
@@ -59,14 +58,6 @@ if DATABASE_URL:
         init_db()
     except Exception as e:
         print("DB INIT SKIPPED:", e)
-
-# ================= SEO FILES =================
-
-@app.route("/sitemap.xml")
-def sitemap():
-    sitemap_path = os.path.join(app.root_path, "sitemap.xml")
-    return send_file(sitemap_path, mimetype="application/xml")
-
 
 # ================= PAGES =================
 @app.route("/")
@@ -373,7 +364,8 @@ def history():
         cur.execute("""
         SELECT
             d.day,
-            ROUND(AVG(w.temperature)::numeric, 2) AS temperature
+            ROUND(AVG(w.temperature)::numeric, 2) AS temperature,
+            to_char(d.day, 'DD Mon') AS label
 
         FROM generate_series(
             date_trunc(
@@ -405,10 +397,11 @@ def history():
     else:
 
         cur.execute("""
-        SELECT 
+        SELECT
             t.hour,
-            ROUND(AVG(w.temperature)::numeric, 2) AS temperature
-        
+            ROUND(AVG(w.temperature)::numeric, 2) AS temperature,
+            to_char(t.hour, 'HH24:MI') AS label
+
         FROM generate_series(
             date_trunc(
                 'hour',
@@ -442,7 +435,8 @@ def history():
     return jsonify([
         {
             "time": r[0].isoformat() if r[0] else None,
-            "temperature": float(r[1]) if r[1] is not None else None
+            "temperature": float(r[1]) if r[1] is not None else None,
+            "label": str(r[2]) if r[2] else None
         }
         for r in rows
     ])
@@ -541,121 +535,15 @@ def export():
         }
     )
 
-# ================= SSE STREAM =================
-def get_latest_data():
-    """Fetch latest weather data formatted for SSE"""
-    con = get_db()
-    if not con:
-        return None
-
-    cur = con.cursor()
-    cur.execute("""
-    SELECT temperature, humidity, rain_status,
-           wind_speed, wind_direction, visibility,
-           alert, created_at, device
-    FROM weather
-    ORDER BY id DESC
-    LIMIT 1
-    """)
-    row = cur.fetchone()
-
-    if not row:
-        cur.close()
-        con.close()
-        return {"device_status": "Offline", "alert": "No data"}
-
-    # Majority vote for visibility
-    cur.execute("SELECT visibility FROM weather ORDER BY id DESC LIMIT 3")
-    vis_rows = cur.fetchall()
-    vis_vals = [r[0] for r in vis_rows if r[0] is not None]
-    not_connected_count = sum(1 for v in vis_vals if v in (-1, 101))
-    stable_visibility = -1 if not_connected_count >= 2 else row[5]
-
-    created_time = row[7]
-    now = datetime.utcnow()
-    seconds = (now - created_time).total_seconds()
-    device_status = "Offline" if seconds > 35 else "Online"
-
-    if device_status == "Offline":
-        cur.close()
-        con.close()
-        return {"device_status": "Offline", "alert": "Offline"}
-
-    # Stats
-    cur.execute("""
-    SELECT MIN(temperature), MAX(temperature), AVG(temperature)
-    FROM weather
-    WHERE created_at >= NOW() - INTERVAL '12 hours' AND temperature != -1
-    """)
-    stats = cur.fetchone()
-
-    # Trend
-    cur.execute("""
-    SELECT temperature FROM weather WHERE temperature != -1 ORDER BY id DESC LIMIT 6
-    """)
-    temps = [t[0] for t in cur.fetchall() if t[0] is not None]
-
-    trend = "Stable"
-    if len(temps) >= 3:
-        diff = temps[0] - temps[-1]
-        if diff > 1: trend = "Rising"
-        elif diff < -1: trend = "Falling"
-
-    device_id = row[8] if row[8] else "GPCA-STATION-01"
-
-    cur.close()
-    con.close()
-
-    return {
-        "temperature": row[0],
-        "humidity": row[1],
-        "rain": row[2],
-        "wind_speed": row[3],
-        "wind_direction": row[4],
-        "visibility": stable_visibility,
-        "alert": row[6],
-        "min_temp": float(stats[0]) if stats[0] else None,
-        "max_temp": float(stats[1]) if stats[1] else None,
-        "avg_temp": round(float(stats[2]), 2) if stats[2] else None,
-        "trend": trend,
-        "device_status": device_status,
-        "device": device_id
-    }
+# Removed SSE /api/stream endpoint — polling is used instead for reliability on cloud hosts
 
 
-@app.route("/api/stream")
-def stream():
-    """Server-Sent Events endpoint for real-time updates"""
-    def event_generator():
-        last_data = None
-        heartbeat_count = 0
-
-        while True:
-            data = get_latest_data()
-            if data:
-                # Only send if data changed
-                if data != last_data:
-                    yield f"data: {json.dumps({'type': 'data', 'payload': data})}\n\n"
-                    last_data = data
-
-            # Send heartbeat every 30 seconds to keep connection alive
-            heartbeat_count += 1
-            if heartbeat_count >= 30:
-                yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
-                heartbeat_count = 0
-
-            time.sleep(1)
-
-    return Response(
-        event_generator(),
-        mimetype="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"  # Disable nginx buffering
-        }
-    )
-
-
+# =============================================
+# PRODUCTION DEPLOYMENT: WSGI ENTRY POINT
+# =============================================
+# Render uses WSGI servers. Create Procfile with:
+#   web: gunicorn app:app --workers 1 --bind 0.0.0.0:8000
+# and add this to your Render service settings.
+# =============================================
 if __name__ == "__main__":
     app.run()

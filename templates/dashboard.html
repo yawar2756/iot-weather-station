@@ -601,58 +601,7 @@
       lastData = data;
     }
 
-    // ============ SSE CONNECTION ============
-    function connectSSE() {
-      if (eventSource) { eventSource.close(); }
-      setConnectionStatus('connecting');
-
-      eventSource = new EventSource(SSE_ENDPOINT);
-
-      let connectionTimeout = setTimeout(() => {
-        eventSource.close();
-        setConnectionStatus('disconnected');
-        scheduleReconnect();
-      }, 10000); // 10 second timeout for SSE connection
-
-      eventSource.onopen = () => {
-        clearTimeout(connectionTimeout);
-        console.log('SSE connected');
-        reconnectAttempts = 0;
-        setConnectionStatus('connected');
-      };
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'data') {
-            applyData(data.payload);
-          } else if (data.type === 'heartbeat') {
-            // Keep alive
-          }
-        } catch (e) { console.error('SSE parse error:', e); }
-      };
-
-      eventSource.onerror = () => {
-        clearTimeout(connectionTimeout);
-        console.warn('SSE error, reconnecting...');
-        eventSource.close();
-        setConnectionStatus('disconnected');
-        scheduleReconnect();
-      };
-    }
-
-    function scheduleReconnect() {
-      if (reconnectAttempts >= maxReconnectAttempts) {
-        console.log('Max reconnect attempts reached, falling back to polling');
-        startPollingFallback();
-        return;
-      }
-      reconnectAttempts++;
-      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-      setTimeout(connectSSE, delay);
-    }
-
-    // ============ POLLING FALLBACK ============
+    // ============ POLLING ============
     let pollingInterval = null;
     async function fetchData() {
       try {
@@ -665,7 +614,7 @@
       }
     }
 
-    function startPollingFallback() {
+    function startPolling() {
       if (pollingInterval) clearInterval(pollingInterval);
       fetchData();
       pollingInterval = setInterval(fetchData, POLL_FALLBACK_INTERVAL);
@@ -703,9 +652,9 @@
             return {
               time: date,
               temp: Number(d.temperature),
-              label: chartMode === 'hourly'
+              label: d.label || (chartMode === 'hourly'
                 ? date.getHours().toString().padStart(2, '0') + ':00'
-                : date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
+                : date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }))
             };
           })
           .filter(d => !isNaN(d.time.getTime()) && !isNaN(d.temp));
@@ -763,23 +712,11 @@
 
     // ============ INIT ============
     function init() {
-      // Try SSE first
-      if (typeof EventSource !== 'undefined') {
-        connectSSE();
-      } else {
-        startPollingFallback();
-      }
+      startPolling();
 
       updateChart();
       setInterval(updateClock, 1000);
       setInterval(updateChart, CHART_REFRESH_INTERVAL);
-
-      // Handle visibility change - reconnect when tab becomes active
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && eventSource?.readyState === EventSource.CLOSED) {
-          connectSSE();
-        }
-      });
     }
 
     // DOM ready guard for robust initialization

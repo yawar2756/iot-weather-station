@@ -15,6 +15,9 @@ print("🔥 SERVER STARTED")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 SERVER_API_KEY = os.environ.get("API_KEY", "gpcaweatherstation25")
 
+if not DATABASE_URL:
+    print("⚠️  WARNING: DATABASE_URL is not set. The database will be unavailable.")
+
 # ================= DB =================
 def get_db():
     try:
@@ -449,7 +452,20 @@ def history():
 def export():
     con = get_db()
     if not con:
-        return "Database Error"
+        # Return empty CSV with headers when DB unavailable
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Date", "Time", "Temperature (°C)", "Humidity (%)",
+            "Rain", "Wind Speed (km/h)", "Direction", "Visibility (%)", "Device"
+        ])
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=weather_last_7_days.csv"
+            }
+        )
 
     cur = con.cursor()
 

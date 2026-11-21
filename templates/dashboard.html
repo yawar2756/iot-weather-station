@@ -608,7 +608,14 @@
 
       eventSource = new EventSource(SSE_ENDPOINT);
 
+      let connectionTimeout = setTimeout(() => {
+        eventSource.close();
+        setConnectionStatus('disconnected');
+        scheduleReconnect();
+      }, 10000); // 10 second timeout for SSE connection
+
       eventSource.onopen = () => {
+        clearTimeout(connectionTimeout);
         console.log('SSE connected');
         reconnectAttempts = 0;
         setConnectionStatus('connected');
@@ -626,6 +633,7 @@
       };
 
       eventSource.onerror = () => {
+        clearTimeout(connectionTimeout);
         console.warn('SSE error, reconnecting...');
         eventSource.close();
         setConnectionStatus('disconnected');
@@ -674,7 +682,16 @@
         console.log('[Chart] Raw data:', historyData);
 
         if (!Array.isArray(historyData) || historyData.length === 0) {
-          console.warn('[Chart] No data received');
+          // Show empty state on chart
+          const canvas = $('weatherChart');
+          const ctx = canvas.getContext('2d');
+          if (!weatherChart) {
+            weatherChart = new Chart(ctx, chartConfig);
+          }
+          weatherChart.data.labels = [];
+          weatherChart.data.datasets[0].data = [];
+          weatherChart.update('active');
+          console.warn('[Chart] No data received - showing empty chart');
           return;
         }
 
@@ -696,6 +713,14 @@
         console.log('[Chart] Valid points:', validPoints.length, validPoints);
 
         if (validPoints.length === 0) {
+          const canvas = $('weatherChart');
+          const ctx = canvas.getContext('2d');
+          if (!weatherChart) {
+            weatherChart = new Chart(ctx, chartConfig);
+          }
+          weatherChart.data.labels = [];
+          weatherChart.data.datasets[0].data = [];
+          weatherChart.update('active');
           console.warn('[Chart] No valid temperature data after filtering');
           return;
         }

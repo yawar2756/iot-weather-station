@@ -14,7 +14,12 @@ app = Flask(__name__)
 print("🔥 SERVER STARTED")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-SERVER_API_KEY = os.environ.get("API_KEY") or os.environ.get("SERVER_API_KEY") or "gpcaweatherstation25"
+SERVER_API_KEY = os.environ.get("API_KEY")
+if not SERVER_API_KEY:
+    print("❌ FATAL: API_KEY environment variable not set")
+    print("   Set it in your shell: export API_KEY='your-secret-key'")
+    print("   Or on Render: add API_KEY in Environment Variables")
+    raise RuntimeError("API_KEY not configured")
 
 if not DATABASE_URL:
     print("⚠️  WARNING: DATABASE_URL is not set. The database will be unavailable.")

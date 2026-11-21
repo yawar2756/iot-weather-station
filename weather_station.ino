@@ -3,7 +3,8 @@
 #include <WiFiClientSecure.h>
 #include <DHT.h>
 #include <ArduinoJson.h>
-#include "config.h"
+// Include secrets from private config (create config.private.h locally, DO NOT commit)
+#include "config.private.h"
 
 /* ================= HARDWARE CONFIG ================= */
 

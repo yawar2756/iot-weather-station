@@ -88,7 +88,7 @@ iot-weather-station/
 - PostgreSQL database (Render or local)
 - ESP8266/ESP32 (for hardware deployment)
 
-### Local Development
+### Local Development (Flask Server)
 
 ```bash
 # Clone the repository
@@ -107,6 +107,21 @@ python app.py
 ```
 
 Visit `http://localhost:5000` to see the app.
+
+### ESP8266 Hardware Setup
+
+```bash
+# 1. Copy the template and fill in YOUR values
+cp config.private.h.example config.private.h
+# 2. Edit config.private.h with your secrets
+#    - API_KEY (must match Render env var)
+#    - WIFI_SSID / WIFI_PASS
+#    - SERVER_URL (your Render URL)
+# 3. Open weather_station.ino in Arduino IDE / PlatformIO
+# 4. Upload to ESP8266
+```
+
+⚠️ **Never commit `config.private.h`** — it's in `.gitignore` for your security.
 
 ---
 

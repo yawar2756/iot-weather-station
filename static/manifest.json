@@ -1,0 +1,37 @@
+{
+  "name": "GPCA Smart Weather Station",
+  "short_name": "GPCA Weather",
+  "description": "Real-time IoT environmental monitoring dashboard for Government Polytechnic College Anantnag",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0B0F19",
+  "theme_color": "#38BDF8",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/static/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["weather", "utilities", "education"],
+  "shortcuts": [
+    {
+      "name": "Live Dashboard",
+      "short_name": "Dashboard",
+      "description": "View real-time weather data",
+      "url": "/dashboard",
+      "icons": [{ "src": "/static/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Data Export",
+      "short_name": "Export",
+      "description": "Download CSV of historical data",
+      "url": "/api/export",
+      "icons": [{ "src": "/static/favicon.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

@@ -26,9 +26,8 @@ To test your dashboard without real hardware, run this **magical incantation** i
     return d;
   };
 
-  // 🚀 Launch the storm
-  const storm = summon();
-  setInterval(storm, 30000);
+  // 🚀 Launch the storm — wrap in arrow function so setInterval gets a function, not a Promise
+  setInterval(() => summon(), 30000);
   
   console.log('☔ Weather oracle activated — refreshing every 30s ⚡');
 })();

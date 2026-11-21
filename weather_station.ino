@@ -122,7 +122,8 @@ void loop() {
     doc["rain_value"] = rainIntensity;
     doc["rain_status"] = rainStatus;
     doc["wind_speed"] = windSpeed;
-    doc["wind_direction"] = "North";
+    // No wind vane attached — send null so dashboard shows "N/A" instead of fake "North"
+    doc["wind_direction"] = (const char*)nullptr;
     doc["visibility"] = visibility;
     doc["visibility_status"] = visibilityStatus;
     doc["device"] = DEVICE_ID;  // From config.h for multi-station support

@@ -345,7 +345,7 @@
       <div class="panel stat-panel">
         <span class="stat-label">Wind Speed</span>
         <div class="stat-value" id="val-wind">-- km/h</div>
-        <div class="stat-footer" id="val-direction">Direction: North</div>
+        <div class="stat-footer" id="val-direction">Direction: N/A</div>
       </div>
       <div class="panel stat-panel">
         <span class="stat-label">System Status</span>
@@ -572,7 +572,7 @@
         ['val-hum', (data.humidity || '--') + '%'],
         ['val-trend', `Trend: ${data.trend || 'Stable'}`],
         ['val-wind', (data.wind_speed || '--') + ' km/h'],
-        ['val-direction', `Direction: ${data.wind_direction || 'North'}`],
+        ['val-direction', `Direction: ${data.wind_direction || 'N/A'}`],
         ['val-status', 'Operational'],
         ['val-rain', data.rain || 'No Precipitation'],
         ['val-vis', (data.visibility || '--') + '%']

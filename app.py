@@ -197,6 +197,9 @@ def receive_data():
         except:
             wind_speed = -1
         wind_direction = data.get("wind_direction")
+        # Normalize blank direction to NULL (no wind vane on hardware)
+        if isinstance(wind_direction, str):
+            wind_direction = wind_direction.strip() or None
         visibility = data.get("visibility")
         device_id = data.get("device", "GPCA-STATION-01")
         print("RAIN:", rain_status)

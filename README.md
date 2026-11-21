@@ -100,7 +100,7 @@ pip install -r requirements.txt
 
 # Set environment variables
 export DATABASE_URL="your-postgres-url"
-export API_KEY="gpcaweatherstation25"
+export API_KEY="your-api-key-here"
 
 # Run the server
 python app.py
@@ -133,8 +133,10 @@ Don't have an ESP8266 handy? Simulate live weather data from your browser consol
 
 ```javascript
 (async () => {
+  // 🔑 Replace with your own Render API key
+  const KEY = 'YOUR_API_KEY';   // ← set your own key
+
   const API = 'https://your-render-url.com/api/seed';
-  const KEY = 'gpcaweatherstation25';
 
   const summon = async () => {
     const r = await fetch(`${API}?key=${KEY}&live=1`, {

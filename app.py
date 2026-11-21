@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify, render_template, Response
 import psycopg2
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 import io
 import json
 import time
+import math
+import random
 
 app = Flask(__name__)
 
@@ -534,6 +536,121 @@ def export():
             "Content-Disposition": "attachment; filename=weather_last_7_days.csv"
         }
     )
+
+# ================= DEMO DATA SEEDING =================
+# Lets you exercise the dashboard/chart without the ESP8266 being online.
+#   POST /api/seed?key=API_KEY&days=7   -> backfill hourly rows for the last 7 days + one live row
+#   POST /api/seed?key=API_KEY&live=1   -> insert a single fresh reading at "now" (call repeatedly for a live feed)
+#   DELETE /api/seed?key=API_KEY        -> remove every demo row
+DEMO_DEVICE = "DEMO-SIM"
+
+WIND_DIRECTIONS = [
+    "North", "North-East", "East", "South-East",
+    "South", "South-West", "West", "North-West"
+]
+
+
+def demo_reading(ts):
+    """Build one realistic weather reading for a UTC timestamp."""
+    # Approximate local hour (IST = UTC + 5:30) to drive the daily curve
+    ist_hour = (ts.hour + 5.5) % 24
+    # Temperature peaks around 15:00, bottoms out around 04:00
+    day_wave = math.sin((ist_hour - 9.0) / 24.0 * 2 * math.pi)
+
+    temperature = round(11.0 + 6.5 * day_wave + random.uniform(-1.0, 1.0), 1)
+    humidity = round(min(96.0, max(32.0, 70.0 - 20.0 * day_wave + random.uniform(-4, 4))), 1)
+
+    rain_value = round(random.uniform(0, 150), 1)
+    if random.random() < 0.08:
+        rain_status = random.choice(["Light Rain", "Drizzle", "Rain Detected"])
+    else:
+        rain_status = "No Rain"
+
+    wind_speed = round(4.0 + 14.0 * random.random(), 1)
+    wind_direction = random.choice(WIND_DIRECTIONS)
+
+    if random.random() < 0.05:
+        visibility = -1  # sensor not connected
+    else:
+        visibility = round(random.uniform(45, 100), 1)
+
+    alert = generate_alert(temperature, wind_speed, visibility, rain_status)
+    return (temperature, humidity, rain_value, rain_status,
+            wind_speed, wind_direction, visibility, alert, DEMO_DEVICE, ts)
+
+
+@app.route("/api/seed", methods=["POST", "DELETE"])
+def seed():
+    key = request.headers.get("x-api-key") or request.args.get("key")
+    if key != SERVER_API_KEY:
+        return jsonify({"error": "Unauthorized: Invalid or missing key"}), 401
+
+    con = get_db()
+    if not con:
+        return jsonify({"error": "DB unavailable"}), 500
+
+    cur = con.cursor()
+
+    # --- CLEAR ---
+    if request.method == "DELETE":
+        cur.execute("DELETE FROM weather WHERE device = %s", (DEMO_DEVICE,))
+        deleted = cur.rowcount
+        con.commit()
+        cur.close()
+        con.close()
+        return jsonify({"deleted": deleted, "demo_device": DEMO_DEVICE})
+
+    now = datetime.utcnow().replace(microsecond=0)
+    live_only = request.args.get("live") in ("1", "true", "yes", "")
+
+    try:
+        days = int(request.args.get("days", 7))
+    except (TypeError, ValueError):
+        days = 7
+    days = max(0, min(days, 7))
+    if "live" in request.args:
+        days = 0  # live mode only
+
+    deleted = 0
+    readings = []
+
+    if days > 0:
+        start = (now - timedelta(days=days)).replace(minute=0, second=0)
+        # Clear only the demo rows in this window so re-seeding stays idempotent
+        cur.execute(
+            "DELETE FROM weather WHERE device = %s AND created_at >= %s",
+            (DEMO_DEVICE, start)
+        )
+        deleted = cur.rowcount
+
+        step = timedelta(minutes=30) if days <= 1 else timedelta(hours=1)
+        ts = start
+        while ts < now:
+            readings.append(demo_reading(ts))
+            ts += step
+
+    # Always append a fresh reading so the dashboard reports "Online"
+    readings.append(demo_reading(now))
+
+    cur.executemany("""
+        INSERT INTO weather
+        (temperature, humidity, rain_value, rain_status,
+         wind_speed, wind_direction, visibility, alert, device, created_at)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """, readings)
+
+    con.commit()
+    cur.close()
+    con.close()
+
+    print(f"🌱 Seeded {len(readings)} demo rows (deleted {deleted})")
+    return jsonify({
+        "status": "ok",
+        "inserted": len(readings),
+        "deleted": deleted,
+        "demo_device": DEMO_DEVICE,
+        "mode": "live" if days == 0 else f"{days}d backfill"
+    })
 
 # Removed SSE /api/stream endpoint — polling is used instead for reliability on cloud hosts
 

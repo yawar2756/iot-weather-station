@@ -14,7 +14,7 @@ app = Flask(__name__)
 print("🔥 SERVER STARTED")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-SERVER_API_KEY = os.environ.get("API_KEY", "gpcaweatherstation25")
+SERVER_API_KEY = os.environ.get("API_KEY") or os.environ.get("SERVER_API_KEY") or "gpcaweatherstation25"
 
 if not DATABASE_URL:
     print("⚠️  WARNING: DATABASE_URL is not set. The database will be unavailable.")

@@ -134,7 +134,7 @@ Don't have an ESP8266 handy? Simulate live weather data from your browser consol
 ```javascript
 (async () => {
   // 🔑 Replace with your own Render API key
-  const KEY = 'YOUR_API_KEY';   // ← set your own key
+  const KEY = 'YOUR_API_KEY';   // ← set your own key from environment
 
   const API = 'https://your-render-url.com/api/seed';
 

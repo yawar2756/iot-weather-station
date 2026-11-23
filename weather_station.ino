@@ -2,7 +2,9 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <DHT.h>
-#include "config.h"
+#include <ArduinoJson.h>
+// Include secrets from private config (create config.private.h locally, DO NOT commit)
+#include "config.private.h"
 
 /* ================= HARDWARE CONFIG ================= */
 
@@ -24,6 +26,10 @@
 DHT dht(DHTPIN, DHTTYPE);
 unsigned long lastSend = 0;
 volatile int windClicks = 0;
+
+// SHA-256 Fingerprint for gpca-weather-station.onrender.com
+// Get this from: openssl s_client -connect gpca-weather-station.onrender.com:443 < /dev/null 2>/dev/null | openssl x509 -fingerprint -sha256 -noout -in /dev/stdin
+const char* SERVER_FINGERPRINT = "E9:9F:6E:AF:76:CB:E6:75:50:AE:DF:2B:CC:F1:AA:9E:3C:41:E9:96";
 
 /* ================= INTERRUPT SERVICE ================= */
 
@@ -110,22 +116,25 @@ void loop() {
     float visibility = (ldrValue == HIGH) ? 25 : 90;
     String visibilityStatus = (ldrValue == HIGH) ? "Low" : "Good";
 
-    // 📦 Data Packaging
-    String json = "{";
-    json += "\"temperature\":" + String(temp, 1) + ",";
-    json += "\"humidity\":" + String(humidity, 1) + ",";
-    json += "\"rain_value\":" + String(rainIntensity) + ",";
-    json += "\"rain_status\":\"" + rainStatus + "\",";
-    json += "\"wind_speed\":" + String(windSpeed, 1) + ",";
-    json += "\"wind_direction\":\"North\",";
-    json += "\"visibility\":" + String(visibility, 0) + ",";
-    json += "\"visibility_status\":\"" + visibilityStatus + "\",";
-    json += "\"device\":\"ESP8266\"";
-    json += "}";
+    // 📦 Data Packaging with ArduinoJson (robust serialization)
+    StaticJsonDocument<256> doc;
+    doc["temperature"] = temp;
+    doc["humidity"] = humidity;
+    doc["rain_value"] = rainIntensity;
+    doc["rain_status"] = rainStatus;
+    doc["wind_speed"] = windSpeed;
+    // No wind vane attached — send null so dashboard shows "N/A" instead of fake "North"
+    doc["wind_direction"] = (const char*)nullptr;
+    doc["visibility"] = visibility;
+    doc["visibility_status"] = visibilityStatus;
+    doc["device"] = DEVICE_ID;  // From config.h for multi-station support
 
-    // 📡 Cloud Transmission
+    String json;
+    serializeJson(doc, json);
+
+    // 📡 Cloud Transmission (SECURE: Certificate Fingerprint Validation)
     WiFiClientSecure client;
-    client.setInsecure();
+    client.setFingerprint(SERVER_FINGERPRINT);  // Validates server identity - prevents MITM
     HTTPClient http;
 
     if (http.begin(client, SERVER_URL)) {
@@ -139,10 +148,21 @@ void loop() {
       if (httpCode > 0) {
         String response = http.getString();
         Serial.println("✅ Response Received: " + response);
+
+        // Optional: parse server response for dynamic config (e.g., new interval)
+        if (httpCode == 200) {
+          StaticJsonDocument<128> respDoc;
+          deserializeJson(respDoc, response);
+          if (respDoc.containsKey("interval")) {
+            // Future: dynamic interval adjustment from server
+          }
+        }
       } else {
-        Serial.println("❌ Cloud Communication Error");
+        Serial.printf("❌ Cloud Communication Error: %s\n", http.errorToString(httpCode).c_str());
       }
       http.end();
+    } else {
+      Serial.println("❌ HTTP Begin Failed");
     }
 
     Serial.println("--------------------------------");

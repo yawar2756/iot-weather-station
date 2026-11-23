@@ -13,7 +13,8 @@ ENV/
 # Environment variables / secrets
 .env
 .env.*
-!.env.example
+config.private.h
+# config.h is a template with placeholders (OK to commit)
 
 # Flask
 instance/

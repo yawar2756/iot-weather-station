@@ -1,15 +1,30 @@
-from flask import Flask, request, jsonify, render_template, Response, send_file
+from flask import Flask, request, jsonify, render_template, Response
+from flask_cors import CORS
 import psycopg2
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import csv
 import io
+import json
+import time
+import math
+import random
 
 app = Flask(__name__)
+CORS(app)  # Allow cross-origin requests (for external integrations)
 
 print("🔥 SERVER STARTED")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+SERVER_API_KEY = os.environ.get("API_KEY")
+if not SERVER_API_KEY:
+    print("❌ FATAL: API_KEY environment variable not set")
+    print("   Set it in your shell: export API_KEY='your-secret-key'")
+    print("   Or on Render: add API_KEY in Environment Variables")
+    raise RuntimeError("API_KEY not configured")
+
+if not DATABASE_URL:
+    print("⚠️  WARNING: DATABASE_URL is not set. The database will be unavailable.")
 
 # ================= DB =================
 def get_db():
@@ -34,8 +49,13 @@ def init_db():
             wind_direction TEXT,
             visibility FLOAT,
             alert TEXT,
+            device TEXT DEFAULT 'GPCA-STATION-01',
             created_at TIMESTAMP DEFAULT NOW()
-            )    
+            )
+        """)
+        # Add device column if it doesn't exist (migration)
+        cur.execute("""
+        ALTER TABLE weather ADD COLUMN IF NOT EXISTS device TEXT DEFAULT 'GPCA-STATION-01'
         """)
         con.commit()
         cur.close()
@@ -47,14 +67,6 @@ if DATABASE_URL:
         init_db()
     except Exception as e:
         print("DB INIT SKIPPED:", e)
-
-# ================= SEO FILES =================
-
-@app.route("/sitemap.xml")
-def sitemap():
-    sitemap_path = os.path.join(app.root_path, "sitemap.xml")
-    return send_file(sitemap_path, mimetype="application/xml")
-
 
 # ================= PAGES =================
 @app.route("/")
@@ -143,52 +155,66 @@ def generate_alert(temp, wind, visibility, rain):
 # ================= API =================
 @app.route("/api/data", methods=["POST"])
 def receive_data():
+    # Enforce API Key security
+    client_key = request.headers.get("x-api-key")
+    if not client_key or client_key != SERVER_API_KEY:
+        return jsonify({"error": "Unauthorized: Invalid or missing API key"}), 401
+
     data = request.json
+    if not data:
+        return jsonify({"error": "Invalid JSON payload"}), 400
+
     print("📥 Incoming Data:", data)
     con = get_db()
     if not con:
         return jsonify({"error": "DB failed"}), 500
 
     try:
+        # Fix: correctly handle 0 as a valid value
         temp = data.get("temperature")
-        try:
-            temp = float(temp)
-        except:
-            temp = None
+        if temp is not None:
+            try:
+                temp = float(temp)
+                if temp < -40 or temp > 80:
+                    temp = None
+            except:
+                temp = None
+
         humidity = data.get("humidity")
+        if humidity is not None:
+            try:
+                humidity = float(humidity)
+                if humidity < 0 or humidity > 100:
+                    humidity = None
+            except:
+                humidity = None
 
-        try:
-            humidity = float(humidity)
-        except:
-            humidity = None
-
-        print("RAW DATA:", data)
-        print("HUMIDITY:", humidity)
-        print("TEMP:", temp)
         rain_value = data.get("rain_value")
         try:
             rain_value = float(rain_value)
         except:
-            rain_value = -1
-        rain_status = data.get("rain_status")
-        wind_speed = data.get("wind_speed")
+            rain_value = None # Changed from -1 to None to avoid mixing with real rain data
 
+        wind_speed = data.get("wind_speed")
         try:
             wind_speed = float(wind_speed)
+            # Allow 0, but filter out -1 sentinels
+            if wind_speed < 0:
+                wind_speed = None
         except:
-            wind_speed = -1
-        wind_direction = data.get("wind_direction")
-        visibility = data.get("visibility")
-        print("RAIN:", rain_status)
-        print("VISIBILITY:", visibility)
+            wind_speed = None
 
+        wind_direction = data.get("wind_direction")
+        if isinstance(wind_direction, str):
+            wind_direction = wind_direction.strip() or None
+
+        visibility = data.get("visibility")
         try:
             visibility = float(visibility)
+            if visibility < 0 or visibility > 100:
+                visibility = None
         except:
-            visibility = -1
-        
-        if visibility in (-1, 101):
-            visibility = -1
+            visibility = None
 
         alert = generate_alert(temp, wind_speed, visibility, rain_status)
 
@@ -197,11 +223,11 @@ def receive_data():
         cur.execute("""
         INSERT INTO weather
         (temperature, humidity, rain_value, rain_status,
-         wind_speed, wind_direction, visibility, alert)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+         wind_speed, wind_direction, visibility, alert, device)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             temp, humidity, rain_value, rain_status,
-            wind_speed, wind_direction, visibility, alert
+            wind_speed, wind_direction, visibility, alert, device_id
         ))
 
         con.commit()
@@ -227,7 +253,7 @@ def latest():
     cur.execute("""
     SELECT temperature, humidity, rain_status,
            wind_speed, wind_direction, visibility,
-           alert, created_at
+           alert, created_at, device
     FROM weather
     ORDER BY id DESC
     LIMIT 1
@@ -240,20 +266,23 @@ def latest():
         con.close()
         return jsonify({"message": "No data yet"})
 
-    # ✅ MAJORITY VOTE — stable visibility (fixes 25/101 flickering)
+    # ✅ Corrected visibility logic: handle NULL visibility
     cur.execute("""
     SELECT visibility FROM weather
+    WHERE visibility IS NOT NULL
     ORDER BY id DESC
     LIMIT 3
     """)
     vis_rows = cur.fetchall()
-    vis_vals = [r[0] for r in vis_rows if r[0] is not None]
-    not_connected_count = sum(1 for v in vis_vals if v in (-1, 101))
-    stable_visibility = -1 if not_connected_count >= 2 else row[5]
-    # ✅ END MAJORITY VOTE
+    vis_vals = [r[0] for r in vis_rows]
+    stable_visibility = vis_vals[0] if vis_vals else None
+    # ✅ END Corrected visibility logic
 
     created_time = row[7]
-    now = datetime.utcnow()
+    # Ensure timezone-aware comparison
+    if created_time.tzinfo is None:
+        created_time = created_time.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
 
     seconds = (now - created_time).total_seconds()
     device_status = "Offline" if seconds > 35 else "Online"
@@ -261,16 +290,17 @@ def latest():
     if device_status == "Offline":
         cur.close()
         con.close()
-        # ✅ CORRECTED
         return jsonify({
             "device_status": "Offline",
             "temperature": None,
             "humidity": None,
             "rain": None,
             "wind_speed": None,
-            "wind_direction": None,   # ← ADD THIS LINE
+            "wind_direction": None,
             "visibility": None,
-            "alert": "Offline"
+            "visibility_status": "Offline",
+            "alert": "Offline",
+            "device": row[8] if row[8] else "GPCA-STATION-01"
         })
     # stats
     cur.execute("""
@@ -301,6 +331,8 @@ def latest():
         elif diff < -1:
             trend = "Falling"
 
+    device_id = row[8] if row[8] else "GPCA-STATION-01"
+
     cur.close()
     con.close()
 
@@ -312,14 +344,15 @@ def latest():
         "wind_direction": row[4],
         "visibility": stable_visibility,
         "visibility_status":
-            "Not Connected" if stable_visibility in (-1, 101)
+            "Not Connected" if stable_visibility is None
             else ("Low" if stable_visibility < 50 else "Good"),
         "alert": row[6],
         "min_temp": float(stats[0]) if stats[0] else None,
         "max_temp": float(stats[1]) if stats[1] else None,
         "avg_temp": round(float(stats[2]), 2) if stats[2] else None,
         "trend": trend,
-        "device_status": device_status
+        "device_status": device_status,
+        "device": device_id
     })
 
 
@@ -342,7 +375,8 @@ def history():
         cur.execute("""
         SELECT
             d.day,
-            ROUND(AVG(w.temperature)::numeric, 2) AS temperature
+            ROUND(AVG(w.temperature)::numeric, 2) AS temperature,
+            to_char(d.day, 'DD Mon') AS label
 
         FROM generate_series(
             date_trunc(
@@ -374,10 +408,11 @@ def history():
     else:
 
         cur.execute("""
-        SELECT 
+        SELECT
             t.hour,
-            ROUND(AVG(w.temperature)::numeric, 2) AS temperature
-        
+            ROUND(AVG(w.temperature)::numeric, 2) AS temperature,
+            to_char(t.hour, 'HH24:MI') AS label
+
         FROM generate_series(
             date_trunc(
                 'hour',
@@ -410,8 +445,9 @@ def history():
 
     return jsonify([
         {
-            "time": str(r[0]),
-            "temperature": r[1] if r[1] is not None else None
+            "time": r[0].isoformat() if r[0] else None,
+            "temperature": float(r[1]) if r[1] is not None else None,
+            "label": str(r[2]) if r[2] else None
         }
         for r in rows
     ])
@@ -421,7 +457,20 @@ def history():
 def export():
     con = get_db()
     if not con:
-        return "Database Error"
+        # Return empty CSV with headers when DB unavailable
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Date", "Time", "Temperature (°C)", "Humidity (%)",
+            "Rain", "Wind Speed (km/h)", "Direction", "Visibility (%)", "Device"
+        ])
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=weather_last_7_days.csv"
+            }
+        )
 
     cur = con.cursor()
 
@@ -432,28 +481,30 @@ def export():
         'hour',
         created_at + INTERVAL '5 hours 30 minutes'
         ) AS hour,
-    
+
         ROUND(AVG(temperature)::numeric,2) AS temperature,
-    
+
         ROUND(AVG(humidity)::numeric,2) AS humidity,
-    
+
         MAX(rain_status) AS rain_status,
-    
+
         ROUND(AVG(wind_speed)::numeric,2) AS wind_speed,
-    
+
         MAX(wind_direction) AS wind_direction,
-    
-        ROUND(AVG(visibility)::numeric,2) AS visibility
-    
+
+        ROUND(AVG(visibility)::numeric,2) AS visibility,
+
+        MAX(device) AS device
+
     FROM weather
-    
+
     WHERE
     created_at >= NOW() - INTERVAL '7 days'
-    
+
     AND temperature != -1
-    
+
     GROUP BY hour
-    
+
     ORDER BY hour ASC
     """)
 
@@ -469,7 +520,7 @@ def export():
     # ✅ clean headers
     writer.writerow([
         "Date", "Time", "Temperature (°C)", "Humidity (%)",
-        "Rain", "Wind Speed (km/h)", "Direction", "Visibility (%)"
+        "Rain", "Wind Speed (km/h)", "Direction", "Visibility (%)", "Device"
     ])
 
     for r in rows:
@@ -484,6 +535,7 @@ def export():
             "" if r[4] in (None, -1) else r[4],
             r[5] or "",
             "" if r[6] in (None, -1, 101) else r[6],
+            r[7] or "GPCA-STATION-01",
         ])
 
     return Response(
@@ -494,5 +546,130 @@ def export():
         }
     )
 
+# ================= DEMO DATA SEEDING =================
+# Lets you exercise the dashboard/chart without the ESP8266 being online.
+#   POST /api/seed?key=API_KEY&days=7   -> backfill hourly rows for the last 7 days + one live row
+#   POST /api/seed?key=API_KEY&live=1   -> insert a single fresh reading at "now" (call repeatedly for a live feed)
+#   DELETE /api/seed?key=API_KEY        -> remove every demo row
+DEMO_DEVICE = "DEMO-SIM"
+
+WIND_DIRECTIONS = [
+    "North", "North-East", "East", "South-East",
+    "South", "South-West", "West", "North-West"
+]
+
+
+def demo_reading(ts):
+    """Build one realistic weather reading for a UTC timestamp."""
+    # Approximate local hour (IST = UTC + 5:30) to drive the daily curve
+    ist_hour = (ts.hour + 5.5) % 24
+    # Temperature peaks around 15:00, bottoms out around 04:00
+    day_wave = math.sin((ist_hour - 9.0) / 24.0 * 2 * math.pi)
+
+    temperature = round(11.0 + 6.5 * day_wave + random.uniform(-1.0, 1.0), 1)
+    humidity = round(min(96.0, max(32.0, 70.0 - 20.0 * day_wave + random.uniform(-4, 4))), 1)
+
+    rain_value = round(random.uniform(0, 150), 1)
+    if random.random() < 0.08:
+        rain_status = random.choice(["Light Rain", "Drizzle", "Rain Detected"])
+    else:
+        rain_status = "No Rain"
+
+    wind_speed = round(4.0 + 14.0 * random.random(), 1)
+    wind_direction = random.choice(WIND_DIRECTIONS)
+
+    if random.random() < 0.05:
+        visibility = -1  # sensor not connected
+    else:
+        visibility = round(random.uniform(45, 100), 1)
+
+    alert = generate_alert(temperature, wind_speed, visibility, rain_status)
+    return (temperature, humidity, rain_value, rain_status,
+            wind_speed, wind_direction, visibility, alert, DEMO_DEVICE, ts)
+
+
+@app.route("/api/seed", methods=["POST", "DELETE"])
+def seed():
+    key = request.headers.get("x-api-key") or request.args.get("key")
+    if key != SERVER_API_KEY:
+        return jsonify({"error": "Unauthorized: Invalid or missing key"}), 401
+
+    con = get_db()
+    if not con:
+        return jsonify({"error": "DB unavailable"}), 500
+
+    cur = con.cursor()
+
+    # --- CLEAR ---
+    if request.method == "DELETE":
+        cur.execute("DELETE FROM weather WHERE device = %s", (DEMO_DEVICE,))
+        deleted = cur.rowcount
+        con.commit()
+        cur.close()
+        con.close()
+        return jsonify({"deleted": deleted, "demo_device": DEMO_DEVICE})
+
+    now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
+    live_only = request.args.get("live") in ("1", "true", "yes", "")
+
+    try:
+        days = int(request.args.get("days", 7))
+    except (TypeError, ValueError):
+        days = 7
+    days = max(0, min(days, 7))
+    if "live" in request.args:
+        days = 0  # live mode only
+
+    deleted = 0
+    readings = []
+
+    if days > 0:
+        start = (now - timedelta(days=days)).replace(minute=0, second=0)
+        # Clear only the demo rows in this window so re-seeding stays idempotent
+        cur.execute(
+            "DELETE FROM weather WHERE device = %s AND created_at >= %s",
+            (DEMO_DEVICE, start)
+        )
+        deleted = cur.rowcount
+
+        step = timedelta(minutes=30) if days <= 1 else timedelta(hours=1)
+        ts = start
+        while ts < now:
+            readings.append(demo_reading(ts))
+            ts += step
+
+    # Always append a fresh reading so the dashboard reports "Online"
+    readings.append(demo_reading(now))
+
+    cur.executemany("""
+        INSERT INTO weather
+        (temperature, humidity, rain_value, rain_status,
+         wind_speed, wind_direction, visibility, alert, device, created_at)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """, readings)
+
+    con.commit()
+    cur.close()
+    con.close()
+
+    print(f"🌱 Seeded {len(readings)} demo rows (deleted {deleted})")
+    return jsonify({
+        "status": "ok",
+        "inserted": len(readings),
+        "deleted": deleted,
+        "demo_device": DEMO_DEVICE,
+        "mode": "live" if days == 0 else f"{days}d backfill"
+    })
+
+# Removed SSE /api/stream endpoint — polling is used instead for reliability on cloud hosts
+
+
+# =============================================
+# PRODUCTION DEPLOYMENT: WSGI ENTRY POINT
+# =============================================
+# Render uses WSGI servers. Create Procfile with:
+#   web: gunicorn app:app --workers 1 --bind 0.0.0.0:8000
+# and add this to your Render service settings.
+# =============================================
 if __name__ == "__main__":
     app.run()

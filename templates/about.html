@@ -6,6 +6,13 @@
   <title>System Documentation | GPCA Weather Station</title>
 
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#38BDF8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GPCA Weather">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,69 +26,101 @@
     }
 
     .doc-section {
-      margin-bottom: 3rem;
+      margin-bottom: var(--space-12);
     }
 
     .doc-section h2 {
-      font-size: 1.75rem;
-      margin-bottom: 1.5rem;
+      font-size: var(--text-xl);
+      margin-bottom: var(--space-5);
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      color: var(--primary);
+      gap: var(--space-3);
+      color: var(--color-primary);
     }
 
     .doc-section h2 i {
       font-size: 1.25rem;
     }
 
+    .architecture-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-5);
+    }
+
+    .arch-card {
+      padding: var(--space-5);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: border-color var(--transition-fast);
+    }
+
+    .arch-card:hover {
+      border-color: var(--color-border-strong);
+    }
+
+    .arch-card h4 {
+      margin: 0 0 var(--space-2);
+      font-size: var(--text-base);
+      color: var(--color-fg);
+    }
+
+    .arch-card p {
+      margin: 0;
+      font-size: var(--text-sm);
+      color: var(--color-fg-muted);
+      line-height: var(--line-height-relaxed);
+    }
+
     .doc-panel {
-      padding: 2.5rem;
-      margin-bottom: 1.5rem;
+      padding: var(--space-6);
+      margin-bottom: var(--space-5);
     }
 
     .doc-panel p {
-      color: var(--text-muted);
-      margin-bottom: 1rem;
+      color: var(--color-fg-muted);
+      margin-bottom: var(--space-3);
     }
 
     .doc-panel ul {
       list-style: none;
       padding: 0;
+      margin: 0;
     }
 
     .doc-panel li {
       position: relative;
-      padding-left: 1.5rem;
-      margin-bottom: 0.75rem;
-      color: var(--text-muted);
+      padding-left: var(--space-5);
+      margin-bottom: var(--space-3);
+      color: var(--color-fg-muted);
+      font-size: var(--text-sm);
     }
 
     .doc-panel li::before {
-      content: "→";
+      content: "—";
       position: absolute;
       left: 0;
-      color: var(--primary);
-      font-weight: bold;
+      color: var(--color-primary);
+      font-weight: var(--font-weight-bold);
     }
 
-    .architecture-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1.5rem;
+    .hero-title-gradient {
+      font-size: clamp(var(--text-2xl), 5vw, var(--text-3xl));
+      margin-bottom: var(--space-4);
+      background: linear-gradient(135deg, var(--color-fg) 0%, var(--color-fg-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .arch-card {
-      padding: 1.5rem;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-    }
-
-    .arch-card h4 {
-      margin-bottom: 0.5rem;
-      color: var(--text-main);
+    .hero-desc {
+      font-size: var(--text-lg);
+      color: var(--color-fg-muted);
+      max-width: 600px;
+      margin: 0 auto var(--space-8);
+      line-height: var(--line-height-relaxed);
     }
   </style>
 </head>
@@ -102,18 +141,16 @@
   </header>
 
   <main class="container doc-container">
-    <section class="doc-section" style="text-align: center; margin: 4rem 0;">
-      <h1 style="font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(135deg, #FFF, #94A3B8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        System Architecture & Overview
-      </h1>
-      <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+    <section class="doc-section" style="text-align: center; margin: var(--space-16) 0 var(--space-12);">
+      <h1 class="hero-title-gradient">System Architecture & Overview</h1>
+      <p class="hero-desc">
         Comprehensive technical documentation for the IoT Weather Monitoring Station developed at Government Polytechnic College Anantnag.
       </p>
     </section>
 
     <div class="doc-section">
       <h2><i class="fas fa-info-circle"></i> Project Overview</h2>
-      <div class="panel doc-panel">
+      <div class="doc-panel">
         <p>
           The GPCA Weather Station is an educational and functional Internet of Things (IoT) project engineered by Computer Science students at Government Polytechnic College Anantnag. It provides automated, real-time meteorological monitoring using connected sensors, edge microcontrollers, and a cloud-native backend pipeline.
         </p>
@@ -125,23 +162,23 @@
 
     <div class="doc-section">
       <h2><i class="fas fa-network-wired"></i> System Architecture</h2>
-      <div class="panel doc-panel">
+      <div class="doc-panel">
         <div class="architecture-grid">
           <div class="arch-card">
             <h4>1. Edge Sensing Layer</h4>
-            <p style="font-size: 0.9rem;">ESP32/ESP8266 microcontroller gathering raw telemetry from DHT11, rain, wind, and visibility sensors.</p>
+            <p>ESP8266 microcontroller gathering raw telemetry from DHT11, rain, wind, and visibility sensors.</p>
           </div>
           <div class="arch-card">
             <h4>2. Transport Layer</h4>
-            <p style="font-size: 0.9rem;">Secure HTTP/REST transmission of structured JSON payloads over Wi-Fi network infrastructure.</p>
+            <p>Secure HTTP/REST transmission of structured JSON payloads over Wi-Fi network infrastructure.</p>
           </div>
           <div class="arch-card">
             <h4>3. Backend Pipeline</h4>
-            <p style="font-size: 0.9rem;">Flask (Python) server handling request validation, priority alert evaluation, and time-series persistence.</p>
+            <p>Flask (Python) server handling request validation, priority alert evaluation, and time-series persistence.</p>
           </div>
           <div class="arch-card">
             <h4>4. Presentation Layer</h4>
-            <p style="font-size: 0.9rem;">Responsive web client utilizing Chart.js for real-time visualization and historical trend analysis.</p>
+            <p>Responsive web client utilizing Chart.js for real-time visualization and historical trend analysis.</p>
           </div>
         </div>
       </div>
@@ -149,9 +186,9 @@
 
     <div class="doc-section">
       <h2><i class="fas fa-microchip"></i> Hardware Specification</h2>
-      <div class="panel doc-panel">
+      <div class="doc-panel">
         <ul>
-          <li><b>Microcontroller:</b> ESP8266 / ESP32 Wi-Fi SoC</li>
+          <li><b>Microcontroller:</b> ESP8266 Wi-Fi SoC</li>
           <li><b>Temperature & Humidity:</b> DHT11 Digital Sensor</li>
           <li><b>Precipitation:</b> Resistive/Digital Rain Detection Module</li>
           <li><b>Wind Measurement:</b> Custom Anemometer Pulse Counter (GPIO Interrupt)</li>
@@ -162,11 +199,11 @@
 
     <div class="doc-section">
       <h2><i class="fas fa-users"></i> Project Authors</h2>
-      <div class="panel doc-panel" style="text-align: center;">
-        <p style="font-size: 1.2rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
-          Yawar Nazir Sheikh &amp; Muhammad Yaseen
+      <div class="doc-panel" style="text-align: center;">
+        <p style="font-size: var(--text-xl); font-weight: var(--font-weight-semibold); color: var(--color-fg); margin-bottom: var(--space-2);">
+          Yawar Nazir Sheikh & Muhammad Yaseen
         </p>
-        <p style="margin-bottom: 0;">
+        <p style="margin-bottom: 0; color: var(--color-fg-muted);">
           Department of Computer Science Engineering<br>
           Government Polytechnic College Anantnag (GPCA)
         </p>
@@ -175,12 +212,22 @@
 
     <footer class="project-credit">
       <p>&copy; 2024 GPCA Smart Weather Station Project</p>
-      <div style="margin-top: 1rem;">
-        <a href="/" style="margin-right: 1.5rem;">Home</a>
+      <div style="margin-top: var(--space-4);">
+        <a href="/" style="margin-right: var(--space-6);">Home</a>
         <a href="/dashboard">Live Dashboard</a>
       </div>
     </footer>
   </main>
 
+  <script>
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
+          .then((reg) => console.log('[SW] Registered:', reg.scope))
+          .catch((err) => console.warn('[SW] Registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>

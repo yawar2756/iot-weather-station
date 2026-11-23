@@ -1,0 +1,23 @@
+// config.private.h.example - COPY TO config.private.h AND FILL IN YOUR SECRETS
+// THIS FILE IS TRACKED IN GIT AS A TEMPLATE
+// DO NOT COMMIT config.private.h (it's in .gitignore)
+
+// ⚠️ BEFORE UPLOADING TO ESP8266:
+// 1. Copy: cp config.private.h.example config.private.h
+// 2. Fill in: API_KEY, WIFI_SSID, WIFI_PASS, SERVER_URL
+// 3. Set API_KEY in Render Environment Variables
+
+#ifndef CONFIG_PRIVATE_H
+#define CONFIG_PRIVATE_H
+
+// ⚠️ SET THESE BEFORE UPLOADING TO ESP8266
+const char* API_KEY    = "your-api-key-here";     // Must match Render env var
+const char* WIFI_SSID  = "your-wifi-ssid";         // Your WiFi name
+const char* WIFI_PASS  = "your-wifi-password";     // Your WiFi password
+const char* SERVER_URL = "https://gpca-weather-station.onrender.com/api/data";
+const char* DEVICE_ID  = "GPCA-STATION-01";
+
+// Optional: Override default interval (ms)
+const long DATA_INTERVAL = 12000; // 12 seconds
+
+#endif

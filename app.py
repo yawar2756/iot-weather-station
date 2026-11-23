@@ -195,6 +195,18 @@ def receive_data():
         except:
             rain_value = None # Changed from -1 to None to avoid mixing with real rain data
 
+        rain_status = data.get("rain_status")
+        if isinstance(rain_status, str):
+            rain_status = rain_status.strip() or "No Rain"
+        else:
+            rain_status = "No Rain"
+
+        device_id = data.get("device")
+        if isinstance(device_id, str):
+            device_id = device_id.strip() or "GPCA-STATION-01"
+        else:
+            device_id = "GPCA-STATION-01"
+
         wind_speed = data.get("wind_speed")
         try:
             wind_speed = float(wind_speed)

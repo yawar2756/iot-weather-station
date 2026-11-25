@@ -8,6 +8,11 @@
   <meta name="description" content="View live real-time weather analytics and historical trends from the GPCA Smart Weather Station at Government Polytechnic College Anantnag. Monitoring temperature, humidity, wind, and visibility.">
   <link rel="canonical" href="https://gpca-weather-station.onrender.com/dashboard">
 
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Live Weather Dashboard | Government Polytechnic College Anantnag (GPCA)">
+  <meta property="og:description" content="View live real-time weather analytics and historical trends from the GPCA Smart Weather Station at Government Polytechnic College Anantnag. Monitoring temperature, humidity, wind, and visibility.">
+  <meta property="og:url" content="https://gpca-weather-station.onrender.com/dashboard">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <meta name="theme-color" content="#38BDF8">
@@ -22,229 +27,38 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
 
-  <style>
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--space-5);
-      margin-bottom: var(--space-6);
-    }
-
-    .stat-panel {
-      padding: var(--space-5);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-panel::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--color-primary), var(--color-info));
-      opacity: 0;
-      transition: opacity var(--transition-normal);
-    }
-
-    .stat-panel:hover::before {
-      opacity: 1;
-    }
-
-    .stat-label {
-      font-size: var(--text-xs);
-      font-weight: var(--font-weight-medium);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--color-fg-subtle);
-    }
-
-    .stat-value {
-      font-size: var(--text-2xl);
-      font-weight: var(--font-weight-bold);
-      line-height: var(--line-height-tight);
-      color: var(--color-fg);
-      font-variant-numeric: tabular-nums;
-      font-family: var(--font-mono), var(--font-sans);
-    }
-
-    .stat-value.updating {
-      transform: scale(1.05);
-      color: var(--color-primary);
-    }
-
-    .stat-footer {
-      font-size: var(--text-xs);
-      color: var(--color-fg-subtle);
-      margin-top: var(--space-2);
-    }
-
-    .main-chart-panel {
-      grid-column: span 3;
-      min-height: 420px;
-    }
-
-    .side-panel {
-      grid-column: span 1;
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-5);
-    }
-
-    .chart-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--space-4);
-    }
-
-    .chart-title {
-      font-size: var(--text-lg);
-      font-weight: var(--font-weight-semibold);
-    }
-
-    .chart-controls {
-      display: flex;
-      gap: var(--space-1);
-    }
-
-    .control-btn {
-      padding: var(--space-1) var(--space-3);
-      font-size: var(--text-xs);
-      font-weight: var(--font-weight-medium);
-      color: var(--color-fg-muted);
-      background: transparent;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-    }
-
-    .control-btn:hover {
-      color: var(--color-fg);
-      border-color: var(--color-border-strong);
-      background: var(--color-bg-hover);
-    }
-
-    .control-btn.active {
-      color: #052e0e;
-      background: var(--color-primary);
-      border-color: var(--color-primary);
-    }
-
-    #alert-banner {
-      display: none;
-      margin-bottom: var(--space-5);
-      padding: var(--space-4);
-      border-radius: var(--radius-md);
-      align-items: center;
-      gap: var(--space-3);
-      font-weight: var(--font-weight-semibold);
-      animation: slide-down 250ms ease-out;
-    }
-
-    @keyframes slide-down {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .alert-active {
-      display: flex !important;
-    }
-
-    .alert-banner-critical { background: var(--color-danger-dim); border-color: rgba(239,68,68,0.3); color: var(--color-danger); }
-    .alert-banner-warning { background: var(--color-warning-dim); border-color: rgba(245,158,11,0.3); color: var(--color-warning); }
-    .alert-banner-info { background: var(--color-info-dim); border-color: rgba(59,130,246,0.3); color: var(--color-info); }
-
-    .weather-icon-lg {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      transition: transform var(--transition-normal);
-    }
-
-    .weather-icon-lg.updating {
-      transform: rotate(15deg) scale(1.1);
-    }
-
-    /* Device info badge - uses .device-badge from design system */
-    .device-info {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-1);
-      font-size: var(--text-xs);
-      color: var(--color-fg-subtle);
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-full);
-      font-family: var(--font-mono);
-      padding: var(--space-1) var(--space-2);
-    }
-
-    @media (max-width: 1100px) {
-      .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
-      .main-chart-panel { grid-column: span 2; }
-      .side-panel { grid-column: span 2; flex-direction: row; }
-    }
-
-    @media (max-width: 720px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
-      .main-chart-panel { grid-column: span 1; }
-      .side-panel { grid-column: span 1; flex-direction: column; }
-      #toast-container { left: var(--space-4); right: var(--space-4); bottom: var(--space-4); }
-      .toast { max-width: none; }
-    }
-
-    /* Value change animation - matches design system */
-    @keyframes value-flash {
-      0% { background-color: var(--color-primary-dim); }
-      100% { background-color: transparent; }
-    }
-
-    .stat-value.changed {
-      animation: value-flash 1.2s ease-out;
-      border-radius: var(--radius-sm);
-      padding: 0 2px;
-      margin: 0 -2px;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
 
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="app-header">
     <div class="brand">
-      <div class="brand-icon"><i class="fas fa-wind"></i></div>
+      <div class="brand-icon"><i class="fas fa-wind" aria-hidden="true"></i></div>
       <div class="brand-title">
         <h1>Dashboard</h1>
         <div class="brand-subtitle">
-          <span id="connection-status" class="connection-status connecting">
+          <span id="connection-status" class="connection-status connecting" role="status" aria-live="polite">
             <span class="connection-dot pulse"></span> Connecting...
           </span>
         </div>
       </div>
     </div>
-    <nav class="nav-links">
+    <nav class="nav-links" aria-label="Main navigation">
       <a href="/" class="btn btn-secondary">Home</a>
-      <a href="/api/export" class="btn btn-secondary"><i class="fas fa-download"></i> Export Data</a>
+      <a href="/api/export" class="btn btn-secondary"><i class="fas fa-download" aria-hidden="true"></i> Export Data</a>
     </nav>
   </header>
 
-  <main class="container">
+  <main id="main" class="container">
     <!-- Weather Alerts Banner -->
-    <div id="alert-banner" class="alert alert-info">
-      <i class="fas fa-exclamation-triangle alert-icon"></i>
+    <div id="alert-banner" class="alert alert-info" role="alert">
+      <i class="fas fa-exclamation-triangle alert-icon" aria-hidden="true"></i>
       <div class="alert-content">
         <div class="alert-title">Weather Alert</div>
-        <div class="alert-message" id="alert-text">High temperature detected.</div>
+        <div class="alert-message" id="alert-text">--</div>
       </div>
     </div>
 
@@ -258,7 +72,7 @@
       <div class="panel stat-panel">
         <span class="stat-label">Humidity</span>
         <div class="stat-value" id="val-hum">--%</div>
-        <div class="stat-footer" id="val-trend">Trend: Stable</div>
+        <div class="stat-footer" id="val-trend">Temp trend: --</div>
       </div>
       <div class="panel stat-panel">
         <span class="stat-label">Wind Speed</span>
@@ -286,404 +100,36 @@
           </div>
         </div>
         <div class="chart-wrapper">
-          <canvas id="weatherChart"></canvas>
+          <canvas id="weatherChart" role="img" aria-label="Line chart of temperature over time"></canvas>
+          <p id="chart-empty" class="stat-footer" hidden>No temperature data in this range yet.</p>
         </div>
       </div>
 
       <div class="side-panel">
         <div class="panel" style="text-align: center;">
-          <div class="weather-icon-lg" id="weather-icon"><i class="fas fa-cloud-sun"></i></div>
-          <h3 id="val-rain">Clear Sky</h3>
+          <div class="weather-icon-lg" id="weather-icon"><i class="fas fa-cloud-sun" aria-hidden="true"></i></div>
+          <h3 id="val-rain">--</h3>
           <p class="stat-footer">Current Precipitation</p>
         </div>
         <div class="panel">
-          <h4 class="stat-label">Visibility Index</h4>
+          <h4 class="stat-label">Light Level</h4>
           <div class="stat-value" id="val-vis">--%</div>
           <div class="vis-track">
             <div id="vis-bar" class="vis-fill"></div>
           </div>
+          <div class="stat-footer" id="val-vis-status">Day/night sensor</div>
         </div>
       </div>
     </div>
 
     <footer class="project-credit">
-      <p>&copy; 2024 GPCA Smart Weather Station • Government Polytechnic College Anantnag</p>
+      <p>&copy; {{ current_year }} GPCA Smart Weather Station • Government Polytechnic College Anantnag</p>
     </footer>
   </main>
 
   <!-- Toast Container -->
   <div id="toast-container"></div>
 
-  <script>
-    // ============ CONFIG ============
-    const POLL_INTERVAL = 10000;           // Poll /api/latest every 10s
-    const CHART_REFRESH_INTERVAL = 300000; // Refresh chart every 5 min
-    const TOAST_DURATION = 5000;
-
-    // ============ STATE ============
-    let weatherChart = null;
-    let chartMode = 'hourly';
-    let lastUpdate = Date.now();
-    let lastAlert = null;
-    let lastData = {};
-
-    // ============ CHART CONFIG ============
-    const chartConfig = {
-      type: 'line',
-      data: { labels: [], datasets: [{
-        label: 'Temperature (°C)',
-        data: [],
-        borderColor: '#38BDF8',
-        backgroundColor: 'rgba(56, 189, 248, 0.1)',
-        borderWidth: 3,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: '#38BDF8',
-        pointBorderWidth: 0
-      }]},
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: {
-          autoPadding: true,
-          padding: { top: 10, right: 20, bottom: 10, left: 10 }
-        },
-        animation: { duration: 750, easing: 'easeOutQuart' },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#0F172A',
-            padding: 12,
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 },
-            displayColors: false,
-            borderColor: 'rgba(255,255,255,0.1)',
-            borderWidth: 1
-          }
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: '#64748B', font: { size: 11 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748B', font: { size: 11 } } }
-        }
-      }
-    };
-
-    // ============ DOM HELPERS ============
-    const $ = (id) => document.getElementById(id);
-    const setText = (id, text) => { const el = $(id); if (el) el.innerText = text; };
-    const setClass = (el, ...classes) => { if (el) el.className = classes.join(' '); };
-    const addClass = (el, ...classes) => { if (el) el.classList.add(...classes); };
-    const removeClass = (el, ...classes) => { if (el) el.classList.remove(...classes); };
-
-    // ============ TOAST SYSTEM ============
-    function showToast(type, title, message) {
-      const container = $('toast-container');
-      const toast = document.createElement('div');
-      toast.className = `toast ${type === 'critical' ? 'toast-danger' : type === 'warning' ? 'toast-warning' : 'toast-info'}`;
-      const icons = { critical: 'fa-triangle-exclamation', warning: 'fa-circle-exclamation', info: 'fa-circle-info' };
-      toast.innerHTML = `
-        <i class="fas ${icons[type]} toast-icon"></i>
-        <div class="toast-content">
-          <div class="toast-title">${title}</div>
-          <div class="toast-message">${message}</div>
-        </div>
-      `;
-      container.appendChild(toast);
-      setTimeout(() => removeToast(toast), TOAST_DURATION);
-    }
-
-    function removeToast(toast) {
-      toast.classList.add('removing');
-      setTimeout(() => toast.remove(), 300);
-    }
-
-    // ============ CONNECTION STATUS ============
-    function setConnectionStatus(status) {
-      const el = $('connection-status');
-      const dot = el?.querySelector('.connection-dot');
-      if (!el) return;
-
-      removeClass(el, 'connected', 'connecting', 'disconnected');
-      removeClass(dot, 'pulse');
-      addClass(el, status);
-      addClass(dot, 'pulse');
-
-      const labels = { connected: 'Live', connecting: 'Connecting...', disconnected: 'Offline' };
-      el.innerHTML = `<span class="connection-dot pulse"></span> ${labels[status]}`;
-    }
-
-    // ============ DATA HANDLING ============
-    function animateValueUpdate(element) {
-      if (!element) return;
-      element.classList.add('updating', 'changed');
-      setTimeout(() => {
-        element.classList.remove('updating');
-        setTimeout(() => element.classList.remove('changed'), 1000);
-      }, 300);
-    }
-
-    function updateWeatherIcon(rainStatus) {
-      const icon = $('weather-icon');
-      if (!icon) return;
-      const icons = {
-        'Rain Detected': 'fa-cloud-showers-heavy',
-        'Heavy Rain': 'fa-cloud-bolt',
-        'Light Rain': 'fa-cloud-rain',
-        'Drizzle': 'fa-cloud-drizzle',
-        'Storm': 'fa-tornado',
-        'No Rain': 'fa-cloud-sun'
-      };
-      const newClass = icons[rainStatus] || 'fa-cloud-sun';
-      const currentClass = icon.querySelector('i')?.className || '';
-      if (!currentClass.includes(newClass)) {
-        icon.classList.add('updating');
-        setTimeout(() => {
-          icon.innerHTML = `<i class="fas ${newClass}"></i>`;
-          icon.classList.remove('updating');
-        }, 250);
-      }
-    }
-
-    function updateAlertBanner(alert) {
-      const banner = $('alert-banner');
-      const text = $('alert-text');
-      if (!banner || !text) return;
-
-      if (alert && alert !== 'Normal') {
-        removeClass(banner, 'alert-banner-info', 'alert-banner-warning', 'alert-banner-critical');
-        const criticalAlerts = ['Storm Warning', 'Heat Alert', 'Cold Alert'];
-        const warningAlerts = ['Low Visibility'];
-        if (criticalAlerts.includes(alert)) addClass(banner, 'alert-banner-critical');
-        else if (warningAlerts.includes(alert)) addClass(banner, 'alert-banner-warning');
-        else addClass(banner, 'alert-banner-info');
-
-        text.innerText = alert;
-        addClass(banner, 'alert-active');
-
-        // Toast for new alerts
-        if (alert !== lastAlert) {
-          const type = criticalAlerts.includes(alert) ? 'critical' : 'warning';
-          showToast(type, 'Weather Alert', alert);
-          lastAlert = alert;
-        }
-      } else {
-        removeClass(banner, 'alert-active');
-        lastAlert = null;
-      }
-    }
-
-    function applyData(data) {
-      if (!data || data.device_status === 'Offline') {
-        setText('val-status', 'Offline');
-        $('val-status').style.color = 'var(--color-danger)';
-        setConnectionStatus('disconnected');
-
-        // Still update rain with last known data (or show Offline)
-        if (lastData && lastData.rain) {
-          setText('val-rain', lastData.rain);
-          updateWeatherIcon(lastData.rain);
-        } else {
-          setText('val-rain', 'Offline');
-          updateWeatherIcon('No Rain');
-        }
-        return;
-      }
-
-      setConnectionStatus('connected');
-
-      // Update values with animation (properly handling 0 values)
-      const updates = [
-        ['val-temp', (data.temperature !== null && data.temperature !== undefined ? data.temperature : '--') + '°C'],
-        ['val-temp-range', `Range: ${data.min_temp !== null && data.min_temp !== undefined ? data.min_temp : '--'}°C / ${data.max_temp !== null && data.max_temp !== undefined ? data.max_temp : '--'}°C`],
-        ['val-hum', (data.humidity !== null && data.humidity !== undefined ? data.humidity : '--') + '%'],
-        ['val-trend', `Trend: ${data.trend || 'Stable'}`],
-        ['val-wind', (data.wind_speed !== null && data.wind_speed !== undefined ? data.wind_speed : '--') + ' km/h'],
-        ['val-direction', `Direction: ${data.wind_direction || 'N/A'}`],
-        ['val-status', 'Operational'],
-        ['val-rain', data.rain || 'No Precipitation'],
-        ['val-vis', (data.visibility !== null && data.visibility !== undefined ? data.visibility : '--') + '%']
-      ];
-
-      updates.forEach(([id, value]) => {
-        const el = $(id);
-        if (el && el.innerText !== value) {
-          animateValueUpdate(el);
-          el.innerText = value;
-        }
-      });
-
-      $('val-status').style.color = 'var(--color-primary)';
-      $('vis-bar').style.width = (data.visibility || 0) + '%';
-      setText('device-badge', `Device: ${data.device || 'GPCA-STATION-01'}`);
-      $('device-badge').style.display = 'inline-flex';
-
-      updateWeatherIcon(data.rain);
-      updateAlertBanner(data.alert);
-
-      lastUpdate = Date.now();
-      lastData = data;
-    }
-
-    // ============ POLLING ============
-    let pollingInterval = null;
-    async function fetchData() {
-      try {
-        const response = await fetch('/api/latest');
-        const data = await response.json();
-        applyData(data);
-      } catch (error) {
-        console.error('Polling error:', error);
-        setConnectionStatus('disconnected');
-      }
-    }
-
-    function startPolling() {
-      if (pollingInterval) clearInterval(pollingInterval);
-      fetchData();
-      pollingInterval = setInterval(fetchData, POLL_INTERVAL);
-      setConnectionStatus('connecting');
-    }
-
-    // ============ CHART ============
-    async function updateChart() {
-      try {
-        const response = await fetch(`/api/history?mode=${chartMode}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const historyData = await response.json();
-
-        console.log('[Chart] Raw data:', historyData);
-
-        // Show empty state on chart
-        const canvas = $('weatherChart');
-        const ctx = canvas.getContext('2d');
-        if (!weatherChart) {
-          weatherChart = new Chart(ctx, chartConfig);
-        }
-
-        // Show empty state when no data
-        if (!Array.isArray(historyData) || historyData.length === 0) {
-          weatherChart.data.labels = [];
-          weatherChart.data.datasets[0].data = [];
-          weatherChart.update('active');
-          console.warn('[Chart] No data received - showing empty chart');
-          return;
-        }
-
-        // Filter valid points and parse times safely
-        const validPoints = historyData
-          .filter(d => d.time && d.temperature !== null && d.temperature !== undefined)
-          .map(d => {
-            const date = new Date(d.time);
-            return {
-              time: date,
-              temp: Number(d.temperature),
-              label: d.label || (chartMode === 'hourly'
-                ? date.getHours().toString().padStart(2, '0') + ':00'
-                : date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }))
-            };
-          })
-          .filter(d => !isNaN(d.time.getTime()) && !isNaN(d.temp));
-
-        console.log('[Chart] Valid points:', validPoints.length, validPoints);
-
-        if (validPoints.length === 0) {
-          const canvas = $('weatherChart');
-          const ctx = canvas.getContext('2d');
-          if (!weatherChart) {
-            weatherChart = new Chart(ctx, chartConfig);
-          }
-          weatherChart.data.labels = [];
-          weatherChart.data.datasets[0].data = [];
-          weatherChart.update('active');
-          console.warn('[Chart] No valid temperature data after filtering');
-          return;
-        }
-
-        const labels = validPoints.map(d => d.label);
-        const temps = validPoints.map(d => d.temp);
-
-        if (!weatherChart) {
-          const canvas = $('weatherChart');
-          if (!canvas) {
-            console.error('[Chart] Canvas element not found');
-            return;
-          }
-          const ctx = canvas.getContext('2d');
-          weatherChart = new Chart(ctx, chartConfig);
-        }
-
-        weatherChart.data.labels = labels;
-        weatherChart.data.datasets[0].data = temps;
-        weatherChart.update('active');
-
-        console.log('[Chart] Updated successfully');
-      } catch (error) {
-        console.error('[Chart] Error:', error);
-      }
-    }
-
-    function setChartMode(mode, btn) {
-      chartMode = mode;
-      document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      updateChart();
-    }
-
-    // ============ CLOCK ============
-    function updateClock() {
-      const sec = Math.floor((Date.now() - lastUpdate) / 1000);
-      setText('val-update', `Last update: ${sec}s ago`);
-    }
-
-    // ============ INIT ============
-    function init() {
-      startPolling();
-
-      updateChart();
-      setInterval(updateClock, 1000);
-      setInterval(updateChart, CHART_REFRESH_INTERVAL);
-    }
-
-    // DOM ready guard for robust initialization
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
-    } else {
-      init();
-    }
-
-    // ============ SERVICE WORKER REGISTRATION ============
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
-          .then((reg) => {
-            console.log('[SW] Registered:', reg.scope);
-
-            // Check for updates periodically
-            setInterval(() => reg.update(), 60 * 60 * 1000); // hourly
-
-            // Handle updates
-            reg.addEventListener('updatefound', () => {
-              const newWorker = reg.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New version available - show toast
-                  showToast('info', 'Update Available', 'New version ready. Refresh to update.');
-                }
-              });
-            });
-          })
-          .catch((err) => console.warn('[SW] Registration failed:', err));
-      });
-
-      // Listen for controller change (new SW activated)
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        refreshing = true;
-        window.location.reload();
-      });
-    }
-  </script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 </html>

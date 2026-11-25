@@ -1,0 +1,103 @@
+    .doc-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .doc-section {
+      margin-bottom: var(--space-12);
+    }
+
+    .doc-section h2 {
+      font-size: var(--text-xl);
+      margin-bottom: var(--space-5);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      color: var(--color-primary);
+    }
+
+    .doc-section h2 i {
+      font-size: 1.25rem;
+    }
+
+    .architecture-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-5);
+    }
+
+    .arch-card {
+      padding: var(--space-5);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: border-color var(--transition-fast);
+    }
+
+    .arch-card:hover {
+      border-color: var(--color-border-strong);
+    }
+
+    .arch-card h4 {
+      margin: 0 0 var(--space-2);
+      font-size: var(--text-base);
+      color: var(--color-fg);
+    }
+
+    .arch-card p {
+      margin: 0;
+      font-size: var(--text-sm);
+      color: var(--color-fg-muted);
+      line-height: var(--line-height-relaxed);
+    }
+
+    .doc-panel {
+      padding: var(--space-6);
+      margin-bottom: var(--space-5);
+    }
+
+    .doc-panel p {
+      color: var(--color-fg-muted);
+      margin-bottom: var(--space-3);
+    }
+
+    .doc-panel ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .doc-panel li {
+      position: relative;
+      padding-left: var(--space-5);
+      margin-bottom: var(--space-3);
+      color: var(--color-fg-muted);
+      font-size: var(--text-sm);
+    }
+
+    .doc-panel li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: var(--color-primary);
+      font-weight: var(--font-weight-bold);
+    }
+
+    .hero-title-gradient {
+      font-size: clamp(var(--text-2xl), 5vw, var(--text-3xl));
+      margin-bottom: var(--space-4);
+      background: linear-gradient(135deg, var(--color-fg) 0%, var(--color-fg-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      font-size: var(--text-lg);
+      color: var(--color-fg-muted);
+      max-width: 600px;
+      margin: 0 auto var(--space-8);
+      line-height: var(--line-height-relaxed);
+    }
+  

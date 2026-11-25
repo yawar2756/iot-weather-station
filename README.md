@@ -25,15 +25,15 @@
 
 ## 🎯 About
 
-The **GPCA Smart Weather Station** is a full-stack IoT project that captures real-time meteorological data — temperature, humidity, rainfall, wind speed, wind direction, and visibility — using ESP8266 edge sensors, streams it securely over HTTPS to a Flask backend running on Render, and visualizes it through an elegant Chart.js dashboard.
+The **GPCA Smart Weather Station** is a full-stack IoT project that captures meteorological data — temperature, humidity, rain detection, wind speed, and ambient light — using ESP8266 edge sensors, streams it securely over HTTPS to a Flask backend running on Render, and visualizes it through an elegant Chart.js dashboard.
 
-Designed as an educational showcase at Government Polytechnic College Anantnag, it bridges edge hardware, cloud persistence, and responsive web presentation in one production-ready package.
+Designed as an educational showcase at Government Polytechnic College Anantnag, it bridges edge hardware, cloud persistence, and responsive web presentation.
 
 ---
 
 ## ⚡ Key Features
 
-- **🌡️ Real-Time Monitoring** — Live temperature, humidity, wind, rain, and visibility readings
+- **🌡️ Real-Time Monitoring** — Live temperature, humidity, wind, rain, and light-level readings (the dashboard shows the last known values, dimmed, when the station is offline)
 - **📊 Interactive Charts** — Chart.js temperature trends toggle between **12 Hours** and **7 Days**
 - **🚨 Smart Alert System** — Heat, Cold, Storm Warning, Rain Alert, Low Visibility banners
 - **📤 Data Export** — Download CSV reports of the last 7 days
@@ -52,7 +52,16 @@ Designed as an educational showcase at Government Polytechnic College Anantnag, 
 | Temperature & Humidity | DHT11 | D4 |
 | Precipitation | Rain Detection Module | D6 |
 | Wind Speed | Anemometer Pulse Counter (GPIO Interrupt) | D5 |
-| Visibility / Light | LDR Photocell | D2 |
+| Light level | LDR module (digital: dark / bright) | D2 |
+
+### Known sensor limits (read before trusting the numbers)
+
+- **DHT11 reads 0–50 °C only (±2 °C, ±5 % RH).** It cannot report sub-zero temperatures. For Kashmir winters use a DHT22 or BME280.
+- **Light level is not visibility.** The LDR module is a day/night switch (25 % / 90 %). Because of that, the "Low Visibility" alert is disabled unless you set `VISIBILITY_ALERT_ENABLED=1`.
+- **Rain is wet / dry only.** The intensity value is a fixed placeholder, not a measurement.
+- **Wind speed** assumes 2.4 km/h per pulse-per-second. Set `WIND_KMH_PER_HZ` in the firmware to match your anemometer's datasheet.
+- **No wind vane**, so wind direction is not measured (shown as N/A).
+- A sensor that is not fitted can be switched off with the `HAS_*` flags at the top of `weather_station.ino`. Missing data is sent as `null` and shown as `--`, never as a fake number.
 
 All sensor data is packaged as JSON via ArduinoJson and transmitted securely over HTTPS with TLS certificate fingerprint validation to prevent MITM attacks.
 
@@ -65,16 +74,28 @@ iot-weather-station/
 ├── app.py                      # Flask backend (API, DB, seeding)
 ├── Procfile                    # Render WSGI entry point
 ├── weather_station.ino         # ESP8266 firmware
-├── config.h                    # WiFi, API keys, server URL (keep private)
+├── config.h                    # Placeholder template only (safe to commit)
+├── config.private.h.example    # Copy to config.private.h and fill in secrets (git-ignored)
 ├── templates/
 │   ├── index.html              # Landing page
 │   ├── dashboard.html          # Live monitoring dashboard
 │   └── about.html              # System architecture docs
 ├── static/
-│   ├── css/main.css            # Styles
-│   ├── favicon.png
+│   ├── css/
+│   │   ├── main.css            # Shared design system
+│   │   ├── index.css           # Landing page styles
+│   │   ├── dashboard.css       # Dashboard styles
+│   │   └── about.css           # Docs page styles
+│   ├── js/
+│   │   ├── dashboard.js        # Polling, rendering, chart
+│   │   ├── index.js            # Landing page status badge
+│   │   └── about.js            # Service worker registration
+│   ├── favicon.png             # 128x128
+│   ├── icon-192.png            # PWA icons
+│   ├── icon-512.png
 │   ├── manifest.json
-│   └── service-worker.js       # PWA support
+│   └── service-worker.js       # Offline support (network-first for pages and API)
+├── CHANGES.md                  # What changed in the v2 review pass
 └── README.md                   # You are here
 ```
 
@@ -116,48 +137,49 @@ cp config.private.h.example config.private.h
 | `GET` | `/api/history?mode=hourly\|daily` | Chart history (12h / 7d) |
 | `POST` | `/api/data` | Receive sensor data (ESP8266) |
 | `GET` | `/api/export` | Download CSV (last 7 days) |
-| `POST` | `/api/seed?key=...&live=1` | Insert live demo reading |
-| `POST` | `/api/seed?key=...&days=7` | Backfill 7 days of demo data |
-| `DELETE` | `/api/seed?key=...` | Clear all demo rows |
+| `POST` | `/api/seed?live=1` | Insert a live demo reading (needs `ENABLE_SEED=1` + `x-api-key` header) |
+| `POST` | `/api/seed?days=7` | Backfill 7 days of demo data (same requirements) |
+| `DELETE` | `/api/seed` | Clear all demo rows (same requirements) |
 
 ---
 
 ## 🌤️ Testing Without Hardware
 
-Don't have an ESP8266 handy? Simulate live weather data from your browser console:
+Demo seeding is **off by default**. To use it, set `ENABLE_SEED=1` on the server, then call it from your terminal (never paste your API key into a browser console or a URL):
 
-```javascript
-(async () => {
-  // 🔑 Replace with your own Render API key
-  const KEY = 'YOUR_API_KEY';   // ← set your own key from environment
+```bash
+# 7 days of demo history + one fresh reading
+curl -X POST -H "x-api-key: $API_KEY" "https://YOUR-APP.onrender.com/api/seed?days=7"
 
-  const API = 'https://your-render-url.com/api/seed';
+# keep the dashboard "Online" with a fresh reading every 30 s
+while true; do curl -s -X POST -H "x-api-key: $API_KEY" "https://YOUR-APP.onrender.com/api/seed?live=1"; sleep 30; done
 
-  const summon = async () => {
-    const r = await fetch(`${API}?key=${KEY}&live=1`, {
-      method: 'POST',
-      headers: { 'x-api-key': KEY }
-    });
-    console.log('🌦️ Weather refreshed:', await r.json());
-  };
-
-  setInterval(() => summon(), 30000);
-  console.log('☔ Weather oracle active — updating every 30s');
-})();
+# remove every demo row
+curl -X DELETE -H "x-api-key: $API_KEY" "https://YOUR-APP.onrender.com/api/seed"
 ```
 
-Paste into DevTools (F12 → Console) on your dashboard page and watch values change in real time.
+Demo rows are tagged `DEMO-SIM`, and the dashboard shows a **DEMO DATA** badge while the newest reading is a demo one. Turn `ENABLE_SEED` off again when the real station is running.
 
 ---
 
 ## ☁️ Deployment (Render)
 
 1. Connect your GitHub repo to [Render](https://render.com)
-2. Add environment variables: `DATABASE_URL`, `API_KEY`
+2. Add environment variables:
+
+   | Variable | Required | Purpose |
+   |---|---|---|
+   | `DATABASE_URL` | yes | PostgreSQL connection string |
+   | `API_KEY` | yes | Shared secret the ESP8266 sends in `x-api-key` |
+   | `ENABLE_SEED` | no | `1` enables the demo-data endpoints |
+   | `RETENTION_DAYS` | no | Delete readings older than this (default 90, `0` = keep forever) |
+   | `VISIBILITY_ALERT_ENABLED` | no | `1` re-enables the light-based "Low Visibility" alert |
 3. Deploy using the included `Procfile`:
    ```
-   web: gunicorn app:app --workers 1 --bind 0.0.0.0:8000
+   web: gunicorn app:app --workers 1 --bind 0.0.0.0:${PORT:-8000}
    ```
+
+   Render's free tier sleeps after ~15 minutes without traffic. Point a free uptime monitor (e.g. UptimeRobot) at `/ping` so the first visitor is not stuck waiting for a cold start.
 4. Visit your Render URL and start monitoring
 
 ---
@@ -183,7 +205,7 @@ Paste into DevTools (F12 → Console) on your dashboard page and watch values ch
 
 ## 📄 License
 
-© 2024 GPCA Smart Weather Station Project — Government Polytechnic College Anantnag
+© GPCA Smart Weather Station Project — Government Polytechnic College Anantnag. No open-source license has been chosen yet; add a `LICENSE` file if you want others to reuse the code.
 
 ---
 

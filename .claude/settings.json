@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git rm *)",
-      "Bash(grep -E \"config|\\\\.h$\")",
-      "Bash(git check-ignore *)"
-    ]
-  }
-}

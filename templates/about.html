@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>System Documentation | GPCA Weather Station</title>
 
+  <meta name="description" content="Technical documentation for the GPCA IoT weather station: architecture, sensors, data flow, and API.">
+  <link rel="canonical" href="https://gpca-weather-station.onrender.com/about">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="System Documentation | GPCA Weather Station">
+  <meta property="og:description" content="Technical documentation for the GPCA IoT weather station: architecture, sensors, data flow, and API.">
+  <meta property="og:url" content="https://gpca-weather-station.onrender.com/about">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <meta name="theme-color" content="#38BDF8">
@@ -19,137 +26,35 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 
-  <style>
-    .doc-container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .doc-section {
-      margin-bottom: var(--space-12);
-    }
-
-    .doc-section h2 {
-      font-size: var(--text-xl);
-      margin-bottom: var(--space-5);
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      color: var(--color-primary);
-    }
-
-    .doc-section h2 i {
-      font-size: 1.25rem;
-    }
-
-    .architecture-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: var(--space-4);
-      margin-top: var(--space-5);
-    }
-
-    .arch-card {
-      padding: var(--space-5);
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      transition: border-color var(--transition-fast);
-    }
-
-    .arch-card:hover {
-      border-color: var(--color-border-strong);
-    }
-
-    .arch-card h4 {
-      margin: 0 0 var(--space-2);
-      font-size: var(--text-base);
-      color: var(--color-fg);
-    }
-
-    .arch-card p {
-      margin: 0;
-      font-size: var(--text-sm);
-      color: var(--color-fg-muted);
-      line-height: var(--line-height-relaxed);
-    }
-
-    .doc-panel {
-      padding: var(--space-6);
-      margin-bottom: var(--space-5);
-    }
-
-    .doc-panel p {
-      color: var(--color-fg-muted);
-      margin-bottom: var(--space-3);
-    }
-
-    .doc-panel ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .doc-panel li {
-      position: relative;
-      padding-left: var(--space-5);
-      margin-bottom: var(--space-3);
-      color: var(--color-fg-muted);
-      font-size: var(--text-sm);
-    }
-
-    .doc-panel li::before {
-      content: "—";
-      position: absolute;
-      left: 0;
-      color: var(--color-primary);
-      font-weight: var(--font-weight-bold);
-    }
-
-    .hero-title-gradient {
-      font-size: clamp(var(--text-2xl), 5vw, var(--text-3xl));
-      margin-bottom: var(--space-4);
-      background: linear-gradient(135deg, var(--color-fg) 0%, var(--color-fg-muted) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-desc {
-      font-size: var(--text-lg);
-      color: var(--color-fg-muted);
-      max-width: 600px;
-      margin: 0 auto var(--space-8);
-      line-height: var(--line-height-relaxed);
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
 </head>
 <body>
 
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="app-header">
     <div class="brand">
-      <div class="brand-icon"><i class="fas fa-book"></i></div>
+      <div class="brand-icon"><i class="fas fa-book" aria-hidden="true"></i></div>
       <div class="brand-title">
         <h1>Documentation</h1>
-        <div class="brand-subtitle"><i class="fas fa-university"></i> GPCA IoT Lab</div>
+        <div class="brand-subtitle"><i class="fas fa-university" aria-hidden="true"></i> GPCA IoT Lab</div>
       </div>
     </div>
-    <nav class="nav-links">
+    <nav class="nav-links" aria-label="Main navigation">
       <a href="/" class="btn btn-secondary">Home</a>
       <a href="/dashboard" class="btn btn-primary">Dashboard</a>
     </nav>
   </header>
 
-  <main class="container doc-container">
+  <main id="main" class="container doc-container">
     <section class="doc-section" style="text-align: center; margin: var(--space-16) 0 var(--space-12);">
-      <h1 class="hero-title-gradient">System Architecture & Overview</h1>
+      <h2 class="hero-title-gradient">System Architecture &amp; Overview</h2>
       <p class="hero-desc">
         Comprehensive technical documentation for the IoT Weather Monitoring Station developed at Government Polytechnic College Anantnag.
       </p>
     </section>
 
     <div class="doc-section">
-      <h2><i class="fas fa-info-circle"></i> Project Overview</h2>
+      <h2><i class="fas fa-info-circle" aria-hidden="true"></i> Project Overview</h2>
       <div class="doc-panel">
         <p>
           The GPCA Weather Station is an educational and functional Internet of Things (IoT) project engineered by Computer Science students at Government Polytechnic College Anantnag. It provides automated, real-time meteorological monitoring using connected sensors, edge microcontrollers, and a cloud-native backend pipeline.
@@ -161,7 +66,7 @@
     </div>
 
     <div class="doc-section">
-      <h2><i class="fas fa-network-wired"></i> System Architecture</h2>
+      <h2><i class="fas fa-network-wired" aria-hidden="true"></i> System Architecture</h2>
       <div class="doc-panel">
         <div class="architecture-grid">
           <div class="arch-card">
@@ -185,7 +90,7 @@
     </div>
 
     <div class="doc-section">
-      <h2><i class="fas fa-microchip"></i> Hardware Specification</h2>
+      <h2><i class="fas fa-microchip" aria-hidden="true"></i> Hardware Specification</h2>
       <div class="doc-panel">
         <ul>
           <li><b>Microcontroller:</b> ESP8266 Wi-Fi SoC</li>
@@ -198,7 +103,7 @@
     </div>
 
     <div class="doc-section">
-      <h2><i class="fas fa-users"></i> Project Authors</h2>
+      <h2><i class="fas fa-users" aria-hidden="true"></i> Project Authors</h2>
       <div class="doc-panel" style="text-align: center;">
         <p style="font-size: var(--text-xl); font-weight: var(--font-weight-semibold); color: var(--color-fg); margin-bottom: var(--space-2);">
           Yawar Nazir Sheikh & Muhammad Yaseen
@@ -211,7 +116,7 @@
     </div>
 
     <footer class="project-credit">
-      <p>&copy; 2024 GPCA Smart Weather Station Project</p>
+      <p>&copy; {{ current_year }} GPCA Smart Weather Station Project</p>
       <div style="margin-top: var(--space-4);">
         <a href="/" style="margin-right: var(--space-6);">Home</a>
         <a href="/dashboard">Live Dashboard</a>
@@ -219,15 +124,6 @@
     </footer>
   </main>
 
-  <script>
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
-          .then((reg) => console.log('[SW] Registered:', reg.scope))
-          .catch((err) => console.warn('[SW] Registration failed:', err));
-      });
-    }
-  </script>
+<script src="{{ url_for('static', filename='js/about.js') }}"></script>
 </body>
 </html>

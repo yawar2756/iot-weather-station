@@ -20,6 +20,9 @@ config.private.h
 instance/
 .webassets-cache/
 
+# AI tooling / local agent state
+.claude/
+
 # IDE / editors
 .vscode/
 .idea/

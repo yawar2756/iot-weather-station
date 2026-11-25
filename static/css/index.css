@@ -1,0 +1,85 @@
+    .hero-section {
+      padding: var(--space-16) 0 var(--space-10);
+      text-align: center;
+    }
+
+    .hero-title {
+      font-size: clamp(var(--text-2xl), 5vw, var(--text-3xl));
+      margin-bottom: var(--space-4);
+      background: linear-gradient(135deg, var(--color-fg) 0%, var(--color-fg-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      font-size: var(--text-lg);
+      color: var(--color-fg-muted);
+      max-width: 640px;
+      margin: 0 auto var(--space-8);
+      line-height: var(--line-height-relaxed);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-5);
+      margin-top: var(--space-12);
+    }
+
+    .feature-card {
+      padding: var(--space-6);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-primary-dim);
+      color: var(--color-primary);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: var(--radius-md);
+      font-size: 1.25rem;
+      margin-bottom: var(--space-4);
+    }
+
+    .feature-card h3 {
+      font-size: var(--text-lg);
+      margin-bottom: var(--space-2);
+    }
+
+    .feature-card p {
+      color: var(--color-fg-muted);
+      font-size: var(--text-sm);
+      margin: 0;
+    }
+
+    .status-panel {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-5);
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      margin-bottom: var(--space-6);
+    }
+
+    .tech-badges {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-6);
+      opacity: 0.6;
+    }
+
+    .tech-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-fg-muted);
+    }
+  

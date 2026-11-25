@@ -778,3 +778,11 @@ a.btn-secondary:hover:not(:disabled) {
 .brand:hover .brand-icon {
   animation: floatSlow 2s ease-in-out infinite;
 }
+/* --- Accessibility: skip link --- */
+.skip-link {
+  position: absolute; left: var(--space-4); top: -48px; z-index: 1000;
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-md);
+  background: var(--color-primary); color: var(--color-bg); font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { top: var(--space-4); }
+.hero-title-gradient { font-size: var(--text-3xl); }
